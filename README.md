@@ -22,6 +22,17 @@ Actions default to open for the first step and interact for later steps. Packs c
 
 The Kane adapter joins author events to archived steps and links refreshes to the corresponding inner run. When archive details are supplied, it returns verified archive entry paths and uses the run manifest ID. See the [Phase 1 report](runs/phase1/REPORT.md) for the live calibration scope.
 
+## Library contract versions
+
+| Version | SHA-256 | Used for |
+|---|---|---|
+| v2 | `259613c83f6ff13aa3b3bb832092c214cc4fefbdfbc3cabaaa636882e63a1c80` | Phase 1 and the first six Gate 1 cases. A byte-identical copy is kept at `tests/fixtures/library-v2.pack.yaml`. |
+| v3 | `76f8bbdc4b1250f97105c600f20bfae26381721a1829e9539aadf4a82e1d6990` | The current pack and the restarted Gate 1 matrix. |
+
+v3 changes only the recording prompts for `titles_before` and `titles_after` in L1, L3 and L4. They now ask for "the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'". The actions, assertions and verdict rules are unchanged.
+
+The reason: in the v2 Gate 1 run on the React reference app, Kane removed the correct book but stored the visible authors as `titles_after`. The screenshots showed the app was correct. v2's "every book title" prompt did not rule out other columns in a table layout. Results from different versions are separate comparisons and are never mixed.
+
 ## Live runs and reports
 
 Start a corpus app on a loopback URL, sign in with `kane-cli`, and leave its Chrome profile unset. Select a scenario explicitly for a Gate 1 run.

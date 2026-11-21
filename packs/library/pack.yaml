@@ -1,5 +1,5 @@
 pack: library
-version: 2
+version: 3
 support: DOM-rendered apps that list books as visible text and keep data in the browser
 persistence: Survives a page reload in the same browser session
 scenarios:
@@ -10,13 +10,13 @@ scenarios:
       - id: before
         do: Open the page.
         record:
-          titles_before: every book title currently shown, separated by |, or 'none'
+          titles_before: the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'
           count_before: the number of books currently shown
       - id: add
         do: Add a new book with title "GP Book {{nonce}}", author "Ada Okafor", 123 pages, not read yet, and save it.
         expects_change: true
         record:
-          titles_after: every book title currently shown, separated by |, or 'none'
+          titles_after: the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'
           count_after: the number of books currently shown
     expect:
       - { op: list_not_contains, value: titles_before, arg: 'GP Book {{nonce}}', prerequisite: true }
@@ -36,13 +36,13 @@ scenarios:
       - id: add_alpha
         do: Add a new book with title "GP Alpha {{nonce}}", author "Ada Okafor", 123 pages, not read yet, and save it.
         record:
-          titles_before: every book title currently shown, separated by |, or 'none'
+          titles_before: the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'
           count_before: the number of books currently shown
       - id: remove
         do: Remove the book titled "GP Alpha {{nonce}}".
         expects_change: true
         record:
-          titles_after: every book title currently shown, separated by |, or 'none'
+          titles_after: the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'
           count_after: the number of books currently shown
     expect:
       - { op: list_contains, value: titles_before, arg: 'GP Alpha {{nonce}}', prerequisite: true }
@@ -61,13 +61,13 @@ scenarios:
       - id: add
         do: Add a new book with title "GP Keep {{nonce}}", author "Ada Okafor", 123 pages, not read yet, and save it.
         record:
-          titles_before: every book title currently shown, separated by |, or 'none'
+          titles_before: the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'
           count_before: the number of books currently shown
       - id: reload
         action: reload
         do: Reload the page in the current browser session.
         record:
-          titles_after: every book title currently shown, separated by |, or 'none'
+          titles_after: the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'
           count_after: the number of books currently shown
     expect:
       - { op: list_contains, value: titles_before, arg: 'GP Keep {{nonce}}', prerequisite: true }
