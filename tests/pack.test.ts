@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { generateTests } from '../src/core/generate.js';
+import { generateTests, lintGeneratedTest } from '../src/core/generate.js';
 import { lintTestMarkdown } from '../src/core/lint.js';
 import { loadPack, parsePack } from '../src/core/pack.js';
 
@@ -18,6 +18,7 @@ describe('pack validation', () => {
     expect(loaded.packHash).toBe(createHash('sha256').update(source).digest('hex'));
     generateTests(loaded.pack, 'differentNonce');
     expect(loaded.pack.scenarios[0].steps[1].do).toContain('{{nonce}}');
+    expect(Reflect.set(loaded.pack.scenarios[0].steps[1], 'do', 'Different action.')).toBe(false);
     expect(parsePack(source.toString().replaceAll('{{nonce}}', 'differentNonce')).packHash).not.toBe(loaded.packHash);
   });
 
@@ -25,6 +26,7 @@ describe('pack validation', () => {
     ['missing required field', (source: string) => source.replace(/^support:.+\r?\n/mu, '')],
     ['unknown assertion type', (source: string) => source.replace('equals_number', 'approximate')],
     ['unknown recording key', (source: string) => source.replace('value: result', 'value: absent_key')],
+    ['a behavior check with no browser actions', (source: string) => source.replaceAll('        do:', '        action: none\n        do:')],
     ['invalid regular expression', (source: string) => source.replace('equals_number, value: result, arg: 19', 'matches, value: result, arg: "["')],
   ])('rejects %s', (_name, edit) => {
     expect(() => parsePack(edit(calculatorSource))).toThrow();
@@ -54,6 +56,14 @@ describe('neutral test Markdown', () => {
     expect(generateTests(pack, 'demo', 'L4')).toHaveLength(1);
     expect(() => generateTests(pack, 'demo', 'unknown')).toThrow('Unknown scenario');
     expect(() => generateTests(pack, '../unsafe')).toThrow();
+  });
+
+  it('rejects clean-looking edits and empty files while accepting Windows line endings', async () => {
+    const { pack } = await loadPack(libraryPath);
+    const [{ markdown }] = generateTests(pack, 'test', 'L1');
+    expect(lintGeneratedTest(markdown.replaceAll('\n', '\r\n'), pack, 'L1', 'test')).toEqual([]);
+    expect(lintGeneratedTest(markdown.replace('Open the page.', 'Open a different page.'), pack, 'L1', 'test')).toHaveLength(1);
+    expect(lintGeneratedTest('', pack, 'L1', 'test')).toHaveLength(1);
   });
 
   it.each(['@import','@db','@api','@js','@smartui','@network_query','@network_assertion',

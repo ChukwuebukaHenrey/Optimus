@@ -28,7 +28,7 @@ const assertionSchema = z.discriminatedUnion('op', [
   }),
   z.strictObject({ op: z.literal('equals_number'), value: identifier, arg: z.number(), prerequisite }),
   z.strictObject({ op: z.literal('count_equals'), value: identifier, arg: z.number().int().nonnegative(), prerequisite }),
-  z.strictObject({ op: z.literal('delta'), value: identifier, from: identifier, by: z.number(), prerequisite }),
+  z.strictObject({ op: z.literal('delta'), value: identifier, from: identifier, by: z.number(), kind: z.literal('count').optional(), prerequisite }),
   z.strictObject({ op: z.literal('absent'), value: identifier, prerequisite }),
 ]);
 
@@ -71,6 +71,9 @@ const packSchema = z.strictObject({
       if (stepIds.has(step.id)) {
         ctx.addIssue({ code: 'custom', path: [...stepPath, 'id'], message: 'Duplicate step id' });
       }
+      if (step.action === 'none' && step.expects_change) {
+        ctx.addIssue({ code: 'custom', path: [...stepPath, 'expects_change'], message: 'A change check requires a browser action' });
+      }
       stepIds.add(step.id);
       for (const key of Object.keys(step.record)) {
         if (recordSteps.has(key)) {
@@ -91,10 +94,16 @@ const packSchema = z.strictObject({
         if (before === undefined || (step !== undefined && before >= step)) {
           ctx.addIssue({ code: 'custom', path: [...assertionPath, 'from'], message: 'Delta needs a recording key from an earlier step' });
         }
+        if (assertion.kind === 'count' && !Number.isSafeInteger(assertion.by)) {
+          ctx.addIssue({ code: 'custom', path: [...assertionPath, 'by'], message: 'A count delta must be a safe integer' });
+        }
       }
     }
-    if (scenario.expect.every((assertion) => assertion.prerequisite)) {
-      ctx.addIssue({ code: 'custom', path: [...scenarioPath, 'expect'], message: 'At least one assertion must assess the exercised behavior' });
+    const behaviorRecordings = scenario.expect.filter((assertion) => !assertion.prerequisite)
+      .map((assertion) => recordSteps.get(assertion.value) ?? -1);
+    const lastBehaviorRecording = Math.max(-1, ...behaviorRecordings);
+    if (!scenario.steps.some((step, index) => index <= lastBehaviorRecording && actionForStep(step, index) !== 'none')) {
+      ctx.addIssue({ code: 'custom', path: [...scenarioPath, 'expect'], message: 'At least one behavior assertion must use a recording made after or during a browser action' });
     }
   }
 });
@@ -104,14 +113,22 @@ export type Scenario = z.infer<typeof scenarioSchema>;
 export type Pack = z.infer<typeof packSchema>;
 
 export interface LoadedPack {
-  pack: Pack;
-  packHash: string;
+  readonly pack: Pack;
+  readonly packHash: string;
+}
+
+function freezePack(value: object): void {
+  for (const child of Object.values(value)) {
+    if (child !== null && typeof child === 'object') freezePack(child);
+  }
+  Object.freeze(value);
 }
 
 export function parsePack(source: string | Buffer): LoadedPack {
   const pack = packSchema.parse(parse(source.toString()));
   const packHash = createHash('sha256').update(source).digest('hex');
-  return { pack, packHash };
+  freezePack(pack);
+  return Object.freeze({ pack, packHash });
 }
 
 export async function loadPack(path: string): Promise<LoadedPack> {

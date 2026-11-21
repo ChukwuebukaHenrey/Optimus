@@ -1,4 +1,4 @@
-import { evaluateAssertion, normalizeText } from './expect.js';
+import { evaluateAssertion, normalizeText, parseRecordedList } from './expect.js';
 import { actionForStep, type LoadedPack, type Scenario } from './pack.js';
 import type { ScenarioResult, ScenarioTrace, Verdict } from './types.js';
 
@@ -11,14 +11,24 @@ function hasObservableChange(scenario: Scenario, values: Record<string, string |
       prior === key.replace(/_after$/u, '_before') || normalizeText(priorPrompt) === normalizeText(prompt),
     )?.[0];
     if (priorKey === undefined || values[priorKey] == null || values[key] == null) continue;
-    hasComparableValues = true;
     if (explicit?.op === 'delta') {
-      if (evaluateAssertion({ ...explicit, by: 0 }, values, nonce).outcome === 'fail') return 'changed';
+      const delta = evaluateAssertion({ ...explicit, by: 0 }, values, nonce).outcome;
+      if (delta === 'inconclusive') continue;
+      if (delta === 'fail') return 'changed';
     } else {
-      const exact = scenario.expect.some((assertion) => assertion.value === key && 'case' in assertion && assertion.case === 'exact');
+      const assertions = scenario.expect.filter(({ value }) => value === key);
+      const exact = assertions.some((assertion) => 'case' in assertion && assertion.case === 'exact');
       const mode = exact ? 'exact' : 'insensitive';
-      if (normalizeText(values[priorKey], mode) !== normalizeText(values[key], mode)) return 'changed';
+      if (assertions.some(({ op }) => op === 'list_contains' || op === 'list_not_contains')) {
+        const before = parseRecordedList(values[priorKey], mode)?.sort();
+        const after = parseRecordedList(values[key], mode)?.sort();
+        if (!before || !after) continue;
+        if (before.length !== after.length || before.some((value, position) => value !== after[position])) return 'changed';
+      } else if (normalizeText(values[priorKey], mode) !== normalizeText(values[key], mode)) {
+        return 'changed';
+      }
     }
+    hasComparableValues = true;
   }
   return hasComparableValues ? 'unchanged' : 'unavailable';
 }
@@ -35,25 +45,28 @@ export function evaluateScenario({ pack, packHash }: LoadedPack, trace: Scenario
     return result('INFRA_ERROR', 'run_incomplete', 'The browser run did not finish with a usable exit status.');
   }
   if (run.replayDecisions === null) return result('INFRA_ERROR', 'replay_count_missing', 'The run did not report its replay count.');
-  if (run.replayDecisions > 0) return result('INFRA_ERROR', 'replay_detected', 'The browser run included replay decisions.');
+  if (run.replayDecisions !== 0) return result('INFRA_ERROR', 'replay_detected', 'The browser run did not establish a zero replay count.');
   if (!run.evidencePackPath?.trim()) return result('INFRA_ERROR', 'evidence_pack_missing', 'The run has no evidence pack reference.');
 
   const recordSteps = new Map(scenario.steps.flatMap((step, index) => Object.keys(step.record).map((key) => [key, index] as const)));
   const decisiveIndex = Math.max(...scenario.expect.map((assertion) => recordSteps.get(assertion.value)!));
-  const indices = new Set<number>();
-  for (const observation of trace.observations) {
-    if (indices.has(observation.stepIndex) || scenario.steps[observation.stepIndex]?.id !== observation.stepId) {
-      return result('INFRA_ERROR', 'invalid_observation_order', 'An observation has a duplicate index or disagrees with its pack step.', observation.stepId);
-    }
-    indices.add(observation.stepIndex);
-  }
-  if (run.stepsSkipped.some((index) => index < 0 || index >= scenario.steps.length)) {
-    return result('INFRA_ERROR', 'invalid_skipped_step', 'A skipped step does not exist in the pack.');
-  }
   const skipped = new Set(run.stepsSkipped);
+  if (skipped.size !== run.stepsSkipped.length || run.stepsSkipped.some((index) => !scenario.steps[index])) {
+    return result('INFRA_ERROR', 'invalid_skipped_step', 'A skipped step is duplicated or does not exist in the pack.');
+  }
+  let previousIndex = -1;
+  for (const observation of trace.observations) {
+    if (observation.stepIndex <= previousIndex || skipped.has(observation.stepIndex) || scenario.steps[observation.stepIndex]?.id !== observation.stepId) {
+      return result('INFRA_ERROR', 'invalid_observation_order', 'An observation is out of order, marked skipped, or disagrees with its pack step.', observation.stepId);
+    }
+    previousIndex = observation.stepIndex;
+  }
   const earlySkip = [...skipped].sort((a, b) => a - b).find((index) => index <= decisiveIndex);
   if (earlySkip !== undefined) {
     return result('NOT_RUN', 'decisive_step_skipped', 'A step needed to reach the decisive recording was skipped.', scenario.steps[earlySkip].id);
+  }
+  if (!Number.isSafeInteger(run.authorDecisions) || !run.authorDecisions || run.authorDecisions < 0) {
+    return result('INFRA_ERROR', 'author_count_missing', 'The run did not establish that author decisions were made.');
   }
 
   const byIndex = new Map(trace.observations.map((observation) => [observation.stepIndex, observation]));
@@ -68,7 +81,9 @@ export function evaluateScenario({ pack, packHash }: LoadedPack, trace: Scenario
     if (observation?.targetAgreement === 'contradicted') {
       return result('INCONCLUSIVE', 'action_target_contradicted', 'The recorded action target disagrees with the pack step.', step.id);
     }
-    for (const key of Object.keys(step.record)) values[key] = observation?.values[key] ?? null;
+    for (const key of Object.keys(step.record)) {
+      values[key] = observation && Object.hasOwn(observation.values, key) ? observation.values[key] : null;
+    }
   }
 
   const checks = scenario.expect.map((assertion) => ({ assertion, check: evaluateAssertion(assertion, values, run.nonce) }));

@@ -1,4 +1,4 @@
-import { lintTestMarkdown } from './lint.js';
+import { lintTestMarkdown, type LintIssue } from './lint.js';
 import { substituteNonce, type Pack } from './pack.js';
 import { nonceSchema } from './types.js';
 
@@ -25,4 +25,20 @@ export function generateTests(pack: Pack, nonce: string, scenarioId?: string) {
     }
     return { fileName, markdown };
   });
+}
+
+export function lintGeneratedTest(markdown: string, pack: Pack, scenarioId: string, nonce: string): LintIssue[] {
+  const scenario = pack.scenarios.find(({ id }) => id === scenarioId);
+  if (!scenario) throw new Error(`Unknown scenario '${scenarioId}'. Pass --scenario for renamed files.`);
+  const issues = lintTestMarkdown(markdown, scenario, nonce);
+  if (issues.length) return issues;
+  const [expected] = generateTests(pack, nonce, scenarioId);
+  const actualLines = markdown.replace(/\r\n/gu, '\n').trimEnd().split('\n');
+  const expectedLines = expected.markdown.trimEnd().split('\n');
+  for (let index = 0; index < Math.max(actualLines.length, expectedLines.length); index++) {
+    if (actualLines[index] !== expectedLines[index]) {
+      return [{ line: index + 1, message: 'Test Markdown differs from the loaded pack. Regenerate it with the same nonce.' }];
+    }
+  }
+  return [];
 }

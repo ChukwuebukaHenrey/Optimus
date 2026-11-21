@@ -13,18 +13,18 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "tsx": "^4.20.0",
     "yaml": "^2.8.0",
+    "yauzl": "^3.4.0",
     "zod": "^4.0.0"
   },
   "devDependencies": {
-    "@types/node": "^18.19.0",
-    "tsx": "^4.20.0",
+    "@types/node": "^20.0.0",
+    "@types/yauzl": "^2.10.3",
     "typescript": "~5.9.3",
-    "vitest": "~3.2.4"
+    "vitest": "4.1.12"
   },
   "overrides": {
-    "vitest": {
-      "vite": "^6.0.0"
-    }
+    "vitest": { "vite": "6.4.6" }
   }
 }

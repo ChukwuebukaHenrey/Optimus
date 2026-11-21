@@ -44,14 +44,18 @@ describe('Library evaluation', () => {
     ['adds two books', add('GP Book sample | Unexpected book', '2'), 'FAIL', 'assertion_failed'],
     ['adds to an existing list', add('Sample A | Sample B | GP Book sample', '3', 'Sample A | Sample B', '2'), 'PASS', 'assertions_satisfied'],
     ['produces an unparseable count', add('GP Book sample', 'many'), 'INCONCLUSIVE', 'recording_unavailable'],
+    ['reports a fractional count', add('GP Book sample', '1.5', 'none', '0.5'), 'INCONCLUSIVE', 'recording_unavailable'],
+    ['reports a negative baseline count', add('GP Book sample', '0', 'none', '-1'), 'INCONCLUSIVE', 'recording_unavailable'],
     ['removes the chosen book', remove(), 'PASS', 'assertions_satisfied'],
     ['removes the wrong book', remove('GP Alpha sample'), 'FAIL', 'assertion_failed'],
     ['shows no change after remove', remove('GP Beta sample | GP Alpha sample', '2.0'), 'INCONCLUSIVE', 'no_observable_change'],
+    ['records the same books in a different order', remove('GP Alpha sample | GP Beta sample', '2'), 'INCONCLUSIVE', 'no_observable_change'],
     ['does not establish the requested starting books', remove('GP Beta sample', '1', 'GP Beta sample | Sample A'), 'INCONCLUSIVE', 'prerequisite_not_established'],
     ['persists across reload', reload(), 'PASS', 'assertions_satisfied'],
     ['loses the book on reload', reload('none', '0'), 'FAIL', 'assertion_failed'],
     ['does not establish a book before reload', reload('none', '0', 'Sample A'), 'INCONCLUSIVE', 'prerequisite_not_established'],
     ['changes read status', trace(library, 'L2', { add: { status_before: 'To read' }, toggle: { status_after: 'Finished' } }), 'PASS', 'assertions_satisfied'],
+    ['starts with an already-read book', trace(library, 'L2', { add: { status_before: 'Read' }, toggle: { status_after: 'Finished' } }), 'INCONCLUSIVE', 'prerequisite_not_established'],
     ['leaves read status unchanged', trace(library, 'L2', { add: { status_before: 'To read' }, toggle: { status_after: 'To read' } }), 'INCONCLUSIVE', 'no_observable_change'],
   ] as const)('%s', (_name, input, verdict, reasonCode) => {
     expect(evaluateScenario(library, input)).toMatchObject({ verdict, reasonCode });
@@ -78,6 +82,8 @@ describe('Library evaluation', () => {
   const brokenRuns: [Partial<RunRecord>, string, string][] = [
     [{ replayDecisions: 1 }, 'INFRA_ERROR', 'replay_detected'],
     [{ replayDecisions: null }, 'INFRA_ERROR', 'replay_count_missing'],
+    [{ authorDecisions: 0 }, 'INFRA_ERROR', 'author_count_missing'],
+    [{ authorDecisions: null }, 'INFRA_ERROR', 'author_count_missing'],
     [{ packHash: '0'.repeat(64) }, 'INFRA_ERROR', 'pack_hash_mismatch'],
     [{ kaneExitCode: 2 }, 'INFRA_ERROR', 'run_incomplete'],
     [{ kaneExitCode: 3 }, 'INFRA_ERROR', 'run_incomplete'],
@@ -89,6 +95,7 @@ describe('Library evaluation', () => {
   it.each(brokenRuns)('enforces run integrity with %j', (update, verdict, reasonCode) => {
     const input = add();
     Object.assign(input.run, update);
+    input.observations = input.observations.filter(({ stepIndex }) => !input.run.stepsSkipped.includes(stepIndex));
     expect(evaluateScenario(library, input)).toMatchObject({ verdict, reasonCode });
   });
 
@@ -102,6 +109,12 @@ describe('Library evaluation', () => {
   it('rejects duplicate step observations', () => {
     const input = add();
     input.observations.push(input.observations[1]);
+    expect(evaluateScenario(library, input)).toMatchObject({ verdict: 'INFRA_ERROR', reasonCode: 'invalid_observation_order' });
+  });
+
+  it('rejects a step reported as both observed and skipped', () => {
+    const input = add();
+    input.run.stepsSkipped = [1];
     expect(evaluateScenario(library, input)).toMatchObject({ verdict: 'INFRA_ERROR', reasonCode: 'invalid_observation_order' });
   });
 });

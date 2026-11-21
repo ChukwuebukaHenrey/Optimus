@@ -1,12 +1,12 @@
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { z } from 'zod';
 import { evaluateScenario } from './core/evaluate.js';
-import { generateTests } from './core/generate.js';
-import { lintTestMarkdown } from './core/lint.js';
+import { generateTests, lintGeneratedTest } from './core/generate.js';
 import { loadPack } from './core/pack.js';
-import { nonceSchema, scenarioTraceSchema, type Verdict } from './core/types.js';
+import { nonceSchema, scenarioTraceSchema, type ScenarioResult, type Verdict } from './core/types.js';
+import { checkEvidenceArchive } from './kane/evidence.js';
 
 const usage = `Usage
   optimus gen-tests --pack <path> --nonce <id> [--scenario <id>] [--out <directory>]
@@ -55,9 +55,7 @@ async function main([command, ...args]: string[]): Promise<number> {
     const nonce = nonceSchema.parse(values.nonce);
     const path = positionals[0];
     const scenarioId = values.scenario ?? basename(path).replace(/_test\.md$/u, '');
-    const scenario = loaded.pack.scenarios.find(({ id }) => id === scenarioId);
-    if (!scenario) throw new Error(`Unknown scenario '${scenarioId}'. Pass --scenario for renamed files.`);
-    const issues = lintTestMarkdown(await readFile(path, 'utf8'), scenario, nonce);
+    const issues = lintGeneratedTest(await readFile(path, 'utf8'), loaded.pack, scenarioId, nonce);
     for (const issue of issues) console.error(`${path}:${issue.line} ${issue.message}`);
     return issues.length ? 10 : 0;
   }
@@ -67,21 +65,28 @@ async function main([command, ...args]: string[]): Promise<number> {
   const collection = Array.isArray(input);
   const traces = z.array(scenarioTraceSchema).min(1).parse(collection ? input : [input]);
   const seen = new Set<string>();
+  const evidenceIds = new Set<string>();
+  const results: ScenarioResult[] = [];
   for (const trace of traces) {
     if (seen.has(trace.scenarioId)) throw new Error(`The trace repeats scenario '${trace.scenarioId}'.`);
-    if (trace.run.appUrl !== traces[0].run.appUrl) throw new Error('A trace collection must describe one app URL.');
-    seen.add(trace.scenarioId);
-    if (trace.run.evidencePackPath) {
-      const evidence = resolve(dirname(path), trace.run.evidencePackPath);
-      try {
-        trace.run.evidencePackPath = (await stat(evidence)).isFile() ? evidence : null;
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-        trace.run.evidencePackPath = null;
-      }
+    if (trace.run.appUrl !== traces[0].run.appUrl || trace.run.nonce !== traces[0].run.nonce) {
+      throw new Error('A trace collection must describe one app URL and one run nonce.');
     }
+    seen.add(trace.scenarioId);
+    const evidenceId = trace.run.evidencePackPath && trace.run.packHash === loaded.packHash
+      ? await checkEvidenceArchive(resolve(dirname(path), trace.run.evidencePackPath)) : undefined;
+    if (evidenceId === null) trace.run.evidencePackPath = null;
+    const result = evaluateScenario(loaded, trace);
+    if (evidenceId === null && result.reasonCode === 'evidence_pack_missing') {
+      result.reasonCode = 'invalid_evidence_archive';
+      result.reason = 'The referenced file is missing or lacks the documented single-test evidence archive structure.';
+    }
+    if (result.verdict !== 'INFRA_ERROR' && evidenceId) {
+      if (evidenceIds.has(evidenceId)) throw new Error('A trace collection must use a separate evidence archive for each scenario.');
+      evidenceIds.add(evidenceId);
+    }
+    results.push(result);
   }
-  const results = traces.map((trace) => evaluateScenario(loaded, trace));
   if (!collection) {
     console.log(JSON.stringify(results[0], null, 2));
     return exitCodes[results[0].verdict];

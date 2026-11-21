@@ -14,28 +14,40 @@ export function normalizeText(value: string, mode?: 'exact' | 'insensitive'): st
   return mode === 'exact' ? normalized : normalized.toLowerCase();
 }
 
-function parseNumber(value: string): number | undefined {
-  const text = value.trim();
-  if (!/^[+-]?(?:(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|\.\d+)$/u.test(text)) return undefined;
-  const parsed = Number(text.replaceAll(',', ''));
-  return Number.isFinite(parsed) && Math.abs(parsed) <= Number.MAX_SAFE_INTEGER ? parsed : undefined;
+interface Decimal {
+  digits: bigint;
+  scale: number;
 }
 
-function parseList(value: string, mode?: 'exact' | 'insensitive'): string[] | undefined {
+function decimal(value: string): Decimal {
+  const [mantissa, exponent = '0'] = value.split('e');
+  const [integer, fraction = ''] = mantissa.split('.');
+  return { digits: BigInt(integer + fraction), scale: fraction.length - Number(exponent) };
+}
+
+function parseNumber(value: string): Decimal | undefined {
+  const text = value.trim();
+  if (text.length > 512 || !/^[+-]?(?:(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|\.\d+)$/u.test(text)) return undefined;
+  const numeral = text.replaceAll(',', '');
+  return Math.abs(Number(numeral)) <= Number.MAX_SAFE_INTEGER ? decimal(numeral) : undefined;
+}
+
+export function parseRecordedList(value: string, mode?: 'exact' | 'insensitive'): string[] | undefined {
   if (['', 'none'].includes(normalizeText(value))) return [];
   const entries = value.split('|').map((entry) => normalizeText(entry, mode));
   return entries.includes('') ? undefined : entries;
 }
 
-function matchesDelta(after: number, before: number, expected: number): boolean {
-  const parts = [after, before, expected].map((value) => {
-    const [mantissa, exponent = '0'] = String(value).split('e');
-    const [integer, fraction = ''] = mantissa.split('.');
-    return { digits: BigInt(integer + fraction), scale: fraction.length - Number(exponent) };
-  });
+function matchesDelta(after: Decimal, before: Decimal, expected: number): boolean {
+  const parts = [after, before, decimal(String(expected))];
   const scale = Math.max(...parts.map((part) => part.scale));
   const [scaledAfter, scaledBefore, scaledExpected] = parts.map(({ digits, scale: places }) => digits * 10n ** BigInt(scale - places));
   return scaledAfter - scaledBefore === scaledExpected;
+}
+
+function isCount({ digits, scale }: Decimal): boolean {
+  const places = 10n ** BigInt(scale);
+  return digits >= 0n && digits % places === 0n && digits / places <= BigInt(Number.MAX_SAFE_INTEGER);
 }
 
 export function evaluateAssertion(assertion: Assertion, values: RecordedValues, nonce: string): AssertionResult {
@@ -58,13 +70,12 @@ export function evaluateAssertion(assertion: Assertion, values: RecordedValues, 
     case 'delta': {
       const number = parseNumber(observed);
       if (number === undefined) return unavailable(assertion.value);
-      if (assertion.op === 'count_equals' && (!Number.isSafeInteger(number) || number < 0)) {
-        return unavailable(assertion.value);
-      }
-      if (assertion.op !== 'delta') return result(number === assertion.arg);
+      const needsCount = assertion.op === 'count_equals' || (assertion.op === 'delta' && assertion.kind === 'count');
+      if (needsCount && !isCount(number)) return unavailable(assertion.value);
+      if (assertion.op !== 'delta') return result(matchesDelta(number, { digits: 0n, scale: 0 }, assertion.arg));
       const previous = values[assertion.from];
       const before = previous == null ? undefined : parseNumber(previous);
-      if (before === undefined) return unavailable(assertion.from);
+      if (before === undefined || (needsCount && !isCount(before))) return unavailable(assertion.from);
       return result(matchesDelta(number, before, assertion.by));
     }
     case 'absent':
@@ -77,7 +88,7 @@ export function evaluateAssertion(assertion: Assertion, values: RecordedValues, 
       return result(assertion.arg.some((arg) => normalizeText(substituteNonce(arg, nonce), assertion.case) === normalizeText(observed, assertion.case)));
     case 'list_contains':
     case 'list_not_contains': {
-      const entries = parseList(observed, assertion.case);
+      const entries = parseRecordedList(observed, assertion.case);
       if (!entries) return unavailable(assertion.value);
       const contains = entries.includes(normalizeText(substituteNonce(assertion.arg, nonce), assertion.case));
       return result(assertion.op === 'list_contains' ? contains : !contains);

@@ -26,6 +26,8 @@ function matchesAction(kind: ActionKind, action: unknown) {
 
 interface ActiveStep {
   index: number;
+  runEnds: number;
+  innerRunUsable?: boolean;
   actionRecorded: boolean | null;
   finalState?: Event;
   actionIndex?: number;
@@ -37,7 +39,9 @@ interface ActiveStep {
 export function parseKaneNdjson(ndjson: string, scenario: Scenario, runtime: Runtime): ScenarioTrace {
   const observations: Observation[] = [];
   const stepsSkipped: number[] = [];
-  const seenSteps = new Set<number>();
+  const priorStateKeys = new Set<string>();
+  let lastStepIndex = -1;
+  let streamStarted = false;
   let active: ActiveStep | undefined;
   let summary: Event | undefined;
   let done: Event | undefined;
@@ -55,19 +59,23 @@ export function parseKaneNdjson(ndjson: string, scenario: Scenario, runtime: Run
 
     switch (event.type) {
       case 'stream_start':
+        if (streamStarted || lastStepIndex >= 0 || summary || (event.surface !== undefined && event.surface !== 'testmd')) {
+          throw new Error(`Unexpected Kane stream header at line ${lineIndex + 1}.`);
+        }
+        streamStarted = true;
         kaneVersion = text(event.cli_version);
         break;
       case 'test_md_step_start': {
         const index = (count(event.step_index) ?? 0) - 1;
-        if (active || seenSteps.has(index) || !scenario.steps[index] || summary || done) {
+        if (active || index <= lastStepIndex || !scenario.steps[index] || summary || done) {
           throw new Error(`Invalid Kane step start at line ${lineIndex + 1}.`);
         }
-        seenSteps.add(index);
-        active = { index, actionRecorded: null, screenshotRef: null, evidenceRef: null };
+        lastStepIndex = index;
+        active = { index, runEnds: 0, actionRecorded: null, screenshotRef: null, evidenceRef: null };
         break;
       }
       case 'step_event': {
-        if (!active || event.event !== 'action' || typeof event.success !== 'boolean') break;
+        if (!active || active.runEnds !== 0 || event.event !== 'action' || typeof event.success !== 'boolean') break;
         const kind = actionForStep(scenario.steps[active.index], active.index);
         if (!matchesAction(kind, event.action_type)) break;
         if (event.success) {
@@ -81,33 +89,42 @@ export function parseKaneNdjson(ndjson: string, scenario: Scenario, runtime: Run
         break;
       }
       case 'step_end':
-        if (active?.actionIndex !== undefined && active.actionIndex === count(event.index)) {
+        if (active?.actionIndex !== undefined && active.runEnds === 0 && active.actionIndex === count(event.index)) {
           active.screenshotRef = text(event.screenshot);
           active.evidenceRef = text(event.action_id);
         }
         break;
       case 'run_end':
-        if (active) active.finalState = object(event.final_state);
+        if (active) {
+          for (const key of Object.keys(active.finalState ?? {})) priorStateKeys.add(key);
+          active.runEnds++;
+          active.finalState = object(event.final_state);
+          active.innerRunUsable = event.status === undefined || event.status === 'passed';
+        }
         break;
       case 'test_md_step_end': {
         const index = (count(event.step_index) ?? 0) - 1;
         const step = scenario.steps[index];
         if (event.status === 'skipped' && step && !summary && !done &&
-          (active?.index === index || (!active && !seenSteps.has(index)))) {
-          seenSteps.add(index);
+          (active?.index === index || (!active && index > lastStepIndex))) {
+          lastStepIndex = index;
+          for (const key of Object.keys(active?.finalState ?? {})) priorStateKeys.add(key);
           stepsSkipped.push(index);
           active = undefined;
           break;
         }
         if (!active || active.index !== index || !step) throw new Error(`Invalid Kane step end at line ${lineIndex + 1}.`);
-        const state = active.finalState;
+        const completeStep = event.status === 'passed' && event.failed_sub_step_index == null &&
+          active.runEnds === 1 && active.innerRunUsable === true;
+        const state = completeStep ? active.finalState : undefined;
         const values = Object.fromEntries(Object.keys(step.record).map((key) => {
-          const value = state && Object.hasOwn(state, key) ? state[key] : null;
+          const value = state && Object.hasOwn(state, key) && !priorStateKeys.has(key) ? state[key] : null;
           return [key, typeof value === 'number' && Number.isFinite(value) ? String(value) : text(value)];
         }));
+        for (const key of Object.keys(active.finalState ?? {})) priorStateKeys.add(key);
         observations.push({
           stepIndex: index, stepId: step.id, actionKind: actionForStep(step, index),
-          actionRecorded: active.actionRecorded, targetAgreement: 'unknown', values,
+          actionRecorded: completeStep ? active.actionRecorded : null, targetAgreement: 'unknown', values,
           screenshotRef: active.screenshotRef, evidenceRef: active.evidenceRef,
         });
         active = undefined;
@@ -126,12 +143,16 @@ export function parseKaneNdjson(ndjson: string, scenario: Scenario, runtime: Run
 
   const summarySteps = object(summary?.steps);
   const reportedSkips = count(summarySteps?.skipped);
-  const completed = done !== undefined && summary?.cancelled !== true && object(summary?.upload)?.succeeded !== false &&
-    (reportedSkips === null || reportedSkips === stepsSkipped.length);
+  const reportedTotal = count(summarySteps?.total);
+  const statusesAgree = summary?.overall_status === undefined || done?.overall_status === undefined ||
+    summary.overall_status === done.overall_status;
+  const completed = streamStarted && done !== undefined && statusesAgree && summary?.cancelled !== true &&
+    object(summary?.upload)?.succeeded !== false && (reportedSkips === null || reportedSkips === stepsSkipped.length) &&
+    (reportedTotal === null || reportedTotal === observations.length + stepsSkipped.length);
   return {
     scenarioId: scenario.id,
     run: {
-      ...runtime, completed, kaneVersion, executionId: text(done?.session_id), stepsSkipped,
+      ...runtime, completed, kaneVersion, executionId: text(done?.execution_id), stepsSkipped,
       replayDecisions: count(summarySteps?.replay_decisions), authorDecisions: count(summarySteps?.author_decisions),
     },
     observations,

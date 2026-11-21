@@ -34,7 +34,7 @@ const encode = (events: object[]) => events.map((event) => JSON.stringify(event)
 describe('provisional Kane parser', () => {
   it('normalizes only declared recordings from each author step and explicit actions', () => {
     const parsed = parseKaneNdjson(encode([...open, ...add, summary(), done]), scenario, runtime);
-    expect(parsed.run).toMatchObject({ completed: true, replayDecisions: 0, authorDecisions: 2, kaneVersion: 'fixture', executionId: 'example' });
+    expect(parsed.run).toMatchObject({ completed: true, replayDecisions: 0, authorDecisions: 2, kaneVersion: 'fixture', executionId: null });
     expect(parsed.observations).toEqual([
       { stepIndex: 0, stepId: 'before', actionKind: 'open', targetAgreement: 'unknown', actionRecorded: true,
         values: { titles_before: 'none', count_before: '0' }, screenshotRef: 'open.png', evidenceRef: 'open-action' },
@@ -61,6 +61,22 @@ describe('provisional Kane parser', () => {
     }
   });
 
+  it('withholds incomplete step evidence even after a successful preliminary click', () => {
+    const partial = add.map((event) => event.type === 'test_md_step_end'
+      ? { ...event, status: 'failed', failed_sub_step_index: 2 } : event);
+    const parsed = parseKaneNdjson(encode([...open, ...partial, summary(), done]), scenario, runtime);
+    expect(parsed.observations[1]).toMatchObject({ actionRecorded: null, values: { titles_after: null, count_after: null } });
+    expect(evaluateScenario(loaded, parsed).verdict).toBe('INCONCLUSIVE');
+  });
+
+  it('withholds keys that were already present in an earlier cumulative state', () => {
+    const premature = open.map((event) => event.type === 'run_end'
+      ? { ...event, final_state: { ...event.final_state, titles_after: 'GP Book demo' } } : event);
+    const parsed = parseKaneNdjson(encode([...premature, ...add, summary(), done]), scenario, runtime);
+    expect(parsed.observations[1].values.titles_after).toBeNull();
+    expect(evaluateScenario(loaded, parsed).verdict).toBe('INCONCLUSIVE');
+  });
+
   it('preserves an explicit skipped step and refuses to guess missing skipped indexes', () => {
     const skipped = { type: 'test_md_step_end', step_index: 2, status: 'skipped' };
     const parsed = parseKaneNdjson(encode([...open, skipped, summary(0, 1), done]), scenario, runtime);
@@ -73,6 +89,9 @@ describe('provisional Kane parser', () => {
     expect(parseKaneNdjson(encode([...open, ...add, summary()]), scenario, runtime).run.completed).toBe(false);
     const failedUpload = { ...summary(), upload: { succeeded: false } };
     expect(parseKaneNdjson(encode([...open, ...add, failedUpload, done]), scenario, runtime).run.completed).toBe(false);
+    const passed = { ...summary(), overall_status: 'passed' };
+    const failed = { ...done, overall_status: 'failed' };
+    expect(parseKaneNdjson(encode([...open, ...add, passed, failed]), scenario, runtime).run.completed).toBe(false);
   });
 
   it('rejects corrupt event streams', () => {
