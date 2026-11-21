@@ -1,0 +1,19 @@
+pack: calculator
+version: 1
+support: DOM-rendered apps with button input and a visible result
+persistence: No persistence is exercised by this pack
+scenarios:
+  - id: C1
+    title: 'Scenario C1: enter an operation and record the display'
+    preconditions: Fresh browser profile at the app starting state
+    steps:
+      - id: open
+        do: Open the page.
+        record: {}
+      - id: calculate
+        do: Enter 12, press +, enter 7, and press =.
+        record:
+          result: the value visible in the display
+    expect:
+      - { op: equals_number, value: result, arg: 19 }
+    evidence: The computation has a recorded interaction and the displayed value is available
