@@ -30,3 +30,22 @@ Gate 1 is unproven. The React removal case produced a confirmed disagreement bet
 - Optimus emitted a machine FAIL for the missing Beta title in that recording. The screenshot disagreement makes that verdict inadmissible as an app failure. The HTML/JSON report implementation and saved trace remain available for diagnosis.
 
 The saved run metadata in `runs/gate1/raw/g1-b-1/L3/` points to the sealed archive. The pack and evaluator expectations were unchanged. The remaining matrix, Gate 2 and the repair loop depend on resolving the recording mismatch.
+
+## Re-evaluation with the recording continuity check
+
+The evaluator now checks each list recording against its earlier pair. An entry that appears afterward must either have been in the earlier recording or be quoted in the step's own action text. Otherwise the scenario is INCONCLUSIVE with `recording_inconsistent`. Removed entries are not checked. The rule is generic and contains no Library knowledge.
+
+The six saved traces were re-evaluated offline with the unchanged Library v2 pack (SHA-256 `259613c8…1c80`, frozen at `tests/fixtures/library-v2.pack.yaml`) and their original evidence archives. No Kane run was made.
+
+| App | Trial | Scenario | Before | After re-evaluation | Screenshot agreement |
+|---|---:|---|---|---|---|
+| A | 1 | L1 | PASS | PASS | Match |
+| A | 1 | L3 | PASS | PASS | Match |
+| A | 1 | L4 | PASS | PASS | Match |
+| B | 1 | L1 | PASS | PASS | Match |
+| B | 1 | L3 | FAIL | INCONCLUSIVE `recording_inconsistent` | Recording mismatch; no verdict on the app |
+| B | 1 | L4 | PASS | PASS | Match |
+
+The React removal no longer produces a FAIL from authors stored as titles. It still does not count as a PASS: the run did not establish the required recording. The sanitized traces are regression fixtures in `tests/fixtures/gate1-v2-traces.json`.
+
+Consequence: an app that shows a different title from the one requested (for example a truncated title) is now INCONCLUSIVE rather than FAIL, because Optimus cannot tell that from a misrecorded field. A missing title with a visible count change still fails.

@@ -1,0 +1,96 @@
+pack: library
+version: 2
+support: DOM-rendered apps that list books as visible text and keep data in the browser
+persistence: Survives a page reload in the same browser session
+scenarios:
+  - id: L1
+    title: 'Scenario L1: add a record and record the list'
+    preconditions: Fresh browser profile at the app starting state, which may contain sample books
+    steps:
+      - id: before
+        do: Open the page.
+        record:
+          titles_before: every book title currently shown, separated by |, or 'none'
+          count_before: the number of books currently shown
+      - id: add
+        do: Add a new book with title "GP Book {{nonce}}", author "Ada Okafor", 123 pages, not read yet, and save it.
+        expects_change: true
+        record:
+          titles_after: every book title currently shown, separated by |, or 'none'
+          count_after: the number of books currently shown
+    expect:
+      - { op: list_not_contains, value: titles_before, arg: 'GP Book {{nonce}}', prerequisite: true }
+      - { op: list_contains, value: titles_after, arg: 'GP Book {{nonce}}' }
+      - { op: delta, value: count_after, from: count_before, by: 1, kind: count }
+    evidence: The add step has a recorded interaction and the list and count are available before and after
+  - id: L3
+    title: 'Scenario L3: remove a record and record the list'
+    preconditions: Fresh browser profile at the app starting state, which may contain sample books
+    steps:
+      - id: open
+        do: Open the page.
+        record: {}
+      - id: add_beta
+        do: Add a new book with title "GP Beta {{nonce}}", author "Ada Okafor", 123 pages, not read yet, and save it.
+        record: {}
+      - id: add_alpha
+        do: Add a new book with title "GP Alpha {{nonce}}", author "Ada Okafor", 123 pages, not read yet, and save it.
+        record:
+          titles_before: every book title currently shown, separated by |, or 'none'
+          count_before: the number of books currently shown
+      - id: remove
+        do: Remove the book titled "GP Alpha {{nonce}}".
+        expects_change: true
+        record:
+          titles_after: every book title currently shown, separated by |, or 'none'
+          count_after: the number of books currently shown
+    expect:
+      - { op: list_contains, value: titles_before, arg: 'GP Alpha {{nonce}}', prerequisite: true }
+      - { op: list_contains, value: titles_before, arg: 'GP Beta {{nonce}}', prerequisite: true }
+      - { op: list_not_contains, value: titles_after, arg: 'GP Alpha {{nonce}}' }
+      - { op: list_contains, value: titles_after, arg: 'GP Beta {{nonce}}' }
+      - { op: delta, value: count_after, from: count_before, by: -1, kind: count }
+    evidence: Both added books are observed before the recorded removal and the list and count are recorded again afterward
+  - id: L4
+    title: 'Scenario L4: reload the page and record the list'
+    preconditions: Fresh browser profile at the app starting state, which may contain sample books
+    steps:
+      - id: open
+        do: Open the page.
+        record: {}
+      - id: add
+        do: Add a new book with title "GP Keep {{nonce}}", author "Ada Okafor", 123 pages, not read yet, and save it.
+        record:
+          titles_before: every book title currently shown, separated by |, or 'none'
+          count_before: the number of books currently shown
+      - id: reload
+        action: reload
+        do: Reload the page in the current browser session.
+        record:
+          titles_after: every book title currently shown, separated by |, or 'none'
+          count_after: the number of books currently shown
+    expect:
+      - { op: list_contains, value: titles_before, arg: 'GP Keep {{nonce}}', prerequisite: true }
+      - { op: list_contains, value: titles_after, arg: 'GP Keep {{nonce}}' }
+      - { op: delta, value: count_after, from: count_before, by: 0, kind: count }
+    evidence: The added book is observed before a recorded reload and the list and count are recorded afterward
+  - id: L2
+    title: 'Scenario L2: change a status and record it'
+    preconditions: Fresh browser profile at the app starting state, which may contain sample books
+    steps:
+      - id: open
+        do: Open the page.
+        record: {}
+      - id: add
+        do: Add a new book with title "GP Status {{nonce}}", author "Ada Okafor", 123 pages, not read yet, and save it.
+        record:
+          status_before: the displayed status text for the book titled "GP Status {{nonce}}"
+      - id: toggle
+        do: Change the read status of the book titled "GP Status {{nonce}}" once.
+        expects_change: true
+        record:
+          status_after: the displayed status text for the book titled "GP Status {{nonce}}"
+    expect:
+      - { op: one_of, value: status_before, arg: ['not read', 'to read', 'unread', 'not yet read', 'no'], prerequisite: true }
+      - { op: one_of, value: status_after, arg: [read, finished, done, '✓', 'yes'] }
+    evidence: The book has a recorded status before and after a recorded interaction with its status control

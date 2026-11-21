@@ -1,0 +1,326 @@
+{
+  "g1-a-1/L1": {
+    "scenarioId": "L1",
+    "run": {
+      "kaneExitCode": 0,
+      "evidencePackPath": "example.evidence",
+      "packHash": "259613c83f6ff13aa3b3bb832092c214cc4fefbdfbc3cabaaa636882e63a1c80",
+      "nonce": "g1-a-1",
+      "appUrl": "http://127.0.0.1:43184/",
+      "completed": true,
+      "kaneVersion": "0.10.6",
+      "executionId": "g1-a-1-L1",
+      "stepsSkipped": [],
+      "replayDecisions": 0,
+      "authorDecisions": 2
+    },
+    "observations": [
+      {
+        "stepIndex": 0,
+        "stepId": "before",
+        "actionKind": "open",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {
+          "titles_before": "none",
+          "count_before": "0"
+        },
+        "screenshotRef": "tests/l1-4c22167d/steps/1-0-1/screenshot.jpg",
+        "evidenceRef": "tests/l1-4c22167d/steps/1-0-1/step.json"
+      },
+      {
+        "stepIndex": 1,
+        "stepId": "add",
+        "actionKind": "interact",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {
+          "titles_after": "GP Book g1-a-1",
+          "count_after": "1"
+        },
+        "screenshotRef": "tests/l1-4c22167d/steps/12-1-8/screenshot.jpg",
+        "evidenceRef": "tests/l1-4c22167d/steps/12-1-8/step.json"
+      }
+    ]
+  },
+  "g1-a-1/L3": {
+    "scenarioId": "L3",
+    "run": {
+      "kaneExitCode": 0,
+      "evidencePackPath": "example.evidence",
+      "packHash": "259613c83f6ff13aa3b3bb832092c214cc4fefbdfbc3cabaaa636882e63a1c80",
+      "nonce": "g1-a-1",
+      "appUrl": "http://127.0.0.1:43184/",
+      "completed": true,
+      "kaneVersion": "0.10.6",
+      "executionId": "g1-a-1-L3",
+      "stepsSkipped": [],
+      "replayDecisions": 0,
+      "authorDecisions": 4
+    },
+    "observations": [
+      {
+        "stepIndex": 0,
+        "stepId": "open",
+        "actionKind": "open",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {},
+        "screenshotRef": "tests/l3-c05ee78b/steps/1-0-1/screenshot.jpg",
+        "evidenceRef": "tests/l3-c05ee78b/steps/1-0-1/step.json"
+      },
+      {
+        "stepIndex": 1,
+        "stepId": "add_beta",
+        "actionKind": "interact",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {},
+        "screenshotRef": "tests/l3-c05ee78b/steps/10-1-8/screenshot.jpg",
+        "evidenceRef": "tests/l3-c05ee78b/steps/10-1-8/step.json"
+      },
+      {
+        "stepIndex": 2,
+        "stepId": "add_alpha",
+        "actionKind": "interact",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {
+          "titles_before": "GP Beta g1-a-1|GP Alpha g1-a-1",
+          "count_before": "2"
+        },
+        "screenshotRef": "tests/l3-c05ee78b/steps/19-2-8/screenshot.jpg",
+        "evidenceRef": "tests/l3-c05ee78b/steps/19-2-8/step.json"
+      },
+      {
+        "stepIndex": 3,
+        "stepId": "remove",
+        "actionKind": "interact",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {
+          "titles_after": "GP Beta g1-a-1",
+          "count_after": "1"
+        },
+        "screenshotRef": "tests/l3-c05ee78b/steps/22-3-1/screenshot.jpg",
+        "evidenceRef": "tests/l3-c05ee78b/steps/22-3-1/step.json"
+      }
+    ]
+  },
+  "g1-a-1/L4": {
+    "scenarioId": "L4",
+    "run": {
+      "kaneExitCode": 0,
+      "evidencePackPath": "example.evidence",
+      "packHash": "259613c83f6ff13aa3b3bb832092c214cc4fefbdfbc3cabaaa636882e63a1c80",
+      "nonce": "g1-a-1",
+      "appUrl": "http://127.0.0.1:43184/",
+      "completed": true,
+      "kaneVersion": "0.10.6",
+      "executionId": "g1-a-1-L4",
+      "stepsSkipped": [],
+      "replayDecisions": 0,
+      "authorDecisions": 3
+    },
+    "observations": [
+      {
+        "stepIndex": 0,
+        "stepId": "open",
+        "actionKind": "open",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {},
+        "screenshotRef": "tests/l4-0e148a9e/steps/1-0-1/screenshot.jpg",
+        "evidenceRef": "tests/l4-0e148a9e/steps/1-0-1/step.json"
+      },
+      {
+        "stepIndex": 1,
+        "stepId": "add",
+        "actionKind": "interact",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {
+          "titles_before": "GP Keep g1-a-1",
+          "count_before": "1"
+        },
+        "screenshotRef": "tests/l4-0e148a9e/steps/10-1-8/screenshot.jpg",
+        "evidenceRef": "tests/l4-0e148a9e/steps/10-1-8/step.json"
+      },
+      {
+        "stepIndex": 2,
+        "stepId": "reload",
+        "actionKind": "reload",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {
+          "titles_after": "GP Keep g1-a-1",
+          "count_after": "1"
+        },
+        "screenshotRef": null,
+        "evidenceRef": "tests/l4-0e148a9e/logs/2-actions.ndjson"
+      }
+    ]
+  },
+  "g1-b-1/L1": {
+    "scenarioId": "L1",
+    "run": {
+      "kaneExitCode": 0,
+      "evidencePackPath": "example.evidence",
+      "packHash": "259613c83f6ff13aa3b3bb832092c214cc4fefbdfbc3cabaaa636882e63a1c80",
+      "nonce": "g1-b-1",
+      "appUrl": "http://127.0.0.1:43185/",
+      "completed": true,
+      "kaneVersion": "0.10.6",
+      "executionId": "g1-b-1-L1",
+      "stepsSkipped": [],
+      "replayDecisions": 0,
+      "authorDecisions": 2
+    },
+    "observations": [
+      {
+        "stepIndex": 0,
+        "stepId": "before",
+        "actionKind": "open",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {
+          "titles_before": "The Hobbit|Kindred",
+          "count_before": "2"
+        },
+        "screenshotRef": "tests/l1-783629cd/steps/1-0-1/screenshot.jpg",
+        "evidenceRef": "tests/l1-783629cd/steps/1-0-1/step.json"
+      },
+      {
+        "stepIndex": 1,
+        "stepId": "add",
+        "actionKind": "interact",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {
+          "titles_after": "The Hobbit|Kindred|GP Book g1-b-1",
+          "count_after": "3"
+        },
+        "screenshotRef": "tests/l1-783629cd/steps/13-1-9/screenshot.jpg",
+        "evidenceRef": "tests/l1-783629cd/steps/13-1-9/step.json"
+      }
+    ]
+  },
+  "g1-b-1/L3": {
+    "scenarioId": "L3",
+    "run": {
+      "kaneExitCode": 0,
+      "evidencePackPath": "example.evidence",
+      "packHash": "259613c83f6ff13aa3b3bb832092c214cc4fefbdfbc3cabaaa636882e63a1c80",
+      "nonce": "g1-b-1",
+      "appUrl": "http://127.0.0.1:43185/",
+      "completed": true,
+      "kaneVersion": "0.10.6",
+      "executionId": "g1-b-1-L3",
+      "stepsSkipped": [],
+      "replayDecisions": 0,
+      "authorDecisions": 4
+    },
+    "observations": [
+      {
+        "stepIndex": 0,
+        "stepId": "open",
+        "actionKind": "open",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {},
+        "screenshotRef": "tests/l3-155f48fe/steps/1-0-1/screenshot.jpg",
+        "evidenceRef": "tests/l3-155f48fe/steps/1-0-1/step.json"
+      },
+      {
+        "stepIndex": 1,
+        "stepId": "add_beta",
+        "actionKind": "interact",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {},
+        "screenshotRef": "tests/l3-155f48fe/steps/10-1-8/screenshot.jpg",
+        "evidenceRef": "tests/l3-155f48fe/steps/10-1-8/step.json"
+      },
+      {
+        "stepIndex": 2,
+        "stepId": "add_alpha",
+        "actionKind": "interact",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {
+          "titles_before": "The Hobbit|Kindred|GP Beta g1-b-1|GP Alpha g1-b-1",
+          "count_before": "4"
+        },
+        "screenshotRef": "tests/l3-155f48fe/steps/20-2-9/screenshot.jpg",
+        "evidenceRef": "tests/l3-155f48fe/steps/20-2-9/step.json"
+      },
+      {
+        "stepIndex": 3,
+        "stepId": "remove",
+        "actionKind": "interact",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {
+          "titles_after": "J. R. R. Tolkien|Octavia E. Butler|Ada Okafor",
+          "count_after": "3"
+        },
+        "screenshotRef": "tests/l3-155f48fe/steps/23-3-1/screenshot.jpg",
+        "evidenceRef": "tests/l3-155f48fe/steps/23-3-1/step.json"
+      }
+    ]
+  },
+  "g1-b-1/L4": {
+    "scenarioId": "L4",
+    "run": {
+      "kaneExitCode": 0,
+      "evidencePackPath": "example.evidence",
+      "packHash": "259613c83f6ff13aa3b3bb832092c214cc4fefbdfbc3cabaaa636882e63a1c80",
+      "nonce": "g1-b-1",
+      "appUrl": "http://127.0.0.1:43185/",
+      "completed": true,
+      "kaneVersion": "0.10.6",
+      "executionId": "g1-b-1-L4",
+      "stepsSkipped": [],
+      "replayDecisions": 0,
+      "authorDecisions": 3
+    },
+    "observations": [
+      {
+        "stepIndex": 0,
+        "stepId": "open",
+        "actionKind": "open",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {},
+        "screenshotRef": "tests/l4-447dc9bc/steps/1-0-1/screenshot.jpg",
+        "evidenceRef": "tests/l4-447dc9bc/steps/1-0-1/step.json"
+      },
+      {
+        "stepIndex": 1,
+        "stepId": "add",
+        "actionKind": "interact",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {
+          "titles_before": "The Hobbit|Kindred|GP Keep g1-b-1",
+          "count_before": "3"
+        },
+        "screenshotRef": "tests/l4-447dc9bc/steps/11-1-9/screenshot.jpg",
+        "evidenceRef": "tests/l4-447dc9bc/steps/11-1-9/step.json"
+      },
+      {
+        "stepIndex": 2,
+        "stepId": "reload",
+        "actionKind": "reload",
+        "actionRecorded": true,
+        "targetAgreement": "unknown",
+        "values": {
+          "titles_after": "The Hobbit|Kindred|GP Keep g1-b-1",
+          "count_after": "3"
+        },
+        "screenshotRef": null,
+        "evidenceRef": "tests/l4-447dc9bc/logs/2-actions.ndjson"
+      }
+    ]
+  }
+}

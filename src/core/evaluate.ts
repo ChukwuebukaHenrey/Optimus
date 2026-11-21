@@ -1,15 +1,59 @@
 import { evaluateAssertion, normalizeText, parseRecordedList } from './expect.js';
-import { actionForStep, type LoadedPack, type Scenario } from './pack.js';
+import { actionForStep, substituteNonce, type LoadedPack, type Scenario } from './pack.js';
 import type { ScenarioResult, ScenarioTrace, Verdict } from './types.js';
 
-function hasObservableChange(scenario: Scenario, values: Record<string, string | null>, index: number, nonce: string) {
-  const earlier = scenario.steps.slice(0, index).reverse().flatMap((step) => Object.entries(step.record));
+type Values = Record<string, string | null>;
+const listOps = new Set(['list_contains', 'list_not_contains']);
+
+// The earlier recording that a step's recording is compared against: a delta's `from` key, a matching
+// `_before` key, or an earlier recording with the same prompt.
+function pairedKey(scenario: Scenario, index: number, key: string): string | undefined {
+  const explicit = scenario.expect.find((assertion) => assertion.op === 'delta' && assertion.value === key);
+  if (explicit?.op === 'delta') return explicit.from;
+  const prompt = scenario.steps[index].record[key];
+  return scenario.steps.slice(0, index).reverse().flatMap((step) => Object.entries(step.record)).find(([prior, priorPrompt]) =>
+    prior === key.replace(/_after$/u, '_before') || normalizeText(priorPrompt) === normalizeText(prompt),
+  )?.[0];
+}
+
+function comparisonMode(scenario: Scenario, key: string): 'exact' | 'insensitive' {
+  return scenario.expect.some((assertion) => assertion.value === key && 'case' in assertion && assertion.case === 'exact')
+    ? 'exact' : 'insensitive';
+}
+
+function quotedStrings(text: string): string[] {
+  return Array.from(text.matchAll(/"([^"\r\n]+)"|“([^”\r\n]+)”/gu), (match) => match[1] ?? match[2]);
+}
+
+// A list recording may only gain entries that its own step asked for by quoting them. Any other new entry
+// means the recording does not describe the same thing as its earlier pair, so neither verdict is safe.
+function inconsistentRecording(scenario: Scenario, values: Values, nonce: string, skipped: ReadonlySet<number>) {
+  for (const [index, step] of scenario.steps.entries()) {
+    if (skipped.has(index)) continue;
+    const requested = quotedStrings(substituteNonce(step.do, nonce));
+    for (const key of Object.keys(step.record)) {
+      if (!scenario.expect.some((assertion) => assertion.value === key && listOps.has(assertion.op))) continue;
+      const priorKey = pairedKey(scenario, index, key);
+      const priorValue = priorKey === undefined ? null : values[priorKey];
+      const value = values[key];
+      if (priorValue == null || value == null) continue;
+      const mode = comparisonMode(scenario, key);
+      const before = parseRecordedList(priorValue, mode);
+      const after = parseRecordedList(value, mode);
+      if (!before || !after) continue;
+      const known = new Set([...before, ...requested.map((entry) => normalizeText(entry, mode))]);
+      const unrequested = after.find((entry) => !known.has(entry));
+      if (unrequested !== undefined) return { key, stepId: step.id, unrequested, observed: value };
+    }
+  }
+  return undefined;
+}
+
+function hasObservableChange(scenario: Scenario, values: Values, index: number, nonce: string) {
   let hasComparableValues = false;
-  for (const [key, prompt] of Object.entries(scenario.steps[index].record)) {
+  for (const key of Object.keys(scenario.steps[index].record)) {
     const explicit = scenario.expect.find((assertion) => assertion.op === 'delta' && assertion.value === key);
-    const priorKey = explicit?.op === 'delta' ? explicit.from : earlier.find(([prior, priorPrompt]) =>
-      prior === key.replace(/_after$/u, '_before') || normalizeText(priorPrompt) === normalizeText(prompt),
-    )?.[0];
+    const priorKey = pairedKey(scenario, index, key);
     if (priorKey === undefined || values[priorKey] == null || values[key] == null) continue;
     if (explicit?.op === 'delta') {
       const delta = evaluateAssertion({ ...explicit, by: 0 }, values, nonce).outcome;
@@ -17,9 +61,8 @@ function hasObservableChange(scenario: Scenario, values: Record<string, string |
       if (delta === 'fail') return 'changed';
     } else {
       const assertions = scenario.expect.filter(({ value }) => value === key);
-      const exact = assertions.some((assertion) => 'case' in assertion && assertion.case === 'exact');
-      const mode = exact ? 'exact' : 'insensitive';
-      if (assertions.some(({ op }) => op === 'list_contains' || op === 'list_not_contains')) {
+      const mode = comparisonMode(scenario, key);
+      if (assertions.some(({ op }) => listOps.has(op))) {
         const before = parseRecordedList(values[priorKey], mode)?.sort();
         const after = parseRecordedList(values[key], mode)?.sort();
         if (!before || !after) continue;
@@ -70,7 +113,7 @@ export function evaluateScenario({ pack, packHash }: LoadedPack, trace: Scenario
   }
 
   const byIndex = new Map(trace.observations.map((observation) => [observation.stepIndex, observation]));
-  const values: Record<string, string | null> = Object.create(null);
+  const values: Values = Object.create(null);
   for (const [index, step] of scenario.steps.entries()) {
     if (skipped.has(index)) continue;
     const observation = byIndex.get(index);
@@ -90,6 +133,15 @@ export function evaluateScenario({ pack, packHash }: LoadedPack, trace: Scenario
   const unavailableKey = checks.find(({ check }) => check.outcome === 'inconclusive')?.check.unavailableKey;
   if (unavailableKey !== undefined) {
     return result('INCONCLUSIVE', 'recording_unavailable', `The recording '${unavailableKey}' is missing or unusable.`, scenario.steps[recordSteps.get(unavailableKey)!].id);
+  }
+  const inconsistent = inconsistentRecording(scenario, values, run.nonce, skipped);
+  if (inconsistent) {
+    return {
+      ...result('INCONCLUSIVE', 'recording_inconsistent',
+        `The recording '${inconsistent.key}' contains '${inconsistent.unrequested}', which is neither in its earlier recording nor quoted in the step.`,
+        inconsistent.stepId),
+      observed: inconsistent.observed,
+    };
   }
   for (const [index, step] of scenario.steps.entries()) {
     if (!step.expects_change || skipped.has(index)) continue;
