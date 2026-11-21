@@ -1,0 +1,30 @@
+{
+  "name": "optimus",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "optimus": "tsx src/cli.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "yaml": "^2.8.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.0",
+    "tsx": "^4.20.0",
+    "typescript": "~5.9.3",
+    "vitest": "~3.2.4"
+  },
+  "overrides": {
+    "vitest": {
+      "vite": "^6.0.0"
+    }
+  }
+}
