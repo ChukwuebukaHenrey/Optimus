@@ -1,11 +1,12 @@
 import { actionForStep, type Scenario } from '../core/pack.js';
 import type { ActionKind, Observation, RunRecord, ScenarioTrace } from '../core/types.js';
+import type { KaneEvidence } from './evidence.js';
 
 type Event = Record<string, unknown>;
 type Runtime = Pick<RunRecord, 'kaneExitCode' | 'evidencePackPath' | 'packHash' | 'nonce' | 'appUrl'>;
 
 const interactions = new Set(['click', 'double_click', 'fill', 'type', 'press', 'select', 'check', 'uncheck', 'tap', 'drag']);
-const navigations = new Set(['navigate', 'reload']);
+const navigations = new Set(['navigate', 'reload', 'refresh']);
 
 function object(value: unknown): Event | undefined {
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Event : undefined;
@@ -27,6 +28,7 @@ function matchesAction(kind: ActionKind, action: unknown) {
 interface ActiveStep {
   index: number;
   runEnds: number;
+  runId?: string;
   innerRunUsable?: boolean;
   actionRecorded: boolean | null;
   finalState?: Event;
@@ -35,8 +37,7 @@ interface ActiveStep {
   evidenceRef: string | null;
 }
 
-// Provisional adapter. A live author run must confirm the action and artifact shapes.
-export function parseKaneNdjson(ndjson: string, scenario: Scenario, runtime: Runtime): ScenarioTrace {
+export function parseKaneNdjson(ndjson: string, scenario: Scenario, runtime: Runtime, archive?: KaneEvidence): ScenarioTrace {
   const observations: Observation[] = [];
   const stepsSkipped: number[] = [];
   const priorStateKeys = new Set<string>();
@@ -90,14 +91,26 @@ export function parseKaneNdjson(ndjson: string, scenario: Scenario, runtime: Run
       }
       case 'step_end':
         if (active?.actionIndex !== undefined && active.runEnds === 0 && active.actionIndex === count(event.index)) {
-          active.screenshotRef = text(event.screenshot);
-          active.evidenceRef = text(event.action_id);
+          const actionId = text(event.action_id);
+          if (archive) {
+            const ordinal = count(event.ordinal);
+            const stepId = text(event.id);
+            const artifact = ordinal !== null && stepId ? archive.actions.get(`${ordinal}-${stepId}`) : undefined;
+            if (artifact && artifact.actionId === actionId && artifact.kind === event.kind) {
+              active.screenshotRef = artifact.screenshotRef;
+              active.evidenceRef = artifact.evidenceRef;
+            }
+          } else {
+            active.screenshotRef = text(event.screenshot);
+            active.evidenceRef = actionId;
+          }
         }
         break;
       case 'run_end':
         if (active) {
           for (const key of Object.keys(active.finalState ?? {})) priorStateKeys.add(key);
           active.runEnds++;
+          active.runId = text(event.run_id) ?? undefined;
           active.finalState = object(event.final_state);
           active.innerRunUsable = event.status === undefined || event.status === 'passed';
         }
@@ -116,6 +129,13 @@ export function parseKaneNdjson(ndjson: string, scenario: Scenario, runtime: Run
         if (!active || active.index !== index || !step) throw new Error(`Invalid Kane step end at line ${lineIndex + 1}.`);
         const completeStep = event.status === 'passed' && event.failed_sub_step_index == null &&
           active.runEnds === 1 && active.innerRunUsable === true;
+        const actionKind = actionForStep(step, index);
+        const archivedRefresh = actionKind === 'reload' && active.runId && !active.evidenceRef
+          ? archive?.refreshes.get(active.runId) : undefined;
+        if (completeStep && archivedRefresh) {
+          active.actionRecorded = true;
+          active.evidenceRef = archivedRefresh;
+        }
         const state = completeStep ? active.finalState : undefined;
         const values = Object.fromEntries(Object.keys(step.record).map((key) => {
           const value = state && Object.hasOwn(state, key) && !priorStateKeys.has(key) ? state[key] : null;
@@ -123,8 +143,10 @@ export function parseKaneNdjson(ndjson: string, scenario: Scenario, runtime: Run
         }));
         for (const key of Object.keys(active.finalState ?? {})) priorStateKeys.add(key);
         observations.push({
-          stepIndex: index, stepId: step.id, actionKind: actionForStep(step, index),
-          actionRecorded: completeStep ? active.actionRecorded : null, targetAgreement: 'unknown', values,
+          stepIndex: index, stepId: step.id, actionKind,
+          actionRecorded: completeStep && !(archive && active.actionRecorded === true && !active.evidenceRef)
+            ? active.actionRecorded : null,
+          targetAgreement: 'unknown', values,
           screenshotRef: active.screenshotRef, evidenceRef: active.evidenceRef,
         });
         active = undefined;
@@ -152,7 +174,7 @@ export function parseKaneNdjson(ndjson: string, scenario: Scenario, runtime: Run
   return {
     scenarioId: scenario.id,
     run: {
-      ...runtime, completed, kaneVersion, executionId: text(done?.execution_id), stepsSkipped,
+      ...runtime, completed, kaneVersion, executionId: archive?.executionId ?? text(done?.execution_id), stepsSkipped,
       replayDecisions: count(summarySteps?.replay_decisions), authorDecisions: count(summarySteps?.author_decisions),
     },
     observations,

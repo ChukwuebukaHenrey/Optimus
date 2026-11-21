@@ -1,0 +1,16 @@
+{"type":"stream_start","cli_version":"0.10.6","surface":"testmd"}
+{"type":"test_md_step_start","step_index":1,"heading":"Step 1"}
+{"type":"step_event","index":1,"event":"action","action_type":"navigate","success":true}
+{"type":"step_end","index":1,"ordinal":1,"id":"0-1","kind":"navigate","status":"passed","screenshot":"screenshot.jpg","action_id":"open-action"}
+{"type":"run_end","status":"passed","final_state":{"titles_before":"none","count_before":"0"}}
+{"type":"test_md_step_end","step_index":1,"status":"passed","failed_sub_step_index":null}
+{"type":"test_md_step_start","step_index":2,"heading":"Step 2"}
+{"type":"step_event","index":6,"event":"action","action_type":"type","success":true}
+{"type":"step_end","index":6,"ordinal":10,"id":"1-6","kind":"type","status":"passed","screenshot":"screenshot.jpg","action_id":"type-action"}
+{"type":"step_event","index":7,"event":"action","action_type":"click","success":false}
+{"type":"step_event","index":8,"event":"action","action_type":"click","success":true}
+{"type":"step_end","index":8,"ordinal":12,"id":"1-8","kind":"click","status":"passed","screenshot":"screenshot.jpg","action_id":"save-action"}
+{"type":"run_end","status":"passed","final_state":{"titles_after":"GP Book p1a","count_after":"1"}}
+{"type":"test_md_step_end","step_index":2,"status":"passed","failed_sub_step_index":null}
+{"type":"test_md_summary","overall_status":"passed","steps":{"total":2,"passed":2,"failed":0,"skipped":0,"replay_decisions":0,"author_decisions":2},"upload":{"succeeded":true}}
+{"type":"test_md_done","overall_status":"passed","session_id":"fixture-session"}

@@ -1,8 +1,10 @@
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { evaluateScenario } from '../src/core/evaluate.js';
 import { loadPack } from '../src/core/pack.js';
 import { parseKaneNdjson } from '../src/kane/parse.js';
+import type { KaneEvidence } from '../src/kane/evidence.js';
 
 const loaded = await loadPack(join('packs', 'library'));
 const [scenario] = loaded.pack.scenarios;
@@ -97,5 +99,56 @@ describe('provisional Kane parser', () => {
   it('rejects corrupt event streams', () => {
     expect(() => parseKaneNdjson(`${encode(open)}\nnot JSON`, scenario, runtime)).toThrow('line 7');
     expect(() => parseKaneNdjson(encode([...open, open[1]]), scenario, runtime)).toThrow('step start');
+  });
+
+  it('joins the trimmed Phase 1 author stream to archive actions', async () => {
+    const fixture = await readFile(join('tests', 'fixtures', 'kane-phase1-l1.ndjson'), 'utf8');
+    const openPath = 'tests/fixture/steps/1-0-1/';
+    const savePath = 'tests/fixture/steps/12-1-8/';
+    const archive: KaneEvidence = {
+      executionId: 'fixture-execution',
+      actions: new Map([
+        ['1-0-1', { actionId: 'open-action', kind: 'navigate', evidenceRef: openPath + 'step.json', screenshotRef: openPath + 'screenshot.jpg' }],
+        ['12-1-8', { actionId: 'save-action', kind: 'click', evidenceRef: savePath + 'step.json', screenshotRef: savePath + 'screenshot.jpg' }],
+      ]),
+      refreshes: new Map(),
+    };
+    const parsed = parseKaneNdjson(fixture, scenario, { ...runtime, nonce: 'p1a' }, archive);
+    expect(parsed.run.executionId).toBe('fixture-execution');
+    expect(parsed.observations[1]).toMatchObject({
+      actionRecorded: true,
+      values: { titles_after: 'GP Book p1a', count_after: '1' },
+      evidenceRef: savePath + 'step.json',
+      screenshotRef: savePath + 'screenshot.jpg',
+    });
+    expect(evaluateScenario(loaded, parsed).verdict).toBe('PASS');
+
+    const unlinked = parseKaneNdjson(fixture, scenario, { ...runtime, nonce: 'p1a' }, { ...archive, actions: new Map() });
+    expect(unlinked.observations[1]).toMatchObject({ actionRecorded: null, evidenceRef: null, screenshotRef: null });
+    expect(evaluateScenario(loaded, unlinked).verdict).toBe('INCONCLUSIVE');
+  });
+
+  it('uses archived refreshes only for the exact inner run and keeps repeated action IDs distinct', async () => {
+    const fixture = await readFile(join('tests', 'fixtures', 'kane-phase1-l4.ndjson'), 'utf8');
+    const scenario = loaded.pack.scenarios.find(({ id }) => id === 'L4')!;
+    const navigationRef = 'tests/fixture/steps/1-0-1/step.json';
+    const refreshRef = 'tests/fixture/logs/2-actions.ndjson';
+    const archive: KaneEvidence = {
+      executionId: 'fixture-execution',
+      actions: new Map([
+        ['1-0-1', { actionId: 'reused-action', kind: 'navigate', evidenceRef: navigationRef, screenshotRef: null }],
+        ['13-2-1', { actionId: 'reused-action', kind: 'wait', evidenceRef: 'tests/fixture/steps/13-2-1/step.json', screenshotRef: null }],
+        ['10-1-8', { actionId: 'save-action', kind: 'click', evidenceRef: 'tests/fixture/steps/10-1-8/step.json', screenshotRef: null }],
+      ]),
+      refreshes: new Map([['run-2', refreshRef]]),
+    };
+    const parsed = parseKaneNdjson(fixture, scenario, { ...runtime, nonce: 'p1b' }, archive);
+    expect(parsed.observations[0]).toMatchObject({ actionRecorded: true, evidenceRef: navigationRef });
+    expect(parsed.observations[2]).toMatchObject({ actionRecorded: true, evidenceRef: refreshRef, screenshotRef: null });
+    expect(evaluateScenario(loaded, parsed).verdict).toBe('PASS');
+
+    const wrongRun = { ...archive, refreshes: new Map([['run-1', refreshRef]]) };
+    const unlinked = parseKaneNdjson(fixture, scenario, { ...runtime, nonce: 'p1b' }, wrongRun);
+    expect(evaluateScenario(loaded, unlinked)).toMatchObject({ verdict: 'INCONCLUSIVE', stepId: 'reload' });
   });
 });
