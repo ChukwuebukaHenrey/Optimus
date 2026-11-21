@@ -16,6 +16,10 @@ function text(value: unknown): string | null {
   return typeof value === 'string' ? value : null;
 }
 
+function recordedValue(value: unknown): string | null {
+  return typeof value === 'number' && Number.isFinite(value) ? String(value) : text(value);
+}
+
 function count(value: unknown): number | null {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null;
 }
@@ -137,11 +141,16 @@ export function parseKaneNdjson(ndjson: string, scenario: Scenario, runtime: Run
           active.evidenceRef = archivedRefresh;
         }
         const state = completeStep ? active.finalState : undefined;
+        const logValues = active.runId ? archive?.recordings?.get(active.runId) : undefined;
         const values = Object.fromEntries(Object.keys(step.record).map((key) => {
-          const value = state && Object.hasOwn(state, key) && !priorStateKeys.has(key) ? state[key] : null;
-          return [key, typeof value === 'number' && Number.isFinite(value) ? String(value) : text(value)];
+          if (!completeStep || priorStateKeys.has(key)) return [key, null];
+          const logged = logValues?.get(key);
+          if (!state || !Object.hasOwn(state, key)) return [key, logged ?? null];
+          const final = recordedValue(state[key]);
+          return [key, logged !== undefined && logged !== final ? null : final];
         }));
         for (const key of Object.keys(active.finalState ?? {})) priorStateKeys.add(key);
+        for (const key of logValues?.keys() ?? []) priorStateKeys.add(key);
         observations.push({
           stepIndex: index, stepId: step.id, actionKind,
           actionRecorded: completeStep && !(archive && active.actionRecorded === true && !active.evidenceRef)

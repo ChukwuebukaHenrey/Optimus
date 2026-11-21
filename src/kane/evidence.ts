@@ -14,6 +14,7 @@ export interface KaneEvidence {
   executionId: string | null;
   actions: ReadonlyMap<string, KaneActionEvidence>;
   refreshes: ReadonlyMap<string, string>;
+  recordings?: ReadonlyMap<string, ReadonlyMap<string, string | null>>;
 }
 
 function openArchive(path: string): Promise<ZipFile> {
@@ -89,15 +90,26 @@ async function readSmallEntry(zip: ZipFile, entry: Entry): Promise<string | null
   return Buffer.concat(data).toString('utf8');
 }
 
-function hasSuccessfulRefresh(source: string | null): boolean {
-  if (source === null) return false;
+function readActionLog(source: string | null): { refresh: boolean; recordings: Map<string, string | null> } {
+  const recordings = new Map<string, string | null>();
+  let refresh = false;
   try {
-    const records: unknown[] = source.split(/\r?\n/u).filter((line) => line.trim()).map((line) => JSON.parse(line));
-    return records.some((record) => record !== null && typeof record === 'object' &&
-      'action_type' in record && record.action_type === 'refresh' && 'status' in record && record.status === 'success' &&
-      'action_id' in record && typeof record.action_id === 'string' && record.action_id.length > 0);
+    for (const line of source?.split(/\r?\n/u) ?? []) {
+      if (!line.trim()) continue;
+      const record: unknown = JSON.parse(line);
+      if (!record || typeof record !== 'object' || !('status' in record) || record.status !== 'success' ||
+        !('action_type' in record) || !('action_id' in record) || typeof record.action_id !== 'string' || !record.action_id) continue;
+      if (record.action_type === 'refresh') refresh = true;
+      if (record.action_type !== 'analyze' || !('output_variable' in record) || typeof record.output_variable !== 'string' ||
+        !record.output_variable || !('output_value' in record)) continue;
+      const value = record.output_value;
+      const output = typeof value === 'number' && Number.isFinite(value) ? String(value) : typeof value === 'string' ? value : null;
+      const previous = recordings.get(record.output_variable);
+      recordings.set(record.output_variable, previous !== undefined && previous !== output ? null : output);
+    }
+    return { refresh, recordings };
   } catch {
-    return false;
+    return { refresh: false, recordings: new Map() };
   }
 }
 
@@ -116,12 +128,16 @@ export async function loadKaneEvidence(path: string): Promise<KaneEvidence | nul
     const testDirectory = Array.from(entries.keys()).find((name) => name.endsWith('/test.md'))!.slice(0, -'test.md'.length);
     const actions = new Map<string, KaneActionEvidence>();
     const refreshes = new Map<string, string>();
+    const recordings = new Map<string, ReadonlyMap<string, string | null>>();
     for (const [name, entry] of entries) {
       if (!name.startsWith(testDirectory)) continue;
       const relative = name.slice(testDirectory.length);
       const actionLog = /^logs\/(\d+)-actions\.ndjson$/u.exec(relative);
       if (actionLog) {
-        if (hasSuccessfulRefresh(await readSmallEntry(zip, entry))) refreshes.set(`run-${actionLog[1]}`, name);
+        const runId = `run-${actionLog[1]}`;
+        const log = readActionLog(await readSmallEntry(zip, entry));
+        if (log.refresh) refreshes.set(runId, name);
+        if (log.recordings.size > 0) recordings.set(runId, log.recordings);
         continue;
       }
       const stepPath = /^steps\/([^/]+)\/step\.json$/u.exec(relative);
@@ -135,7 +151,7 @@ export async function loadKaneEvidence(path: string): Promise<KaneEvidence | nul
         .map((fileName) => directory + fileName).find((candidate) => entries.has(candidate)) ?? null;
       actions.set(stepPath[1], { actionId: step.action_id, kind: step.kind, evidenceRef: name, screenshotRef });
     }
-    return { executionId, actions, refreshes };
+    return { executionId, actions, refreshes, recordings };
   } catch {
     return null;
   } finally {

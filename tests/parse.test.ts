@@ -79,6 +79,32 @@ describe('provisional Kane parser', () => {
     expect(evaluateScenario(loaded, parsed).verdict).toBe('INCONCLUSIVE');
   });
 
+  it('reads explicit named recordings from the matching archive log when final_state uses aliases', () => {
+    const aliasState = add.map((event) => event.type === 'run_end' ? {
+      ...event, run_id: 'run-1', final_state: { book_titles: 'GP Book demo', book_count: '1' },
+    } : event);
+    const recordings = new Map([['titles_after', 'GP Book demo'], ['count_after', '1']]);
+    const archive: KaneEvidence = {
+      executionId: null, actions: new Map(), refreshes: new Map(), recordings: new Map([['run-1', recordings]]),
+    };
+    const input = encode([...open, ...aliasState, summary(), done]);
+    expect(parseKaneNdjson(input, scenario, runtime, archive).observations[1].values)
+      .toEqual({ titles_after: 'GP Book demo', count_after: '1' });
+    const wrongRun = { ...archive, recordings: new Map([['run-0', recordings]]) };
+    expect(parseKaneNdjson(input, scenario, runtime, wrongRun).observations[1].values)
+      .toEqual({ titles_after: null, count_after: null });
+  });
+
+  it('withholds recordings when explicit final_state and archive values disagree', () => {
+    const withRunId = add.map((event) => event.type === 'run_end' ? { ...event, run_id: 'run-1' } : event);
+    const archive: KaneEvidence = {
+      executionId: null, actions: new Map(), refreshes: new Map(),
+      recordings: new Map([['run-1', new Map([['count_after', '2']])]]),
+    };
+    const parsed = parseKaneNdjson(encode([...open, ...withRunId, summary(), done]), scenario, runtime, archive);
+    expect(parsed.observations[1].values).toEqual({ titles_after: 'GP Book demo', count_after: null });
+  });
+
   it('preserves an explicit skipped step and refuses to guess missing skipped indexes', () => {
     const skipped = { type: 'test_md_step_end', step_index: 2, status: 'skipped' };
     const parsed = parseKaneNdjson(encode([...open, skipped, summary(0, 1), done]), scenario, runtime);
