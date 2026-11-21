@@ -31,3 +31,5 @@ npm run optimus -- run --pack packs/library --url http://127.0.0.1:3000/ --scena
 ```
 
 Optimus runs Kane in author mode and evaluates each scenario sequentially. Kane uploads each live run to TestMu and uses credits. The command prints the run directory and writes `result.json` and `report.html` there. An optional `--out` points to a new report directory. Generated authoring inputs, raw streams, and evidence stay in the ignored `.optimus/runs/` directory. A selected scenario returns its own verdict exit code and leaves the whole-pack score provisional.
+
+The [Gate 1 report](runs/gate1/REPORT.md) records the live reference-app results and the React recording mismatch that halted the matrix.
