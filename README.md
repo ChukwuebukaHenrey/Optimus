@@ -21,3 +21,13 @@ npm run optimus -- evaluate trace.json --pack packs/library
 Actions default to open for the first step and interact for later steps. Packs can declare `action: reload` or `action: none` explicitly. For a step with `expects_change`, the evaluator pairs recordings with earlier values using a delta's `from` key, matching `_before` and `_after` keys, or matching recording prompts. List order alone does not establish a change for a list membership assertion. A delta with `kind: count` requires nonnegative whole numbers. Assertions with `prerequisite: true` establish starting state. If a prerequisite fails, the result is INCONCLUSIVE.
 
 The Kane adapter joins author events to archived steps and links refreshes to the corresponding inner run. When archive details are supplied, it returns verified archive entry paths and uses the run manifest ID. See the [Phase 1 report](runs/phase1/REPORT.md) for the live calibration scope.
+
+## Live runs and reports
+
+Start a corpus app on a loopback URL, sign in with `kane-cli`, and leave its Chrome profile unset. Select a scenario explicitly for a Gate 1 run.
+
+```sh
+npm run optimus -- run --pack packs/library --url http://127.0.0.1:3000/ --scenario L3
+```
+
+Optimus runs Kane in author mode and evaluates each scenario sequentially. Kane uploads each live run to TestMu and uses credits. The command prints the run directory and writes `result.json` and `report.html` there. An optional `--out` points to a new report directory. Generated authoring inputs, raw streams, and evidence stay in the ignored `.optimus/runs/` directory. A selected scenario returns its own verdict exit code and leaves the whole-pack score provisional.

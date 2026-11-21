@@ -1,17 +1,20 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rmdir, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { z } from 'zod';
 import { evaluateScenario } from './core/evaluate.js';
 import { generateTests, lintGeneratedTest } from './core/generate.js';
 import { loadPack } from './core/pack.js';
+import { writeReport } from './core/report.js';
 import { nonceSchema, scenarioTraceSchema, type ScenarioResult, type Verdict } from './core/types.js';
 import { checkEvidenceArchive } from './kane/evidence.js';
+import { controlledAppUrl, runKaneAssessment } from './kane/run.js';
 
 const usage = `Usage
   optimus gen-tests --pack <path> --nonce <id> [--scenario <id>] [--out <directory>]
   optimus lint <file_test.md> --pack <path> --nonce <id> [--scenario <id>]
-  optimus evaluate <trace.json> --pack <path>`;
+  optimus evaluate <trace.json> --pack <path>
+  optimus run --pack <path> --url <loopback-url> [--nonce <id>] [--scenario <id>] [--out <new-directory>]`;
 
 const exitCodes: Record<Verdict, number> = {
   PASS: 0, FAIL: 10, INCONCLUSIVE: 20, NOT_RUN: 20, INFRA_ERROR: 30, UNSUPPORTED: 20,
@@ -22,7 +25,7 @@ async function main([command, ...args]: string[]): Promise<number> {
     console.log(usage);
     return 0;
   }
-  if (!['gen-tests', 'lint', 'evaluate'].includes(command)) throw new Error(`Unknown command '${command}'.\n${usage}`);
+  if (!['gen-tests', 'lint', 'evaluate', 'run'].includes(command)) throw new Error(`Unknown command '${command}'.\n${usage}`);
   const { values, positionals } = parseArgs({
     args,
     allowPositionals: true,
@@ -31,10 +34,12 @@ async function main([command, ...args]: string[]): Promise<number> {
       nonce: { type: 'string' },
       scenario: { type: 'string' },
       out: { type: 'string' },
+      url: { type: 'string' },
     },
   });
-  if (!values.pack || positionals.length !== (command === 'gen-tests' ? 0 : 1)) throw new Error(usage);
-  if ((command !== 'gen-tests' && values.out !== undefined) ||
+  const takesFile = command === 'lint' || command === 'evaluate';
+  if (!values.pack || positionals.length !== Number(takesFile)) throw new Error(usage);
+  if ((takesFile && values.out !== undefined) || (command !== 'run' && values.url !== undefined) ||
     (command === 'evaluate' && (values.nonce !== undefined || values.scenario !== undefined))) throw new Error(usage);
   const loaded = await loadPack(values.pack);
 
@@ -58,6 +63,29 @@ async function main([command, ...args]: string[]): Promise<number> {
     const issues = lintGeneratedTest(await readFile(path, 'utf8'), loaded.pack, scenarioId, nonce);
     for (const issue of issues) console.error(`${path}:${issue.line} ${issue.message}`);
     return issues.length ? 10 : 0;
+  }
+
+  if (command === 'run') {
+    if (!values.url) throw new Error(usage);
+    const appUrl = controlledAppUrl(values.url);
+    const out = values.out ? resolve(values.out) : undefined;
+    if (out) {
+      await mkdir(dirname(out), { recursive: true });
+      await mkdir(out);
+    }
+    try {
+      const { directory, ...report } = await runKaneAssessment({
+        loaded, appUrl, nonce: values.nonce, scenarioId: values.scenario,
+      });
+      const reportDirectory = out ?? directory;
+      await writeReport(reportDirectory, report);
+      console.log(JSON.stringify({ ...report, reportDirectory, runDirectory: directory }, null, 2));
+      const selected = report.results.filter(({ scenarioId }) => values.scenario === undefined || scenarioId === values.scenario);
+      return Math.max(...selected.map(({ verdict }) => exitCodes[verdict]));
+    } catch (error) {
+      if (out) await rmdir(out).catch(() => undefined);
+      throw error;
+    }
   }
 
   const path = positionals[0];
