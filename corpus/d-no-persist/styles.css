@@ -1,0 +1,116 @@
+:root {
+  color-scheme: light;
+  font: 100%/1.5 system-ui, sans-serif;
+  color: #17251f;
+  background: #f5f7f5;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 54rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+h1, h2, h3, p {
+  margin: 0;
+}
+
+form, .book {
+  padding: 1.25rem;
+  background: #fff;
+  border: 1px solid #cbd6cf;
+  border-radius: 0.5rem;
+}
+
+form {
+  margin: 1.25rem 0 2rem;
+}
+
+.fields, .books {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 1rem;
+}
+
+.fields, .books, #empty-message {
+  margin-top: 0.75rem;
+}
+
+.fields label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+input, button {
+  font: inherit;
+}
+
+input:not([type="checkbox"]), button {
+  box-sizing: border-box;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #6b7d71;
+  border-radius: 0.3rem;
+}
+
+input:not([type="checkbox"]) {
+  min-width: 0;
+  width: 100%;
+}
+
+button {
+  color: inherit;
+  background: #fff;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #eef3ef;
+}
+
+.primary {
+  color: #fff;
+  background: #245740;
+  border-color: #245740;
+}
+
+.primary:hover {
+  background: #17432f;
+}
+
+:focus-visible {
+  outline: 2px solid #205e9b;
+  outline-offset: 2px;
+}
+
+.checkbox, .form-actions, .book-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.form-actions, .book-actions {
+  margin-top: 1rem;
+}
+
+.books {
+  padding: 0;
+  list-style: none;
+}
+
+.book {
+  overflow-wrap: anywhere;
+}
+
+.book-title {
+  margin-bottom: 0.25rem;
+}
+
+.book-status {
+  margin-top: 0.5rem;
+  font-weight: 600;
+}
