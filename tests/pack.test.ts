@@ -32,6 +32,17 @@ describe('pack validation', () => {
     expect(() => parsePack(edit(calculatorSource))).toThrow();
   });
 
+  it('requires designated new values to be quoted in the step action', async () => {
+    const source = await readFile(join(libraryPath, 'pack.yaml'), 'utf8');
+    expect(() => parsePack(source.replace("new_values: ['GP Book {{nonce}}']", "new_values: ['GP Book']"))).toThrow(/double quotes/u);
+    expect(() => parsePack(source.replace("new_values: ['GP Book {{nonce}}']", "new_values: ['Unmentioned book']"))).toThrow(/double quotes/u);
+  });
+
+  it('keeps designated new values out of the Kane test file', async () => {
+    const loaded = await loadPack(libraryPath);
+    for (const { markdown } of generateTests(loaded.pack, 'sample')) expect(markdown).not.toMatch(/new_values/u);
+  });
+
   it('allows a nonce placeholder in a regex expectation', () => {
     const source = calculatorSource.replace('equals_number, value: result, arg: 19', () => "matches, value: result, arg: '^item {{nonce}}$'");
     expect(parsePack(source).pack.scenarios[0].expect[0]).toMatchObject({ op: 'matches' });

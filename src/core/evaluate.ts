@@ -21,27 +21,26 @@ function comparisonMode(scenario: Scenario, key: string): 'exact' | 'insensitive
     ? 'exact' : 'insensitive';
 }
 
-function quotedStrings(text: string): string[] {
-  return Array.from(text.matchAll(/"([^"\r\n]+)"|“([^”\r\n]+)”/gu), (match) => match[1] ?? match[2]);
-}
-
-// A list recording may only gain entries that its own step asked for by quoting them. Any other new entry
-// means the recording does not describe the same thing as its earlier pair, so neither verdict is safe.
+// A list recording may only gain entries that were in its earlier pair or that a step since that pair
+// designates as a new value. Any other new entry means the recording does not describe the same thing
+// as its earlier pair, so neither PASS nor FAIL is safe. Removed entries are not checked.
 function inconsistentRecording(scenario: Scenario, values: Values, nonce: string, skipped: ReadonlySet<number>) {
+  const recordSteps = new Map(scenario.steps.flatMap((step, index) => Object.keys(step.record).map((key) => [key, index] as const)));
   for (const [index, step] of scenario.steps.entries()) {
     if (skipped.has(index)) continue;
-    const requested = quotedStrings(substituteNonce(step.do, nonce));
     for (const key of Object.keys(step.record)) {
       if (!scenario.expect.some((assertion) => assertion.value === key && listOps.has(assertion.op))) continue;
       const priorKey = pairedKey(scenario, index, key);
       const priorValue = priorKey === undefined ? null : values[priorKey];
       const value = values[key];
-      if (priorValue == null || value == null) continue;
+      if (priorKey === undefined || priorValue == null || value == null) continue;
       const mode = comparisonMode(scenario, key);
       const before = parseRecordedList(priorValue, mode);
       const after = parseRecordedList(value, mode);
       if (!before || !after) continue;
-      const known = new Set([...before, ...requested.map((entry) => normalizeText(entry, mode))]);
+      const designated = scenario.steps.slice(recordSteps.get(priorKey)! + 1, index + 1)
+        .flatMap((between) => between.new_values ?? []).map((entry) => normalizeText(substituteNonce(entry, nonce), mode));
+      const known = new Set([...before, ...designated]);
       const unrequested = after.find((entry) => !known.has(entry));
       if (unrequested !== undefined) return { key, stepId: step.id, unrequested, observed: value };
     }
@@ -138,7 +137,7 @@ export function evaluateScenario({ pack, packHash }: LoadedPack, trace: Scenario
   if (inconsistent) {
     return {
       ...result('INCONCLUSIVE', 'recording_inconsistent',
-        `The recording '${inconsistent.key}' contains '${inconsistent.unrequested}', which is neither in its earlier recording nor quoted in the step.`,
+        `The recording '${inconsistent.key}' contains '${inconsistent.unrequested}', which is neither in its earlier recording nor a designated new value.`,
         inconsistent.stepId),
       observed: inconsistent.observed,
     };

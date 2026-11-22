@@ -2,13 +2,18 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { evaluateScenario } from '../src/core/evaluate.js';
-import { actionForStep, loadPack, type LoadedPack } from '../src/core/pack.js';
+import { actionForStep, loadPack, parsePack, type LoadedPack } from '../src/core/pack.js';
 import type { Observation, RunRecord, ScenarioTrace } from '../src/core/types.js';
 
 const library = await loadPack(join('packs', 'library'));
 const calculator = await loadPack(join('tests', 'fixtures', 'calculator.pack.yaml'));
 // Byte-identical copy of Library v2 and sanitized normalized traces from the first Gate 1 trial.
-const v2 = await loadPack(join('tests', 'fixtures', 'library-v2.pack.yaml'));
+const v2Source = await readFile(join('tests', 'fixtures', 'library-v2.pack.yaml'), 'utf8');
+const v2 = parsePack(v2Source);
+// Test-only: v2 with each added title designated as a new value, to exercise the check on real recordings.
+// Its hash differs from v2, so results against it are implementation checks, never verdicts on an app.
+const v2Designated = parsePack(v2Source.replace(/^( +)do: Add a new book with title "([^"]+)",.*\n/gmu, "$&$1new_values: ['$2']\n"));
+const asDesignated = (input: ScenarioTrace): ScenarioTrace => ({ ...input, run: { ...input.run, packHash: v2Designated.packHash } });
 const traces: Record<string, ScenarioTrace> = JSON.parse(await readFile(join('tests', 'fixtures', 'gate1-v2-traces.json'), 'utf8'));
 
 function trace(loaded: LoadedPack, scenarioId: string, byStep: Record<string, Observation['values']>): ScenarioTrace {
@@ -48,6 +53,8 @@ describe('Library evaluation', () => {
     ['adds the requested book twice', add('GP Book sample | GP Book sample', '2'), 'FAIL', 'assertion_failed'],
     ['records an unrequested new entry after add', add('GP Book sample | Unexpected book', '2'), 'INCONCLUSIVE', 'recording_inconsistent'],
     ['records a different title than requested', add('Unexpected book'), 'INCONCLUSIVE', 'recording_inconsistent'],
+    ['records the new book author instead of its title', add('Sample A | Sample B | Ada Okafor', '3', 'Sample A | Sample B', '2'), 'INCONCLUSIVE', 'recording_inconsistent'],
+    ['records the remove target as a new entry', remove('GP Beta sample | GP Gamma sample', '1', 'GP Beta sample | GP Alpha sample'), 'INCONCLUSIVE', 'recording_inconsistent'],
     ['records an unrequested new entry after remove', remove('GP Beta sample | Unexpected book', '1'), 'INCONCLUSIVE', 'recording_inconsistent'],
     ['records an unrequested new entry after reload', reload('GP Keep sample | Unexpected book', '2'), 'INCONCLUSIVE', 'recording_inconsistent'],
     ['adds to an existing list', add('Sample A | Sample B | GP Book sample', '3', 'Sample A | Sample B', '2'), 'PASS', 'assertions_satisfied'],
@@ -128,9 +135,21 @@ describe('Library evaluation', () => {
 });
 
 describe('Gate 1 v2 traces', () => {
-
   it('keeps the Gate 1 pack hash', () => {
     expect(v2.packHash).toBe('259613c83f6ff13aa3b3bb832092c214cc4fefbdfbc3cabaaa636882e63a1c80');
+    expect(v2Designated.packHash).not.toBe(v2.packHash);
+  });
+
+  // v2 designates no new values, so a recording that gains the added title cannot be trusted under it.
+  it.each([
+    ['g1-a-1/L1', 'INCONCLUSIVE', 'recording_inconsistent'],
+    ['g1-a-1/L3', 'PASS', 'assertions_satisfied'],
+    ['g1-a-1/L4', 'PASS', 'assertions_satisfied'],
+    ['g1-b-1/L1', 'INCONCLUSIVE', 'recording_inconsistent'],
+    ['g1-b-1/L3', 'INCONCLUSIVE', 'recording_inconsistent'],
+    ['g1-b-1/L4', 'PASS', 'assertions_satisfied'],
+  ] as const)('%s under the unchanged v2 pack', (id, verdict, reasonCode) => {
+    expect(evaluateScenario(v2, traces[id])).toMatchObject({ verdict, reasonCode });
   });
 
   it.each([
@@ -140,28 +159,28 @@ describe('Gate 1 v2 traces', () => {
     ['g1-b-1/L1', 'PASS', 'assertions_satisfied'],
     ['g1-b-1/L3', 'INCONCLUSIVE', 'recording_inconsistent'],
     ['g1-b-1/L4', 'PASS', 'assertions_satisfied'],
-  ] as const)('%s', (id, verdict, reasonCode) => {
-    expect(evaluateScenario(v2, traces[id])).toMatchObject({ verdict, reasonCode });
+  ] as const)('%s with designated new values', (id, verdict, reasonCode) => {
+    expect(evaluateScenario(v2Designated, asDesignated(traces[id]))).toMatchObject({ verdict, reasonCode });
   });
 
   it('reports authors stored as titles on the React removal as inconsistent', () => {
-    expect(evaluateScenario(v2, traces['g1-b-1/L3'])).toMatchObject({
+    expect(evaluateScenario(v2Designated, asDesignated(traces['g1-b-1/L3']))).toMatchObject({
       stepId: 'remove', observed: 'J. R. R. Tolkien|Octavia E. Butler|Ada Okafor',
     });
   });
 
   // C removes the first card. On the vanilla build Beta is listed first, so Beta disappears and Alpha stays.
   it('fails a removal of the wrong book on the real A recording shape', () => {
-    const input = structuredClone(traces['g1-a-1/L3']);
+    const input = asDesignated(structuredClone(traces['g1-a-1/L3']));
     input.observations[3].values = { titles_after: 'GP Alpha g1-a-1', count_after: '1' };
-    expect(evaluateScenario(v2, input)).toMatchObject({ verdict: 'FAIL', reasonCode: 'assertion_failed', stepId: 'remove' });
+    expect(evaluateScenario(v2Designated, input)).toMatchObject({ verdict: 'FAIL', reasonCode: 'assertion_failed', stepId: 'remove' });
   });
 
   // D keeps books only in memory, so the reloaded vanilla build is empty.
   it('fails a book lost on reload on the real A recording shape', () => {
-    const input = structuredClone(traces['g1-a-1/L4']);
+    const input = asDesignated(structuredClone(traces['g1-a-1/L4']));
     input.observations[2].values = { titles_after: 'none', count_after: '0' };
-    expect(evaluateScenario(v2, input)).toMatchObject({ verdict: 'FAIL', reasonCode: 'assertion_failed', stepId: 'reload' });
+    expect(evaluateScenario(v2Designated, input)).toMatchObject({ verdict: 'FAIL', reasonCode: 'assertion_failed', stepId: 'reload' });
   });
 });
 

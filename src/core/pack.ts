@@ -36,6 +36,8 @@ const stepSchema = z.strictObject({
   id: identifier,
   do: line,
   record: z.record(identifier, line),
+  // Values this step's action creates. Only these may appear as new entries in a later list recording.
+  new_values: z.array(line).min(1).optional(),
   action: actionKindSchema.optional(),
   expects_change: z.boolean().optional(),
 });
@@ -73,6 +75,11 @@ const packSchema = z.strictObject({
       }
       if (step.action === 'none' && step.expects_change) {
         ctx.addIssue({ code: 'custom', path: [...stepPath, 'expects_change'], message: 'A change check requires a browser action' });
+      }
+      for (const [valueIndex, value] of (step.new_values ?? []).entries()) {
+        if (!step.do.includes(`"${value}"`)) {
+          ctx.addIssue({ code: 'custom', path: [...stepPath, 'new_values', valueIndex], message: 'A new value must appear in double quotes in the step action' });
+        }
       }
       stepIds.add(step.id);
       for (const key of Object.keys(step.record)) {

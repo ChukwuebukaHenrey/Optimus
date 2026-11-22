@@ -33,19 +33,23 @@ The saved run metadata in `runs/gate1/raw/g1-b-1/L3/` points to the sealed archi
 
 ## Re-evaluation with the recording continuity check
 
-The evaluator now checks each list recording against its earlier pair. An entry that appears afterward must either have been in the earlier recording or be quoted in the step's own action text. Otherwise the scenario is INCONCLUSIVE with `recording_inconsistent`. Removed entries are not checked. The rule is generic and contains no Library knowledge.
+The evaluator now checks each list recording against its earlier pair. An entry that appears afterward must either have been in the earlier recording or be declared by a step since then as a new value (`new_values` in the pack). Otherwise the scenario is INCONCLUSIVE with `recording_inconsistent`. Removed entries are not checked. The rule is generic and contains no Library knowledge. Quoted text in an action, such as an author or a removal target, does not authorize a new entry unless the pack declares it.
 
-The six saved traces were re-evaluated offline with the unchanged Library v2 pack (SHA-256 `259613c8…1c80`, frozen at `tests/fixtures/library-v2.pack.yaml`) and their original evidence archives. No Kane run was made.
+These six v2 runs stay archived here. They can validate the check offline but do not count toward the calibration of a later contract. No Kane run was made for this re-evaluation.
 
-| App | Trial | Scenario | Before | After re-evaluation | Screenshot agreement |
+Under the unchanged v2 pack (SHA-256 `259613c8…1c80`, frozen at `tests/fixtures/library-v2.pack.yaml`), with the original evidence archives:
+
+| App | Trial | Scenario | Original verdict | Re-evaluated | Screenshot agreement |
 |---|---:|---|---|---|---|
-| A | 1 | L1 | PASS | PASS | Match |
+| A | 1 | L1 | PASS | INCONCLUSIVE `recording_inconsistent` | Match |
 | A | 1 | L3 | PASS | PASS | Match |
 | A | 1 | L4 | PASS | PASS | Match |
-| B | 1 | L1 | PASS | PASS | Match |
-| B | 1 | L3 | FAIL | INCONCLUSIVE `recording_inconsistent` | Recording mismatch; no verdict on the app |
+| B | 1 | L1 | PASS | INCONCLUSIVE `recording_inconsistent` | Match |
+| B | 1 | L3 | FAIL | INCONCLUSIVE `recording_inconsistent` | Recording mismatch |
 | B | 1 | L4 | PASS | PASS | Match |
 
-The React removal no longer produces a FAIL from authors stored as titles. It still does not count as a PASS: the run did not establish the required recording. The sanitized traces are regression fixtures in `tests/fixtures/gate1-v2-traces.json`.
+v2 declares no new values, so the added title in both L1 recordings is not authorized and those results are withheld. The React removal no longer produces a FAIL from authors stored as titles.
 
-Consequence: an app that shows a different title from the one requested (for example a truncated title) is now INCONCLUSIVE rather than FAIL, because Optimus cannot tell that from a misrecorded field. A missing title with a visible count change still fails.
+Implementation check only, not a verdict: the unit tests add `new_values` for each added title to a copy of v2. With that copy, A L1, L3 and L4 and B L1 and L4 pass, and B L3 stays INCONCLUSIVE. Altered copies of the real A recordings fail for the C defect (wrong book removed) and the D defect (book lost on reload). The sanitized traces are in `tests/fixtures/gate1-v2-traces.json`.
+
+Consequence: an app that shows a different title from the one requested (for example a truncated title) is INCONCLUSIVE rather than FAIL, because Optimus cannot tell that apart from a misrecorded field. A missing title with a visible count change still fails.

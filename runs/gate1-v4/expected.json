@@ -1,0 +1,35 @@
+{
+  "pack": "library",
+  "version": 4,
+  "packHash": "4ad9bb6e33c57d1718393452b16b0178f830e3805b43de8380fc4d26da2ab4f9",
+  "trials": 2,
+  "note": "Fixed before any v4 run. Each verdict comes from reading the fixture source. A defective app is expected to PASS the scenarios its defect does not touch. The run stops at the first verdict that contradicts this matrix or the screenshots.",
+  "apps": {
+    "A": {
+      "fixture": "corpus/a-vanilla",
+      "port": 43184,
+      "expected": { "L1": "PASS", "L3": "PASS", "L4": "PASS" },
+      "rationale": "Reference app. Adds append a card, Remove deletes the clicked book, and every change is saved to localStorage and reloaded on start."
+    },
+    "B": {
+      "fixture": "corpus/b-react (production build in dist)",
+      "port": 43185,
+      "expected": { "L1": "PASS", "L3": "PASS", "L4": "PASS" },
+      "rationale": "Reference app with two sample books. The assertions are relative to the recorded starting list, so the samples do not affect the verdicts."
+    },
+    "C": {
+      "fixture": "corpus/c-remove-wrong",
+      "port": 43186,
+      "expected": { "L1": "PASS", "L3": "FAIL", "L4": "PASS" },
+      "rationale": "Only the remove handler differs from A: it deletes list.firstElementChild and books[0]. New cards are appended, so in L3 the first card is GP Beta and GP Alpha stays (FAIL). Adding and saving are unchanged, so L1 and L4 pass."
+    },
+    "D": {
+      "fixture": "corpus/d-no-persist",
+      "port": 43187,
+      "expected": { "L1": "PASS", "L3": "PASS", "L4": "FAIL" },
+      "rationale": "Only saveBooks() is removed. The page still reads localStorage on start, but nothing is ever written, so the list is empty after a reload (L4 FAIL). L1 and L3 never reload, and in-memory add and remove are unchanged."
+    }
+  },
+  "order": "Trial 1 in the order A, B, C, D, each running L1, L3 and L4; then trial 2 in the same order. A trial 1 calibrates the pack on the reference app (AGENTS rule 10).",
+  "nonces": "g4-<app>-<trial>, for example g4-a-1"
+}

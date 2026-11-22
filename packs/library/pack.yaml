@@ -1,5 +1,5 @@
 pack: library
-version: 3
+version: 4
 support: DOM-rendered apps that list books as visible text and keep data in the browser
 persistence: Survives a page reload in the same browser session
 scenarios:
@@ -14,6 +14,7 @@ scenarios:
           count_before: the number of books currently shown
       - id: add
         do: Add a new book with title "GP Book {{nonce}}", author "Ada Okafor", 123 pages, not read yet, and save it.
+        new_values: ['GP Book {{nonce}}']
         expects_change: true
         record:
           titles_after: the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'
@@ -32,9 +33,11 @@ scenarios:
         record: {}
       - id: add_beta
         do: Add a new book with title "GP Beta {{nonce}}", author "Ada Okafor", 123 pages, not read yet, and save it.
+        new_values: ['GP Beta {{nonce}}']
         record: {}
       - id: add_alpha
         do: Add a new book with title "GP Alpha {{nonce}}", author "Ada Okafor", 123 pages, not read yet, and save it.
+        new_values: ['GP Alpha {{nonce}}']
         record:
           titles_before: the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'
           count_before: the number of books currently shown
@@ -60,6 +63,7 @@ scenarios:
         record: {}
       - id: add
         do: Add a new book with title "GP Keep {{nonce}}", author "Ada Okafor", 123 pages, not read yet, and save it.
+        new_values: ['GP Keep {{nonce}}']
         record:
           titles_before: the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'
           count_before: the number of books currently shown
@@ -83,6 +87,7 @@ scenarios:
         record: {}
       - id: add
         do: Add a new book with title "GP Status {{nonce}}", author "Ada Okafor", 123 pages, not read yet, and save it.
+        new_values: ['GP Status {{nonce}}']
         record:
           status_before: the displayed status text for the book titled "GP Status {{nonce}}"
       - id: toggle
