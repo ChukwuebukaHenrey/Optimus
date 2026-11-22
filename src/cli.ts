@@ -11,6 +11,9 @@ import { checkEvidenceArchive } from './kane/evidence.js';
 import { controlledAppUrl, readKaneBalance, runKaneAssessment } from './kane/run.js';
 import { claudeCodeCommand, customAgentCommand, invokeAgent } from './loop/agent.js';
 import { runRepairLoop } from './loop/repair.js';
+import { buildBundle } from './report/bundle.js';
+import { renderReport } from './report/render.js';
+import { comparisonBundleSchema } from './report/schema.js';
 
 const usage = `Usage
   optimus gen-tests --pack <path> --nonce <id> [--scenario <id>] [--out <directory>]
@@ -18,7 +21,9 @@ const usage = `Usage
   optimus evaluate <trace.json> --pack <path>
   optimus run --pack <path> --url <loopback-url> [--nonce <id>] [--scenario <id>] [--out <new-directory>]
   optimus repair --pack <path> --app <static-app-folder> --scenarios <id,id,...> [--agent <claude|path>]
-                 [--max-attempts 3] [--max-credits 1500] [--max-minutes 20]`;
+                 [--max-attempts 3] [--max-credits 1500] [--max-minutes 20]
+  optimus bundle --manifest <manifest.json> --out <new-folder>
+  optimus report --bundle <folder-with-bundle.json>`;
 
 const exitCodes: Record<Verdict, number> = {
   PASS: 0, FAIL: 10, INCONCLUSIVE: 20, NOT_RUN: 20, INFRA_ERROR: 30, UNSUPPORTED: 20,
@@ -29,7 +34,7 @@ async function main([command, ...args]: string[]): Promise<number> {
     console.log(usage);
     return 0;
   }
-  if (!['gen-tests', 'lint', 'evaluate', 'run', 'repair'].includes(command)) throw new Error(`Unknown command '${command}'.\n${usage}`);
+  if (!['gen-tests', 'lint', 'evaluate', 'run', 'repair', 'bundle', 'report'].includes(command)) throw new Error(`Unknown command '${command}'.\n${usage}`);
   const { values, positionals } = parseArgs({
     args,
     allowPositionals: true,
@@ -45,8 +50,24 @@ async function main([command, ...args]: string[]): Promise<number> {
       'max-attempts': { type: 'string' },
       'max-credits': { type: 'string' },
       'max-minutes': { type: 'string' },
+      manifest: { type: 'string' },
+      bundle: { type: 'string' },
     },
   });
+  if (command === 'bundle') {
+    if (!values.manifest || !values.out || positionals.length) throw new Error(usage);
+    const bundle = await buildBundle(values.manifest, values.out);
+    const path = await renderReport(bundle, resolve(values.out));
+    console.log(JSON.stringify({ bundle: join(resolve(values.out), 'bundle.json'), report: path, builds: bundle.builds.length, runs: bundle.runs.length, repairs: bundle.repairs.length }, null, 2));
+    return 0;
+  }
+  if (command === 'report') {
+    if (!values.bundle || positionals.length) throw new Error(usage);
+    const directory = resolve(values.bundle);
+    const bundle = comparisonBundleSchema.parse(JSON.parse(await readFile(join(directory, 'bundle.json'), 'utf8')));
+    console.log(await renderReport(bundle, directory));
+    return 0;
+  }
   const takesFile = command === 'lint' || command === 'evaluate';
   if (!values.pack || positionals.length !== Number(takesFile)) throw new Error(usage);
   if ((takesFile && values.out !== undefined) || (command !== 'run' && values.url !== undefined) ||

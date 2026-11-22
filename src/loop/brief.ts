@@ -20,10 +20,17 @@ export interface RepairBrief {
 
 const quote = (value: unknown) => `"${String(value)}"`;
 
-function describe(assertion: Assertion, subject: string, priorSubject: string | undefined, nonce: string): string {
+/**
+ * One check in plain language, for example: After "Remove the book …", the title of every book … should include "GP Beta".
+ * `fill` expands the run nonce, or leaves the placeholder visible for a contract view.
+ */
+export function describeCheck(scenario: Scenario, assertion: Assertion, fill: (text: string) => string = (text) => text): string {
+  const prompt = (recordKey: string) => scenario.steps.map((step) => step.record[recordKey]).find((text) => text !== undefined) ?? recordKey;
+  const step = scenario.steps.find((candidate) => Object.hasOwn(candidate.record, assertion.value));
+  const subject = `After "${fill(step?.do ?? '')}", ${prompt(assertion.value)}`;
   const arg = 'arg' in assertion
-    ? Array.isArray(assertion.arg) ? assertion.arg.map((value) => quote(substituteNonce(value, nonce))).join(' or ')
-      : quote(typeof assertion.arg === 'string' ? substituteNonce(assertion.arg, nonce) : assertion.arg)
+    ? Array.isArray(assertion.arg) ? assertion.arg.map((value) => quote(fill(value))).join(' or ')
+      : quote(typeof assertion.arg === 'string' ? fill(assertion.arg) : assertion.arg)
     : '';
   switch (assertion.op) {
     case 'list_contains': return `${subject} should include ${arg}.`;
@@ -36,7 +43,7 @@ function describe(assertion: Assertion, subject: string, priorSubject: string | 
     case 'absent': return `${subject} should be empty.`;
     case 'delta': {
       const change = assertion.by === 0 ? 'stay the same as' : assertion.by > 0 ? `be ${assertion.by} more than` : `be ${-assertion.by} fewer than`;
-      return `${subject} should ${change} ${priorSubject ?? 'before'}.`;
+      return `${subject} should ${change} ${prompt(assertion.from)} before that action.`;
     }
   }
 }
@@ -60,10 +67,6 @@ export function buildBrief(pack: Pack, result: ScenarioResult, nonce: string, ap
   const sameExpected = (candidate: Assertion) => 'arg' in candidate && !Array.isArray(candidate.arg) &&
     substituteNonce(String(candidate.arg), nonce) === result.expected;
   const assertion = candidates.length === 1 ? candidates[0] : candidates.find(sameExpected);
-  const prompt = (recordKey: string | undefined) => recordKey === undefined ? undefined
-    : scenario.steps.map((step) => step.record[recordKey]).find((text) => text !== undefined);
-  const subject = assertion ? `After "${substituteNonce(failingStep?.do ?? '', nonce)}", ${prompt(assertion.value) ?? assertion.value}` : 'The recorded result';
-  const priorSubject = assertion?.op === 'delta' ? `${prompt(assertion.from) ?? assertion.from} before that action` : undefined;
   const expected = assertion?.op === 'delta'
     ? `a change of ${assertion.by > 0 ? '+' : ''}${assertion.by} from the earlier value`
     : render(result.expected);
@@ -72,7 +75,7 @@ export function buildBrief(pack: Pack, result: ScenarioResult, nonce: string, ap
     scenarioId: scenario.id,
     scenarioTitle: substituteNonce(scenario.title, nonce),
     actions: scenario.steps.map((step) => substituteNonce(step.do, nonce)),
-    requirement: assertion ? describe(assertion, subject, priorSubject, nonce) : result.reason,
+    requirement: assertion ? describeCheck(scenario, assertion, (text) => substituteNonce(text, nonce)) : result.reason,
     failingStep: failingStep ? { id: failingStep.id, action: substituteNonce(failingStep.do, nonce) } : null,
     expected,
     observed: render(result.observed),

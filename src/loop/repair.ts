@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path';
 import type { LoadedPack } from '../core/pack.js';
 import type { ScenarioResult, ScenarioTrace } from '../core/types.js';
 import { extractArchiveEntry } from '../kane/evidence.js';
+import { lastStepScreenshots } from '../kane/screens.js';
 import type { KaneAssessment } from '../kane/run.js';
 import type { AgentRun } from './agent.js';
 import { briefMarkdown, buildBrief, type RepairBrief } from './brief.js';
@@ -107,20 +108,9 @@ async function failureScreenshot(run: RunEntry, failure: ScenarioResult, output:
   if (!execution?.evidencePackPath) return null;
   const trace = JSON.parse(await readFile(join(execution.directory, 'trace.json'), 'utf8')) as ScenarioTrace;
   const observation = trace.observations.find(({ stepId }) => stepId === failure.stepId);
-  const prefix = trace.observations.map(({ screenshotRef }) => screenshotRef?.split('/steps/')[0]).find(Boolean);
-  if (!observation || !prefix) return null;
-  let current = -1;
-  let last: string | null = null;
-  for (const line of (await readFile(join(execution.directory, 'stdout.ndjson'), 'utf8')).split(/\r?\n/u)) {
-    if (!line.trim()) continue;
-    const event = JSON.parse(line) as Record<string, unknown>;
-    if (event.type === 'test_md_step_start') current = Number(event.step_index) - 1;
-    if (current === observation.stepIndex && event.type === 'step_end' && typeof event.screenshot === 'string' &&
-      typeof event.id === 'string' && Number.isSafeInteger(event.ordinal)) {
-      last = `${prefix}/steps/${String(event.ordinal)}-${event.id}/${event.screenshot}`;
-    }
-  }
-  const reference = last ?? observation.screenshotRef;
+  if (!observation) return null;
+  const screens = lastStepScreenshots(await readFile(join(execution.directory, 'stdout.ndjson'), 'utf8'), trace);
+  const reference = screens.get(observation.stepIndex) ?? observation.screenshotRef;
   if (!reference) return null;
   return await extractArchiveEntry(execution.evidencePackPath, reference, output) ? output : null;
 }

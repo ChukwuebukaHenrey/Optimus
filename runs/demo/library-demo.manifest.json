@@ -1,0 +1,39 @@
+{
+  "name": "Library assessment",
+  "pack": "../../packs/library",
+  "scope": ["L1", "L3", "L4"],
+  "builds": [
+    {
+      "buildId": "a-vanilla",
+      "label": "A · Vanilla JS",
+      "appSource": "../../corpus/a-vanilla",
+      "gateCases": ["../gate1-v5/raw/g5-a-2/L1", "../gate1-v5/raw/g5-a-2/L3", "../gate1-v5/raw/g5-a-2/L4"]
+    },
+    {
+      "buildId": "b-react",
+      "label": "B · React",
+      "appSource": "../../corpus/b-react",
+      "gateCases": ["../gate1-v5/raw/g5-b-2/L1-retry", "../gate1-v5/raw/g5-b-2/L3", "../gate1-v5/raw/g5-b-2/L4-retry"]
+    },
+    {
+      "buildId": "c-remove-wrong",
+      "label": "C · Removes the wrong book",
+      "appSource": "../../corpus/c-remove-wrong",
+      "repairHistory": "../../.optimus/repair/repair-20261122205046-1b7e12/repair-history.json"
+    },
+    {
+      "buildId": "d-no-persist",
+      "label": "D · Loses books on reload",
+      "appSource": "../../corpus/d-no-persist",
+      "gateCases": ["../gate1-v5/raw/g5-d-2/L1", "../gate1-v5/raw/g5-d-2/L3", "../gate1-v5/raw/g5-d-2/L4"]
+    }
+  ],
+  "calibration": {
+    "title": "Gate 1 calibration on Library v5",
+    "progress": "../gate1-v5/raw/matrix-progress.json",
+    "notes": [
+      "24 of 24 cases matched the expected verdicts with zero replay decisions.",
+      "Void attempts (sleep, upload rejections, a wrong-site navigation and Kane planner stalls) are archived and not counted."
+    ]
+  }
+}

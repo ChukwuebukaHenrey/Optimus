@@ -1,0 +1,1461 @@
+{
+  "bundleVersion": 1,
+  "generatedAt": "2026-11-22T22:17:06.910Z",
+  "assessment": {
+    "name": "Library assessment",
+    "pack": {
+      "name": "library",
+      "version": 5,
+      "packHash": "b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74",
+      "support": "DOM-rendered apps that list books as visible text and keep data in the browser",
+      "persistence": "Survives a page reload in the same browser session"
+    }
+  },
+  "scope": [
+    "L1",
+    "L3",
+    "L4"
+  ],
+  "contract": [
+    {
+      "id": "L1",
+      "title": "Scenario L1: add a record and record the list",
+      "inScope": true,
+      "sentToKane": {
+        "steps": [
+          {
+            "stepId": "before",
+            "action": "Open the page.",
+            "record": {
+              "titles_before": "the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'",
+              "count_before": "the number of books currently shown"
+            }
+          },
+          {
+            "stepId": "add",
+            "action": "Add a new book with title \"GP Book {{nonce}}\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+            "record": {
+              "titles_after": "the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'",
+              "count_after": "the number of books currently shown"
+            }
+          }
+        ]
+      },
+      "judgedByOptimus": {
+        "checks": [
+          {
+            "text": "After \"Open the page.\", the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none' should not include \"GP Book {{nonce}}\".",
+            "recording": "titles_before",
+            "prerequisite": true
+          },
+          {
+            "text": "After \"Add a new book with title \"GP Book {{nonce}}\", author \"Ada Okafor\", 123 pages, not read yet, and save it.\", the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none' should include \"GP Book {{nonce}}\".",
+            "recording": "titles_after",
+            "prerequisite": false
+          },
+          {
+            "text": "After \"Add a new book with title \"GP Book {{nonce}}\", author \"Ada Okafor\", 123 pages, not read yet, and save it.\", the number of books currently shown should be 1 more than the number of books currently shown before that action.",
+            "recording": "count_after",
+            "prerequisite": false
+          }
+        ],
+        "newValues": [
+          "GP Book {{nonce}}"
+        ],
+        "evidenceRule": "The add step has a recorded interaction and the list and count are available before and after"
+      }
+    },
+    {
+      "id": "L3",
+      "title": "Scenario L3: remove a record and record the list",
+      "inScope": true,
+      "sentToKane": {
+        "steps": [
+          {
+            "stepId": "open",
+            "action": "Open the page.",
+            "record": {}
+          },
+          {
+            "stepId": "add_beta",
+            "action": "Add a new book with title \"GP Beta {{nonce}}\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+            "record": {}
+          },
+          {
+            "stepId": "add_alpha",
+            "action": "Add a new book with title \"GP Alpha {{nonce}}\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+            "record": {
+              "titles_before": "the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'",
+              "count_before": "the number of books currently shown"
+            }
+          },
+          {
+            "stepId": "remove",
+            "action": "Remove the book titled \"GP Alpha {{nonce}}\".",
+            "record": {
+              "titles_after": "the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'",
+              "count_after": "the number of books currently shown"
+            }
+          }
+        ]
+      },
+      "judgedByOptimus": {
+        "checks": [
+          {
+            "text": "After \"Add a new book with title \"GP Alpha {{nonce}}\", author \"Ada Okafor\", 123 pages, not read yet, and save it.\", the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none' should include \"GP Alpha {{nonce}}\".",
+            "recording": "titles_before",
+            "prerequisite": true
+          },
+          {
+            "text": "After \"Add a new book with title \"GP Alpha {{nonce}}\", author \"Ada Okafor\", 123 pages, not read yet, and save it.\", the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none' should include \"GP Beta {{nonce}}\".",
+            "recording": "titles_before",
+            "prerequisite": true
+          },
+          {
+            "text": "After \"Remove the book titled \"GP Alpha {{nonce}}\".\", the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none' should not include \"GP Alpha {{nonce}}\".",
+            "recording": "titles_after",
+            "prerequisite": false
+          },
+          {
+            "text": "After \"Remove the book titled \"GP Alpha {{nonce}}\".\", the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none' should include \"GP Beta {{nonce}}\".",
+            "recording": "titles_after",
+            "prerequisite": false
+          },
+          {
+            "text": "After \"Remove the book titled \"GP Alpha {{nonce}}\".\", the number of books currently shown should be 1 fewer than the number of books currently shown before that action.",
+            "recording": "count_after",
+            "prerequisite": false
+          }
+        ],
+        "newValues": [
+          "GP Beta {{nonce}}",
+          "GP Alpha {{nonce}}"
+        ],
+        "evidenceRule": "Both added books are observed before the recorded removal and the list and count are recorded again afterward"
+      }
+    },
+    {
+      "id": "L4",
+      "title": "Scenario L4: reload the page and record the list",
+      "inScope": true,
+      "sentToKane": {
+        "steps": [
+          {
+            "stepId": "open",
+            "action": "Open the page.",
+            "record": {}
+          },
+          {
+            "stepId": "add",
+            "action": "Add a new book with title \"GP Keep {{nonce}}\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+            "record": {
+              "titles_before": "the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'",
+              "count_before": "the number of books currently shown"
+            }
+          },
+          {
+            "stepId": "reload",
+            "action": "Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.",
+            "record": {
+              "titles_after": "the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'",
+              "count_after": "the number of books currently shown"
+            }
+          }
+        ]
+      },
+      "judgedByOptimus": {
+        "checks": [
+          {
+            "text": "After \"Add a new book with title \"GP Keep {{nonce}}\", author \"Ada Okafor\", 123 pages, not read yet, and save it.\", the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none' should include \"GP Keep {{nonce}}\".",
+            "recording": "titles_before",
+            "prerequisite": true
+          },
+          {
+            "text": "After \"Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.\", the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none' should include \"GP Keep {{nonce}}\".",
+            "recording": "titles_after",
+            "prerequisite": false
+          },
+          {
+            "text": "After \"Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.\", the number of books currently shown should stay the same as the number of books currently shown before that action.",
+            "recording": "count_after",
+            "prerequisite": false
+          }
+        ],
+        "newValues": [
+          "GP Keep {{nonce}}"
+        ],
+        "evidenceRule": "The added book is observed before a recorded reload and the list and count are recorded afterward"
+      }
+    },
+    {
+      "id": "L2",
+      "title": "Scenario L2: change a status and record it",
+      "inScope": false,
+      "sentToKane": {
+        "steps": [
+          {
+            "stepId": "open",
+            "action": "Open the page.",
+            "record": {}
+          },
+          {
+            "stepId": "add",
+            "action": "Add a new book with title \"GP Status {{nonce}}\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+            "record": {
+              "status_before": "the displayed status text for the book titled \"GP Status {{nonce}}\""
+            }
+          },
+          {
+            "stepId": "toggle",
+            "action": "Change the read status of the book titled \"GP Status {{nonce}}\" once.",
+            "record": {
+              "status_after": "the displayed status text for the book titled \"GP Status {{nonce}}\""
+            }
+          }
+        ]
+      },
+      "judgedByOptimus": {
+        "checks": [
+          {
+            "text": "After \"Add a new book with title \"GP Status {{nonce}}\", author \"Ada Okafor\", 123 pages, not read yet, and save it.\", the displayed status text for the book titled \"GP Status {{nonce}}\" should be one of \"not read\" or \"to read\" or \"unread\" or \"not yet read\" or \"no\".",
+            "recording": "status_before",
+            "prerequisite": true
+          },
+          {
+            "text": "After \"Change the read status of the book titled \"GP Status {{nonce}}\" once.\", the displayed status text for the book titled \"GP Status {{nonce}}\" should be one of \"read\" or \"finished\" or \"done\" or \"✓\" or \"yes\".",
+            "recording": "status_after",
+            "prerequisite": false
+          }
+        ],
+        "newValues": [
+          "GP Status {{nonce}}"
+        ],
+        "evidenceRule": "The book has a recorded status before and after a recorded interaction with its status control"
+      }
+    }
+  ],
+  "builds": [
+    {
+      "buildId": "a-vanilla",
+      "label": "A · Vanilla JS",
+      "appSource": "corpus/a-vanilla",
+      "baselineRunId": "gate/g5-a-2",
+      "latestRunId": "gate/g5-a-2",
+      "repairSessionId": null,
+      "repairState": "no_repair"
+    },
+    {
+      "buildId": "b-react",
+      "label": "B · React",
+      "appSource": "corpus/b-react",
+      "baselineRunId": "gate/g5-b-2",
+      "latestRunId": "gate/g5-b-2",
+      "repairSessionId": null,
+      "repairState": "no_repair"
+    },
+    {
+      "buildId": "c-remove-wrong",
+      "label": "C · Removes the wrong book",
+      "appSource": "corpus/c-remove-wrong",
+      "baselineRunId": "repair-20261122205046-1b7e12/run-0",
+      "latestRunId": "repair-20261122205046-1b7e12/run-1",
+      "repairSessionId": "repair-20261122205046-1b7e12",
+      "repairState": "repaired"
+    },
+    {
+      "buildId": "d-no-persist",
+      "label": "D · Loses books on reload",
+      "appSource": "corpus/d-no-persist",
+      "baselineRunId": "gate/g5-d-2",
+      "latestRunId": "gate/g5-d-2",
+      "repairSessionId": null,
+      "repairState": "no_repair"
+    }
+  ],
+  "runs": [
+    {
+      "runId": "gate/g5-a-2",
+      "buildId": "a-vanilla",
+      "source": "gate",
+      "kind": "assessment",
+      "nonce": "g5-a-2",
+      "appUrl": "http://127.0.0.1:43184/",
+      "packHash": "b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74",
+      "sourceRevision": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "creditsUsed": 159.02,
+      "scenarios": [
+        {
+          "scenarioId": "L1",
+          "executionId": "1d72b64d-d725-4a0e-8bf9-4761ab83e9d6",
+          "result": {
+            "scenarioId": "L1",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 2,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "before",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "none",
+                "count_before": "0"
+              },
+              "screenshot": "evidence/gate-g5-a-2/L1-before.jpg"
+            },
+            {
+              "stepId": "add",
+              "action": "Add a new book with title \"GP Book g5-a-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Book g5-a-2",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/gate-g5-a-2/L1-add.jpg"
+            }
+          ]
+        },
+        {
+          "scenarioId": "L3",
+          "executionId": "4edab127-74b6-494e-90df-c3967ec62417",
+          "result": {
+            "scenarioId": "L3",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 4,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "open",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add_beta",
+              "action": "Add a new book with title \"GP Beta g5-a-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add_alpha",
+              "action": "Add a new book with title \"GP Alpha g5-a-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "GP Beta g5-a-2|GP Alpha g5-a-2",
+                "count_before": "2"
+              },
+              "screenshot": "evidence/gate-g5-a-2/L3-add_alpha.jpg"
+            },
+            {
+              "stepId": "remove",
+              "action": "Remove the book titled \"GP Alpha g5-a-2\".",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Beta g5-a-2",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/gate-g5-a-2/L3-remove.jpg"
+            }
+          ]
+        },
+        {
+          "scenarioId": "L4",
+          "executionId": "58230ccb-1244-4591-a441-0cb7d886a416",
+          "result": {
+            "scenarioId": "L4",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 3,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "open",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add",
+              "action": "Add a new book with title \"GP Keep g5-a-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "GP Keep g5-a-2",
+                "count_before": "1"
+              },
+              "screenshot": "evidence/gate-g5-a-2/L4-add.jpg"
+            },
+            {
+              "stepId": "reload",
+              "action": "Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.",
+              "actionKind": "reload",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Keep g5-a-2",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/gate-g5-a-2/L4-reload.jpg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "runId": "gate/g5-b-2",
+      "buildId": "b-react",
+      "source": "gate",
+      "kind": "assessment",
+      "nonce": "g5-b-2",
+      "appUrl": "http://127.0.0.1:43185/",
+      "packHash": "b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74",
+      "sourceRevision": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "creditsUsed": 142.4619,
+      "scenarios": [
+        {
+          "scenarioId": "L1",
+          "executionId": "0b965551-e49a-4dbd-99f5-cdf583fc52d6",
+          "result": {
+            "scenarioId": "L1",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 2,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "before",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "The Hobbit|Kindred",
+                "count_before": "2"
+              },
+              "screenshot": "evidence/gate-g5-b-2/L1-before.jpg"
+            },
+            {
+              "stepId": "add",
+              "action": "Add a new book with title \"GP Book g5-b-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "The Hobbit|Kindred|GP Book g5-b-2",
+                "count_after": "3"
+              },
+              "screenshot": "evidence/gate-g5-b-2/L1-add.jpg"
+            }
+          ]
+        },
+        {
+          "scenarioId": "L3",
+          "executionId": "9170f692-edfc-49db-a214-2e2e6de6561c",
+          "result": {
+            "scenarioId": "L3",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 4,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "open",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add_beta",
+              "action": "Add a new book with title \"GP Beta g5-b-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add_alpha",
+              "action": "Add a new book with title \"GP Alpha g5-b-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "The Hobbit|Kindred|GP Beta g5-b-2|GP Alpha g5-b-2",
+                "count_before": "4"
+              },
+              "screenshot": "evidence/gate-g5-b-2/L3-add_alpha.jpg"
+            },
+            {
+              "stepId": "remove",
+              "action": "Remove the book titled \"GP Alpha g5-b-2\".",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "The Hobbit|Kindred|GP Beta g5-b-2",
+                "count_after": "3"
+              },
+              "screenshot": "evidence/gate-g5-b-2/L3-remove.jpg"
+            }
+          ]
+        },
+        {
+          "scenarioId": "L4",
+          "executionId": "2f386712-8977-4158-ab87-05f881c7e6fd",
+          "result": {
+            "scenarioId": "L4",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 3,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "open",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add",
+              "action": "Add a new book with title \"GP Keep g5-b-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "The Hobbit|Kindred|GP Keep g5-b-2",
+                "count_before": "3"
+              },
+              "screenshot": "evidence/gate-g5-b-2/L4-add.jpg"
+            },
+            {
+              "stepId": "reload",
+              "action": "Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.",
+              "actionKind": "reload",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "The Hobbit|Kindred|GP Keep g5-b-2",
+                "count_after": "3"
+              },
+              "screenshot": "evidence/gate-g5-b-2/L4-reload.jpg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "runId": "repair-20261122205046-1b7e12/run-0",
+      "buildId": "c-remove-wrong",
+      "source": "repair",
+      "kind": "baseline",
+      "nonce": "1b7e12-run-0",
+      "appUrl": "http://127.0.0.1:59847/",
+      "packHash": "b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74",
+      "sourceRevision": "f469b2d35746dad624b9b55d718f0c689a64526d",
+      "startedAt": "2026-11-22T20:50:55.929Z",
+      "finishedAt": "2026-11-22T21:04:13.633Z",
+      "creditsUsed": 158.7103,
+      "scenarios": [
+        {
+          "scenarioId": "L1",
+          "executionId": "196da366-dfee-4d8c-ad2b-921d5278f27d",
+          "result": {
+            "scenarioId": "L1",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 2,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "before",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "none",
+                "count_before": "0"
+              },
+              "screenshot": "evidence/repair-20261122205046-1b7e12-run-0/L1-before.jpg"
+            },
+            {
+              "stepId": "add",
+              "action": "Add a new book with title \"GP Book 1b7e12-run-0\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Book 1b7e12-run-0",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/repair-20261122205046-1b7e12-run-0/L1-add.jpg"
+            }
+          ]
+        },
+        {
+          "scenarioId": "L3",
+          "executionId": "c280aeba-4b5f-4bde-81b4-6a3f1ba7db28",
+          "result": {
+            "scenarioId": "L3",
+            "verdict": "FAIL",
+            "reasonCode": "assertion_failed",
+            "reason": "The recording 'titles_after' did not satisfy 'list_contains'.",
+            "stepId": "remove",
+            "expected": "GP Beta 1b7e12-run-0",
+            "observed": "none"
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 4,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "open",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add_beta",
+              "action": "Add a new book with title \"GP Beta 1b7e12-run-0\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add_alpha",
+              "action": "Add a new book with title \"GP Alpha 1b7e12-run-0\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "GP Beta 1b7e12-run-0|GP Alpha 1b7e12-run-0",
+                "count_before": "2"
+              },
+              "screenshot": "evidence/repair-20261122205046-1b7e12-run-0/L3-add_alpha.jpg"
+            },
+            {
+              "stepId": "remove",
+              "action": "Remove the book titled \"GP Alpha 1b7e12-run-0\".",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "none",
+                "count_after": "0"
+              },
+              "screenshot": "evidence/repair-20261122205046-1b7e12-run-0/L3-remove.jpg"
+            }
+          ]
+        },
+        {
+          "scenarioId": "L4",
+          "executionId": "45133116-de48-49f5-ac6c-b350e0f1821d",
+          "result": {
+            "scenarioId": "L4",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 3,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "open",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add",
+              "action": "Add a new book with title \"GP Keep 1b7e12-run-0\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "GP Keep 1b7e12-run-0",
+                "count_before": "1"
+              },
+              "screenshot": "evidence/repair-20261122205046-1b7e12-run-0/L4-add.jpg"
+            },
+            {
+              "stepId": "reload",
+              "action": "Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.",
+              "actionKind": "reload",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Keep 1b7e12-run-0",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/repair-20261122205046-1b7e12-run-0/L4-reload.jpg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "runId": "repair-20261122205046-1b7e12/run-1",
+      "buildId": "c-remove-wrong",
+      "source": "repair",
+      "kind": "verification",
+      "nonce": "1b7e12-run-1",
+      "appUrl": "http://127.0.0.1:59847/",
+      "packHash": "b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74",
+      "sourceRevision": "a9a92ac65601d913c2c8ed1b93e77f5ebadc351b",
+      "startedAt": "2026-11-22T21:04:59.152Z",
+      "finishedAt": "2026-11-22T21:16:36.906Z",
+      "creditsUsed": 152.0717,
+      "scenarios": [
+        {
+          "scenarioId": "L1",
+          "executionId": "07668a71-7d7c-42eb-a769-3b705b098e32",
+          "result": {
+            "scenarioId": "L1",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 2,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "before",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "none",
+                "count_before": "0"
+              },
+              "screenshot": "evidence/repair-20261122205046-1b7e12-run-1/L1-before.jpg"
+            },
+            {
+              "stepId": "add",
+              "action": "Add a new book with title \"GP Book 1b7e12-run-1\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Book 1b7e12-run-1",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/repair-20261122205046-1b7e12-run-1/L1-add.jpg"
+            }
+          ]
+        },
+        {
+          "scenarioId": "L3",
+          "executionId": "d9ee7236-1a94-4a25-a370-659b59ed19d0",
+          "result": {
+            "scenarioId": "L3",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 4,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "open",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add_beta",
+              "action": "Add a new book with title \"GP Beta 1b7e12-run-1\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add_alpha",
+              "action": "Add a new book with title \"GP Alpha 1b7e12-run-1\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "GP Beta 1b7e12-run-1|GP Alpha 1b7e12-run-1",
+                "count_before": "2"
+              },
+              "screenshot": "evidence/repair-20261122205046-1b7e12-run-1/L3-add_alpha.jpg"
+            },
+            {
+              "stepId": "remove",
+              "action": "Remove the book titled \"GP Alpha 1b7e12-run-1\".",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Beta 1b7e12-run-1",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/repair-20261122205046-1b7e12-run-1/L3-remove.jpg"
+            }
+          ]
+        },
+        {
+          "scenarioId": "L4",
+          "executionId": "169887f2-8b06-48d2-be98-8f2b7f75cc14",
+          "result": {
+            "scenarioId": "L4",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 3,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "open",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add",
+              "action": "Add a new book with title \"GP Keep 1b7e12-run-1\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "GP Keep 1b7e12-run-1",
+                "count_before": "1"
+              },
+              "screenshot": "evidence/repair-20261122205046-1b7e12-run-1/L4-add.jpg"
+            },
+            {
+              "stepId": "reload",
+              "action": "Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.",
+              "actionKind": "reload",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Keep 1b7e12-run-1",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/repair-20261122205046-1b7e12-run-1/L4-reload.jpg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "runId": "gate/g5-d-2",
+      "buildId": "d-no-persist",
+      "source": "gate",
+      "kind": "assessment",
+      "nonce": "g5-d-2",
+      "appUrl": "http://127.0.0.1:43187/",
+      "packHash": "b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74",
+      "sourceRevision": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "creditsUsed": 162.4036,
+      "scenarios": [
+        {
+          "scenarioId": "L1",
+          "executionId": "502e1f15-0799-4f68-855d-4d996a676cd6",
+          "result": {
+            "scenarioId": "L1",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 2,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "before",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "none",
+                "count_before": "0"
+              },
+              "screenshot": "evidence/gate-g5-d-2/L1-before.jpg"
+            },
+            {
+              "stepId": "add",
+              "action": "Add a new book with title \"GP Book g5-d-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Book g5-d-2",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/gate-g5-d-2/L1-add.jpg"
+            }
+          ]
+        },
+        {
+          "scenarioId": "L3",
+          "executionId": "dc080640-1d04-4fc5-9b55-8a2bb3963e83",
+          "result": {
+            "scenarioId": "L3",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 4,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "open",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add_beta",
+              "action": "Add a new book with title \"GP Beta g5-d-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add_alpha",
+              "action": "Add a new book with title \"GP Alpha g5-d-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "GP Beta g5-d-2|GP Alpha g5-d-2",
+                "count_before": "2"
+              },
+              "screenshot": "evidence/gate-g5-d-2/L3-add_alpha.jpg"
+            },
+            {
+              "stepId": "remove",
+              "action": "Remove the book titled \"GP Alpha g5-d-2\".",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Beta g5-d-2",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/gate-g5-d-2/L3-remove.jpg"
+            }
+          ]
+        },
+        {
+          "scenarioId": "L4",
+          "executionId": "aa0947d1-9d78-47c7-a157-88e817eb9326",
+          "result": {
+            "scenarioId": "L4",
+            "verdict": "FAIL",
+            "reasonCode": "assertion_failed",
+            "reason": "The recording 'titles_after' did not satisfy 'list_contains'.",
+            "stepId": "reload",
+            "expected": "GP Keep g5-d-2",
+            "observed": "none"
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 3,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "open",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add",
+              "action": "Add a new book with title \"GP Keep g5-d-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "GP Keep g5-d-2",
+                "count_before": "1"
+              },
+              "screenshot": "evidence/gate-g5-d-2/L4-add.jpg"
+            },
+            {
+              "stepId": "reload",
+              "action": "Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.",
+              "actionKind": "reload",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "none",
+                "count_after": "0"
+              },
+              "screenshot": "evidence/gate-g5-d-2/L4-reload.jpg"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "repairs": [
+    {
+      "sessionId": "repair-20261122205046-1b7e12",
+      "buildId": "c-remove-wrong",
+      "packHash": "b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74",
+      "graderHash": "7472d3622f0ec59d144c5e6474809cdad36e3ede05eea2f723835c5aeb17c70b",
+      "scope": [
+        "L1",
+        "L3",
+        "L4"
+      ],
+      "startedAt": "2026-11-22T20:50:48.291Z",
+      "finishedAt": "2026-11-22T21:16:40.083Z",
+      "caps": {
+        "attempts": 3,
+        "credits": 1500,
+        "minutes": 20
+      },
+      "budget": {
+        "creditsStart": 8940.725,
+        "creditsUsed": 310.782,
+        "attemptsUsed": 1,
+        "infrastructureRetriesUsed": 0,
+        "repairMinutesUsed": 0.66
+      },
+      "baselineRunId": "repair-20261122205046-1b7e12/run-0",
+      "decisions": [
+        {
+          "decisionId": "decision-0",
+          "runId": "repair-20261122205046-1b7e12/run-0",
+          "decision": "REPAIR",
+          "reason": "L3 failed after an established action."
+        },
+        {
+          "decisionId": "decision-1",
+          "runId": "repair-20261122205046-1b7e12/run-1",
+          "decision": "COMPLETE",
+          "reason": "Every scenario in scope passed."
+        }
+      ],
+      "attempts": [
+        {
+          "attempt": 1,
+          "decisionId": "decision-0",
+          "briefId": "brief-142a6e6f-2d6f-4608-9f0a-29eea662cc73",
+          "briefMarkdown": "# Repair brief\n\nA behavioural check of this web app failed. Fix the app so the behaviour below works for any data, not only the example values. (Brief brief-142a6e6f-2d6f-4608-9f0a-29eea662cc73.)\n\n## What a user does\n\n1. Open the page.\n2. Add a new book with title \"GP Beta 1b7e12-run-0\", author \"Ada Okafor\", 123 pages, not read yet, and save it.\n3. Add a new book with title \"GP Alpha 1b7e12-run-0\", author \"Ada Okafor\", 123 pages, not read yet, and save it.\n4. Remove the book titled \"GP Alpha 1b7e12-run-0\".\n\n## What went wrong\n\n- Requirement: After \"Remove the book titled \"GP Alpha 1b7e12-run-0\".\", the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none' should include \"GP Beta 1b7e12-run-0\".\n- Checked after step: Remove the book titled \"GP Alpha 1b7e12-run-0\".\n- Expected: GP Beta 1b7e12-run-0\n- Observed: none\n- Screenshot of the page after that step: <tmp>\\optimus-repair-20261122205046-1b7e12\\brief\\attempt-1-L3.jpg\n\n## Rules\n\n- App folder: <tmp>\\optimus-repair-20261122205046-1b7e12\\app\n- Allowed scope: Only the files of this app folder. Do not create or edit anything outside it.\n- Fix the general behaviour. Do not special-case the example titles or detect that a test is running.\n- Keep every other behaviour of the app working. The full set of behavioural checks runs again after your change.\n- When the fix is done, stop. Do not run browsers or test tools; the app will be re-checked independently.\n",
+          "requirement": "After \"Remove the book titled \"GP Alpha 1b7e12-run-0\".\", the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none' should include \"GP Beta 1b7e12-run-0\".",
+          "expected": "GP Beta 1b7e12-run-0",
+          "observed": "none",
+          "failingStepAction": "Remove the book titled \"GP Alpha 1b7e12-run-0\".",
+          "briefScreenshot": "evidence/repair-20261122205046-1b7e12/attempt-1-brief.jpg",
+          "agent": {
+            "agentInvocationId": "agent-0754a466-071b-455c-b594-3e2af8fdc642",
+            "agent": "claude-code",
+            "exitCode": 0,
+            "timedOut": false,
+            "startedAt": "2026-11-22T21:04:16.952Z",
+            "finishedAt": "2026-11-22T21:04:56.345Z",
+            "finalMessage": "I fixed the Remove button. It was deleting the wrong book: whichever Remove button you clicked, the code took out the first card in the list and the first book in saved storage.\n\nThe fix is in `app.js:38-50`. Each Remove button now deletes its own card, and its own book from saved storage. The book is found by the object itself, not by its title, so two books with the same title don't get mixed up. After a removal, focus still moves to the next card's Remove button, or to the title field if no books are left.\n\nI haven't run the app or any tests, as the brief asked. The re-check should show \"GP Beta 1b7e12-run-0\" still listed after removing \"GP Alpha 1b7e12-run-0\".\n\nOne thing I couldn't fully explain: the check saw \"none\" after the removal. The old bug should have left one book on screen, not zero. My fix addresses the bug I found in the code, but if the re-check still shows \"none\", the cause is something else."
+          },
+          "sourceRevisionBefore": "f469b2d35746dad624b9b55d718f0c689a64526d",
+          "sourceRevisionAfter": "a9a92ac65601d913c2c8ed1b93e77f5ebadc351b",
+          "changedFiles": [
+            "app.js"
+          ],
+          "diffStat": "app.js | 7 +++++--\n 1 file changed, 5 insertions(+), 2 deletions(-)",
+          "diff": "diff --git a/app.js b/app.js\nindex c2819b5..0d66382 100644\n--- a/app.js\n+++ b/app.js\n@@ -36,9 +36,12 @@ function addCard(book) {\n   });\n \n   remove.addEventListener('click', () => {\n-    const removedCard = list.firstElementChild;\n+    const removedCard = card;\n     const adjacentCard = removedCard.nextElementSibling ?? removedCard.previousElementSibling;\n-    books.splice(0, 1);\n+    const index = books.indexOf(book);\n+    if (index !== -1) {\n+      books.splice(index, 1);\n+    }\n     saveBooks();\n     removedCard.remove();\n     updateEmptyMessage();\n",
+          "integrity": {
+            "workspaceOutsideOptimus": true,
+            "packHashUnchanged": true,
+            "graderUnchanged": true,
+            "changedGraderFiles": []
+          },
+          "verificationRunId": "repair-20261122205046-1b7e12/run-1"
+        }
+      ],
+      "outcome": {
+        "decision": "COMPLETE",
+        "reason": "Every scenario in scope passed.",
+        "finalRunId": "repair-20261122205046-1b7e12/run-1"
+      }
+    }
+  ],
+  "calibration": {
+    "title": "Gate 1 calibration on Library v5",
+    "rows": [
+      {
+        "app": "A",
+        "trial": 1,
+        "scenario": "L4",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 175,
+        "credits": 47.0109
+      },
+      {
+        "app": "B",
+        "trial": 1,
+        "scenario": "L4",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 173,
+        "credits": 49.6558
+      },
+      {
+        "app": "A",
+        "trial": 1,
+        "scenario": "L1",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 189,
+        "credits": 41.9864
+      },
+      {
+        "app": "A",
+        "trial": 1,
+        "scenario": "L3",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 391,
+        "credits": 70.4846
+      },
+      {
+        "app": "B",
+        "trial": 1,
+        "scenario": "L1",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 216,
+        "credits": 42.0338
+      },
+      {
+        "app": "B",
+        "trial": 1,
+        "scenario": "L3",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 402,
+        "credits": 73.1675
+      },
+      {
+        "app": "C",
+        "trial": 1,
+        "scenario": "L1",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 227,
+        "credits": 44.3898
+      },
+      {
+        "app": "C",
+        "trial": 1,
+        "scenario": "L3",
+        "expected": "FAIL",
+        "verdict": "FAIL",
+        "seconds": 442,
+        "credits": 59.2292
+      },
+      {
+        "app": "C",
+        "trial": 1,
+        "scenario": "L4",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 423,
+        "credits": 44.821
+      },
+      {
+        "app": "D",
+        "trial": 1,
+        "scenario": "L1",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 310,
+        "credits": 40.7207
+      },
+      {
+        "app": "D",
+        "trial": 1,
+        "scenario": "L3",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 383,
+        "credits": 62.0152
+      },
+      {
+        "app": "D",
+        "trial": 1,
+        "scenario": "L4",
+        "expected": "FAIL",
+        "verdict": "FAIL",
+        "seconds": 239,
+        "credits": 46.2058
+      },
+      {
+        "app": "A",
+        "trial": 2,
+        "scenario": "L1",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 273,
+        "credits": 44.5646
+      },
+      {
+        "app": "A",
+        "trial": 2,
+        "scenario": "L3",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 296,
+        "credits": 68.3347
+      },
+      {
+        "app": "A",
+        "trial": 2,
+        "scenario": "L4",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 276,
+        "credits": 46.1207
+      },
+      {
+        "app": "B",
+        "trial": 2,
+        "scenario": "L1",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 223,
+        "credits": 35.0868
+      },
+      {
+        "app": "B",
+        "trial": 2,
+        "scenario": "L3",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 445,
+        "credits": 65.0059
+      },
+      {
+        "app": "B",
+        "trial": 2,
+        "scenario": "L4",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 390,
+        "credits": 42.3692
+      },
+      {
+        "app": "C",
+        "trial": 2,
+        "scenario": "L1",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 209,
+        "credits": 39.3004
+      },
+      {
+        "app": "C",
+        "trial": 2,
+        "scenario": "L3",
+        "expected": "FAIL",
+        "verdict": "FAIL",
+        "seconds": 279,
+        "credits": 73.4422
+      },
+      {
+        "app": "C",
+        "trial": 2,
+        "scenario": "L4",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 226,
+        "credits": 48.2316
+      },
+      {
+        "app": "D",
+        "trial": 2,
+        "scenario": "L1",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 586,
+        "credits": 43.1366
+      },
+      {
+        "app": "D",
+        "trial": 2,
+        "scenario": "L3",
+        "expected": "PASS",
+        "verdict": "PASS",
+        "seconds": 375,
+        "credits": 72.8966
+      },
+      {
+        "app": "D",
+        "trial": 2,
+        "scenario": "L4",
+        "expected": "FAIL",
+        "verdict": "FAIL",
+        "seconds": 214,
+        "credits": 46.3704
+      }
+    ],
+    "notes": [
+      "24 of 24 cases matched the expected verdicts with zero replay decisions.",
+      "Void attempts (sleep, upload rejections, a wrong-site navigation and Kane planner stalls) are archived and not counted."
+    ]
+  }
+}
