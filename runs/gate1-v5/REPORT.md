@@ -2,7 +2,9 @@
 
 Pack SHA-256 `b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74` for every case. Kane CLI 0.10.6, `--author --agent --headless`, fresh browser profile, loopback fixtures. The expected verdicts were committed in `expected.json` before the first run. The v2 and v4 cases are archived separately and do not count here.
 
-The matrix is paused after 19 of 24 cases. It stopped at C L1 in trial 2 (see below). The verdicts below come from re-evaluating every case from its original evidence with the current adapter.
+**Result: 24 of 24 cases match the expected verdict, with zero replay decisions, and agree with their screenshots.** A and B pass L1, L3 and L4 in both trials. C fails only L3, and D fails only L4, in both trials. All screenshot labels are pending independent review.
+
+The verdicts below come from re-evaluating every case from its original evidence with the final adapter.
 
 | App | Trial | Scenario | Expected | Verdict | Screenshot check | Seconds | Credits used |
 |---|---:|---|---|---|---|---:|---:|
@@ -24,25 +26,32 @@ The matrix is paused after 19 of 24 cases. It stopped at C L1 in trial 2 (see be
 | B | 2 | L1 | PASS | PASS (retry) | Agrees | 223 | 35.0868 |
 | B | 2 | L3 | PASS | PASS | Agrees | 445 | 65.0059 |
 | B | 2 | L4 | PASS | PASS (retry) | Agrees | 390 | 42.3692 |
-| C | 2 | L1 | PASS | **INCONCLUSIVE** `action_target_contradicted` | The app is not shown | 613 | 51.1806 |
+| C | 2 | L1 | PASS | PASS (clean rerun, then retry) | Agrees | 209 | 39.3004 |
+| C | 2 | L3 | FAIL | FAIL | Agrees | 279 | 73.4422 |
+| C | 2 | L4 | PASS | PASS | Agrees | 226 | 48.2316 |
+| D | 2 | L1 | PASS | PASS | Agrees | 586 | 43.1366 |
+| D | 2 | L3 | PASS | PASS (third run) | Agrees | 375 | 72.8966 |
+| D | 2 | L4 | FAIL | FAIL | Agrees | 214 | 46.3704 |
 
-Every case had zero replay decisions. All screenshot labels are pending independent review.
-
-Void attempts, kept in `raw/` and not counted: A L1 trial 1 first attempt (9.2181 credits); B L3 trial 1 attempts 1 and 2 (48.9085 and 55.2513); B L1 trial 2 first attempt (40.1164); and B L4 trial 2 first attempt (26.4867). In total, 1,154.3642 credits were used (10,467.7906 → 9,313.4264).
+Valid cases: 7,362 seconds and 1,246.5804 credits. Void attempts (listed below) used 280.4852 credits. Total used: 1,527.0656 credits (10,467.7906 → 8,940.7250).
 
 ## Findings
 
-- **The reworded reload works.** Every L4 run recorded a `refresh` action, and the server received a second page request. On D, the reloaded page is empty, as expected.
-- **The defective apps fail only where expected, so far.** C failed only L3 in trial 1. D failed only L4.
-- **C L3 failed for the right reason, by a different route than predicted.** Kane clicked Remove on GP Alpha. The app removed GP Beta, the first card. Kane clicked Remove on the still-visible Alpha again, and the list became empty. GP Beta, which was never asked to be removed, disappeared after an established action.
-- **D L3: list-format fix.** Kane's action log stored `titles_before` as a JSON array, while `final_state` held the same titles joined with `|`. The adapter now reads an unambiguous JSON array of strings as the same list. The verdict changed from INCONCLUSIVE to PASS, which matches the screenshots. No other verdict changed.
-- **C L1 trial 2 stop: Kane tested the wrong site.** Kane's stream reported "Navigate to http://127.0.0.1:43186/" as successful. However, every screenshot and `final_state.url` show the browser still on Kane's configured default site, `https://kaneai-playground.lambdatest.io/`, and the local server received no request. Step 1 recorded an empty list from that site. Step 2 then failed while following an unrelated guided flow. This happened in only one of the 24 runs.
-- **Origin check added.** The adapter now compares each step's reported `final_state.url` with the origin of the app under test. A step that ended on another origin has its target marked contradicted, and the evaluator returns INCONCLUSIVE (`action_target_contradicted`). Before this check, the wrong-site recording from step 1 was accepted as evidence. Re-evaluating every completed case leaves the 18 other verdicts unchanged.
+- **The reworded reload works.** Every L4 run recorded a `refresh` action, and the server received a second page request. On D, the reloaded page is empty in both trials.
+- **C L3 failed for the right reason in both trials, by a route other than the one predicted.** Kane clicked Remove on GP Alpha. The app removed GP Beta, the first card. Kane then clicked Remove on the still-visible Alpha, and the list became empty. GP Beta, which was never asked to be removed, disappeared after an established action.
+- **Two adapter fixes came from real evidence.** Each was checked against every saved case.
+  - *List format (D L3, trial 1).* Kane's action log stored a list as a JSON array, while `final_state` held the same titles joined with `|`. The adapter now reads an unambiguous JSON array of strings as the same list.
+  - *Wrong site (C L1, trial 2).* Kane reported navigating to the app, but the browser stayed on Kane's configured default site, and step 1 recorded an empty list from it. The adapter now marks a step contradicted when its `final_state.url` is on another origin than the app. That attempt is INCONCLUSIVE (`action_target_contradicted`) and archived.
+- **Neither fix changed a verdict that the screenshots supported.** Re-evaluating all saved cases after each fix left every other verdict unchanged.
 
-## Infrastructure failures
+## Void attempts (archived in `raw/`, not counted)
 
-- **Sleep.** The PC slept on lid or button twice during runs (A L1 trial 1 and B L3 trial 1). The browser target closed and the upload failed.
-- **Upload failures.** TestMu rejected the upload for B L1 and B L4 in trial 2. Each was retried once in a fresh working folder and passed.
-- **Replay from a reused folder.** The helper's first retry design reused Kane's working folder, so Kane replayed cached steps. Optimus rejected that run as `replay_detected`. Retries now use a fresh folder. The tracked `optimus run` already isolated its attempts.
+| Case | Cause | Outcome |
+|---|---|---|
+| A L1, trial 1, first attempt | PC slept (lid or button); browser closed; upload failed | Retried once and passed |
+| B L3, trial 1, attempts 1 and 2 | PC slept during step 4; the retry replayed cached steps from a reused working folder (`replay_detected`) | Helper fixed to isolate retries; a clean third run passed |
+| B L1 and B L4, trial 2, first attempts | TestMu upload rejected | Each retried once in a fresh folder and passed |
+| C L1, trial 2, first attempt | Kane stayed on its default site despite reporting navigation | INCONCLUSIVE; a clean rerun then hit an upload failure, was retried and passed |
+| D L3, trial 2, attempts 1 and 2 | Kane's planner produced no action for three consecutive steps (Kane-side) | A clean third run passed |
 
-The queue is paused with `raw/pause`. Remaining: C L1 trial 2 needs a valid run; C L3 and C L4, and D L1, L3 and L4, in trial 2 have not run (5 cases).
+Infrastructure lessons for the repair loop: keep live runs on mains power with the lid open; give every retry its own Kane working folder; count void attempts against the credit budget; and never let an INFRA_ERROR or INCONCLUSIVE result trigger a code change.
