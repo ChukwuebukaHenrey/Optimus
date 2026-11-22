@@ -1,3 +1,4 @@
+import { parseRecordedList } from '../core/expect.js';
 import { actionForStep, type Scenario } from '../core/pack.js';
 import type { ActionKind, Observation, RunRecord, ScenarioTrace } from '../core/types.js';
 import type { KaneEvidence } from './evidence.js';
@@ -33,6 +34,14 @@ function originAgreement(reported: unknown, appUrl: string): 'contradicted' | 'u
   } catch {
     return 'unknown';
   }
+}
+
+// Two sources agree when the text is identical or both describe the same list (an empty list may be '' or 'none').
+function sameRecording(logged: string | null, final: string | null): boolean {
+  if (logged === final) return true;
+  if (logged === null || final === null) return false;
+  const [a, b] = [parseRecordedList(logged, 'exact'), parseRecordedList(final, 'exact')];
+  return a !== undefined && b !== undefined && a.length === b.length && a.every((entry, index) => entry === b[index]);
 }
 
 function matchesAction(kind: ActionKind, action: unknown) {
@@ -158,7 +167,7 @@ export function parseKaneNdjson(ndjson: string, scenario: Scenario, runtime: Run
           const logged = logValues?.get(key);
           if (!state || !Object.hasOwn(state, key)) return [key, logged ?? null];
           const final = recordedValue(state[key]);
-          return [key, logged !== undefined && logged !== final ? null : final];
+          return [key, logged !== undefined && !sameRecording(logged, final) ? null : final];
         }));
         for (const key of Object.keys(active.finalState ?? {})) priorStateKeys.add(key);
         for (const key of logValues?.keys() ?? []) priorStateKeys.add(key);

@@ -107,6 +107,16 @@ describe('provisional Kane parser', () => {
     expect(noUrl.observations.map(({ targetAgreement }) => targetAgreement)).toEqual(['unknown', 'unknown']);
   });
 
+  it('accepts an empty list recorded as [] in the log and none in final_state', () => {
+    const withRunId = open.map((event) => event.type === 'run_end' ? { ...event, run_id: 'run-0' } : event);
+    const archive: KaneEvidence = {
+      executionId: null, actions: new Map(), refreshes: new Map(),
+      recordings: new Map([['run-0', new Map<string, string | null>([['titles_before', ''], ['count_before', '0']])]]),
+    };
+    const parsed = parseKaneNdjson(encode([...withRunId, ...add, summary(), done]), scenario, runtime, archive);
+    expect(parsed.observations[0].values).toEqual({ titles_before: 'none', count_before: '0' });
+  });
+
   it('withholds recordings when explicit final_state and archive values disagree', () => {
     const withRunId = add.map((event) => event.type === 'run_end' ? { ...event, run_id: 'run-1' } : event);
     const archive: KaneEvidence = {

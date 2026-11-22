@@ -91,7 +91,8 @@ async function readSmallEntry(zip: ZipFile, entry: Entry): Promise<string | null
 }
 
 // Kane's action log sometimes stores a list recording as a JSON array of strings while run_end.final_state
-// holds the same list joined with '|'. Translate only an unambiguous array: non-empty strings without '|'.
+// holds the same list joined with '|'. Translate only an unambiguous array of non-empty strings without '|';
+// an empty array becomes an empty string.
 // Anything else is kept as recorded, so a real disagreement with final_state still withholds the value.
 export function loggedRecording(value: unknown): string | null {
   if (typeof value === 'number') return Number.isFinite(value) ? String(value) : null;
@@ -99,7 +100,7 @@ export function loggedRecording(value: unknown): string | null {
   if (!value.trimStart().startsWith('[')) return value;
   try {
     const entries: unknown = JSON.parse(value);
-    if (Array.isArray(entries) && entries.length > 0 &&
+    if (Array.isArray(entries) &&
       entries.every((entry) => typeof entry === 'string' && entry.trim() !== '' && !entry.includes('|'))) {
       return entries.join('|');
     }

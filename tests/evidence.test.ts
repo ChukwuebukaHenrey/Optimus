@@ -68,7 +68,7 @@ it.each([
   [' ["Only one"]', 'Only one'],
   ['GP Beta d|GP Alpha d', 'GP Beta d|GP Alpha d'],
   ['[Draft] notes', '[Draft] notes'],
-  ['[]', '[]'],
+  ['[]', ''],
   ['["a|b","c"]', '["a|b","c"]'],
   ['["a",2]', '["a",2]'],
   ['["a",""]', '["a",""]'],
