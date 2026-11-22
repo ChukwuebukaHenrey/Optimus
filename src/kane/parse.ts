@@ -24,6 +24,17 @@ function count(value: unknown): number | null {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null;
 }
 
+// Kane reports the page URL in run_end.final_state. A step that ended on another origin than the app under
+// test acted on the wrong site, whatever its actions reported, so its target is contradicted.
+function originAgreement(reported: unknown, appUrl: string): 'contradicted' | 'unknown' {
+  if (typeof reported !== 'string' || !reported) return 'unknown';
+  try {
+    return new URL(reported).origin === new URL(appUrl).origin ? 'unknown' : 'contradicted';
+  } catch {
+    return 'unknown';
+  }
+}
+
 function matchesAction(kind: ActionKind, action: unknown) {
   if (typeof action !== 'string' || kind === 'none') return false;
   return kind === 'interact' ? interactions.has(action) : navigations.has(action);
@@ -155,7 +166,7 @@ export function parseKaneNdjson(ndjson: string, scenario: Scenario, runtime: Run
           stepIndex: index, stepId: step.id, actionKind,
           actionRecorded: completeStep && !(archive && active.actionRecorded === true && !active.evidenceRef)
             ? active.actionRecorded : null,
-          targetAgreement: 'unknown', values,
+          targetAgreement: originAgreement(active.finalState?.url, runtime.appUrl), values,
           screenshotRef: active.screenshotRef, evidenceRef: active.evidenceRef,
         });
         active = undefined;

@@ -95,6 +95,18 @@ describe('provisional Kane parser', () => {
       .toEqual({ titles_after: null, count_after: null });
   });
 
+  it('contradicts a step whose browser ended on another origin than the app', () => {
+    const elsewhere = open.map((event) => event.type === 'run_end'
+      ? { ...event, final_state: { url: 'https://unrelated.example/', titles_before: 'none', count_before: 0 } } : event);
+    const atApp = add.map((event) => event.type === 'run_end'
+      ? { ...event, final_state: { url: 'http://localhost:8080/#list', titles_after: 'GP Book demo', count_after: 1 } } : event);
+    const parsed = parseKaneNdjson(encode([...elsewhere, ...atApp, summary(), done]), scenario, runtime);
+    expect(parsed.observations.map(({ targetAgreement }) => targetAgreement)).toEqual(['contradicted', 'unknown']);
+    expect(evaluateScenario(loaded, parsed)).toMatchObject({ verdict: 'INCONCLUSIVE', reasonCode: 'action_target_contradicted', stepId: 'before' });
+    const noUrl = parseKaneNdjson(encode([...open, ...add, summary(), done]), scenario, runtime);
+    expect(noUrl.observations.map(({ targetAgreement }) => targetAgreement)).toEqual(['unknown', 'unknown']);
+  });
+
   it('withholds recordings when explicit final_state and archive values disagree', () => {
     const withRunId = add.map((event) => event.type === 'run_end' ? { ...event, run_id: 'run-1' } : event);
     const archive: KaneEvidence = {
