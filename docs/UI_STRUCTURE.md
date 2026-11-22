@@ -4,6 +4,8 @@ This draft lists the views, components and resources for the Optimus results UI,
 
 Revision 2 adopts a design review. The comparison matrix is the visual centrepiece and is designed first. The report is organised as three levels in one file, not five separate pages. The UI is treated as a reading path that answers questions in order, not as a dump of the available data. The pasted review was cut off after its Level 1 description, so Levels 2 and 3 below are inferred from the original views.
 
+Revision 3 adds the repair loop after the closed-loop audit (`Optimus_Kane_Closed_Loop_Audit.md`). The hackathon's third requirement is that the coding agent and Kane CLI communicate through a feedback loop. The report must therefore show the full chain: verified failure → brief to the agent → code change → fresh Kane run → outcome. It must also show the proof that the contract and grader stayed unchanged. This adds a fourth level (the repair record) and a repair state in the matrix.
+
 ## Build constraints the design must respect
 
 | Constraint | Source | What it means for design |
@@ -12,24 +14,26 @@ Revision 2 adopts a design review. The comparison matrix is the visual centrepie
 | Content Security Policy `default-src 'none'`, inline styles only | `report.ts` | No JavaScript, web fonts from a CDN, external images or icon fonts. Interactions must be pure HTML and CSS: links, `<details>` disclosure, `:target`. Icons must be inline SVG. Fonts must be system fonts, or a font embedded in the file if the policy is widened for it. |
 | Every value is escaped text | `report.ts` | App titles, reasons and recorded values can be long or odd. Layouts must wrap and must not depend on short strings. |
 | No LLM, no subjective quality | AGENTS.md rule 1 and scope | The UI shows verdicts, reasons and evidence. It shows no AI summaries, grades out of 10, or code-quality opinions. |
+| The agent repairs; it never judges | AGENTS.md rule 1 (amended) and the closed-loop audit | Content from the coding agent (its brief, its code diff, its final message) is shown in clearly labelled agent panels. Verdicts always come from Optimus and are never shown in an agent panel. |
 | Education wording only in reports and README | AGENTS.md | The UI may say "submission", "assignment" and "student". The engine data uses "app", "pack" and "scenario". |
 | Out of scope for the hackathon | AGENTS.md | No hosted dashboard, LMS integration, accounts, or editing packs in the UI. |
 
 ## Reading path
 
-The report answers three questions in order. Each level links to the next with in-page anchors, so no scripts are needed.
+The report answers four questions in order. Each level links to the next with in-page anchors, so no scripts are needed.
 
 | Question the reader has | Level | Answer on screen |
 |---|---|---|
 | Which builds meet the contract? | 1. Comparison overview | The verdict matrix |
 | Why did this build get these verdicts? | 2. Build detail | Scenario verdicts with plain reasons |
 | What is the proof? | 3. Scenario evidence | Steps, recorded values and screenshots |
+| Did the fix work, and can it be trusted? | 4. Repair record | Failure, brief, code change, fresh Kane run, outcome and integrity checks |
 
 Two supporting sections sit outside the main path: the contract, for transparency and reproducibility, and the calibration summary, for the hackathon demo.
 
-## Report structure: one file, three levels
+## Report structure: one file, four levels
 
-The comparison report is a single static HTML file. Screenshots sit next to it in an `evidence/` folder. Anchors give every level a stable address, for example `#build-b` and `#build-b-L3`, so a matrix cell links straight to its evidence. The per-app `report.html` that exists today becomes Level 2 and Level 3 for a single build.
+The comparison report is a single static HTML file. Screenshots sit next to it in an `evidence/` folder. Anchors give every level a stable address, for example `#build-b`, `#build-b-L3` and `#repair-c`, so a matrix cell links straight to its evidence or repair record. The per-app `report.html` that exists today becomes Level 2 and Level 3 for a single build.
 
 ### Level 1: Comparison overview (design first)
 
@@ -40,6 +44,8 @@ The centrepiece. One screen shows that one contract judged many different builds
 - **Verdict matrix:** one row per build and one column per scenario, with plain names ("Add", "Remove", "Persist") and the scenario ID as a secondary label. Each cell is a verdict badge linking to that scenario's evidence.
 - **Score column:** a percentage per build when every scenario is resolved, otherwise "Provisional".
 - **Legend:** the six verdicts in plain words. INCONCLUSIVE and INFRA_ERROR must read as "no judgement", never as failure.
+- **Repair state:** a build that went through the repair loop shows both runs in its cells, for example "FAIL → PASS", with the baseline verdict dimmed or struck through. The row links to its repair record. A build whose loop stopped shows the stopping decision, for example "Stopped: needs evidence".
+- **Repair summary tiles:** loops run, repairs that reached PASS, loops stopped, and total attempts.
 - **Mock data rule:** a mock that is not built from real run data is labelled "Illustrative". Real Gate 1 v5 data can be used once the matrix completes.
 
 Data status: each run already writes `result.json` with the pack hash, app URL, score and scenario results. The matrix only needs a combiner over those files. No new engine data is required.
@@ -65,6 +71,24 @@ The proof behind one verdict, reached from a matrix cell or a scenario card.
 - **Evidence references:** the archive path and step entries, as plain text for auditors. This is collapsed by default.
 
 Data status: recorded values and screenshot references are in the normalized trace. Screenshots must be copied out of the sealed archive into `evidence/`, and the page's security policy must allow `img-src 'self'`.
+
+### Level 4: Repair record (the closed-loop proof)
+
+One loop for one build, reached from the matrix row or the build header. It reads top to bottom as a timeline, and each stage shows its evidence.
+
+1. **Baseline run.** The Kane execution ID, pack hash, and the scenario verdicts. The verified FAIL that started the loop is highlighted and links to its Level 3 evidence.
+2. **Decision gate.** The controller's decision with its reason: `REPAIR`, `COMPLETE`, `NEEDS_EVIDENCE`, `RETRY_INFRASTRUCTURE` or `STOP`. The page states that only a verified FAIL can start a repair, and that INCONCLUSIVE never does.
+3. **Brief sent to the agent.** The exact text the agent received: scenario, requirement in plain language, expected and observed values, screenshot reference and allowed scope. It is labelled "Sent to the coding agent". A note confirms that the pack and expected values were not included.
+4. **Agent action.** Agent name and version, start and end times, and the agent's final message, collapsed by default and labelled as agent output.
+5. **Code change.** The diff of the app files, rendered as static `<pre>` lines marked added or removed, with a file list and line counts.
+6. **Integrity checks.** Only allowed app files changed; the pack hash is unchanged; the evaluator and adapter file hashes are unchanged; the browser profile was fresh. Each check is a pass or problem line.
+7. **Fresh Kane run.** A new execution ID and nonce, the same pack hash, and the full Gate 1 scope (L1, L3, L4), not only the failed scenario. Each verdict links to its Level 3 evidence.
+8. **Outcome.** The final state, for example "Repaired: L3 FAIL → PASS; L1 and L4 still PASS", or the stopping reason.
+9. **Budget.** Attempts used out of 3, credits used out of 1,500, and minutes used out of 20. Void infrastructure attempts are listed separately with their own retry count.
+
+A loop with several attempts repeats stages 3–7 per attempt, as numbered attempt blocks.
+
+Data status: needs `repair-history.json` from the new repair controller, recording the baseline execution, brief, agent invocation, diff, hashes, new execution, attempts, budget and stopping reason. Nothing produces it yet.
 
 ### Supporting section A: Contract
 
@@ -100,8 +124,17 @@ Out of scope until after grading is proven: the Phase 4 repair loop view.
 | C14 | Totals strip | Overview, Calibration | Counts per verdict; optional credits and duration. |
 | C15 | Empty and error states | All | "No scenario results", "trace missing", and "evidence archive unavailable". |
 | C16 | Notes list | Calibration | Dated, plain-text entries for stops and contract revisions. |
+| C17 | Repair cell state | Overview | A matrix cell showing a baseline and a post-repair verdict, for example "FAIL → PASS". The baseline is dimmed or struck through. |
+| C18 | Decision badge | Repair | Five states: COMPLETE, REPAIR, NEEDS_EVIDENCE, RETRY_INFRASTRUCTURE, STOP. These need a visual family distinct from the verdict badges, because a decision is not a verdict. |
+| C19 | Repair timeline | Repair | Vertical stages (baseline, decision, brief, agent, change, integrity, rerun, outcome) with connectors, and repeated attempt blocks. |
+| C20 | Agent panel | Repair | A container for content that came from or went to the coding agent (the brief, its final message), with a distinct label and border, so that it is never mistaken for an Optimus verdict. |
+| C21 | Diff view | Repair | Static code diff with added and removed lines, line numbers, the file name header, and a "no other files changed" footer. Long diffs collapse with `<details>`. |
+| C22 | Integrity seal | Repair | Four checks (allowed files only, pack hash unchanged, grader hashes unchanged, fresh profile), each with the hash or file list available in a disclosure. |
+| C23 | Budget meter | Repair, Overview | Attempts out of 3, credits out of 1,500, and minutes out of 20, plus a void-attempt count. |
 
 ## Verdict meanings for the legend and badges
+
+Repair decisions (C18) use their own neutral family, such as outlined badges, so they never compete with verdict colours.
 
 | Verdict | Plain meaning | Suggested tone |
 |---|---|---|
@@ -120,13 +153,15 @@ Out of scope until after grading is proven: the Phase 4 repair loop view.
 4. **Layout references:** a dense comparison table that stays readable on a laptop and reflows on a phone, a card list, and a two-up image comparison.
 5. **Screenshot frame:** a light browser-like frame or a plain border for the 1600×900 screenshots, with a caption style.
 6. **Print style:** instructors may print or export to PDF. Verdict badges must stay readable in greyscale.
-7. **Sample content for mocks:** use the real Gate 1 v5 data, for example "GP Beta g5-a-1" or "The Hobbit | Kindred | GP Book g5-b-1", and one long reason string. This tests wrapping.
+7. **Repair-loop references:** a vertical timeline or stepper pattern, a code diff style that reads well without syntax highlighting, and an "agent output" container style (for example a terminal-like frame) that is clearly different from Optimus's own panels.
+8. **Sample content for mocks:** use the real Gate 1 v5 data, for example "GP Beta g5-a-1" or "The Hobbit | Kindred | GP Book g5-b-1", and one long reason string. This tests wrapping.
 
 ## Design order and build order
 
-Design in reading order. Build in dependency order. The two now mostly agree.
+Design in reading order. Build in dependency order.
 
-1. **Design** the Level 1 overview first: matrix, tiles, legend and verdict badges. **Build** it as a combiner over existing `result.json` files. No new engine data is needed.
-2. Design and build Level 2: restyle the existing per-app report with the new tokens, and add the integrity checklist and run identifiers to `result.json`.
-3. Design and build Level 3: copy the screenshots and recorded values into the report folder.
-4. Add the contract section, then the calibration summary for the demo.
+1. **Design** the Level 1 overview first, including the repair cell state: matrix, tiles, legend, verdict badges and decision badges. **Build** it as a combiner over existing `result.json` files.
+2. **Design** the Level 4 repair record next, because it is the closed-loop proof the hackathon judges look for. **Build** it once the repair controller writes `repair-history.json`.
+3. Design and build Level 2: restyle the per-app report, and add the integrity checklist and run identifiers to `result.json`.
+4. Design and build Level 3: copy the screenshots and recorded values into the report folder.
+5. Add the contract section, then the calibration summary.
