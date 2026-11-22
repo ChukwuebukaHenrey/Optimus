@@ -2,6 +2,8 @@
 
 This draft lists the views, components and resources for the Optimus results UI, so design references can be gathered before it is built. It follows AGENTS.md: one contract (a pack) applied unchanged to many independently built apps, with evidence-backed verdicts.
 
+Revision 2 adopts a design review. The comparison matrix is the visual centrepiece and is designed first. The report is organised as three levels in one file, not five separate pages. The UI is treated as a reading path that answers questions in order, not as a dump of the available data. The pasted review was cut off after its Level 1 description, so Levels 2 and 3 below are inferred from the original views.
+
 ## Build constraints the design must respect
 
 | Constraint | Source | What it means for design |
@@ -13,87 +15,91 @@ This draft lists the views, components and resources for the Optimus results UI,
 | Education wording only in reports and README | AGENTS.md | The UI may say "submission", "assignment" and "student". The engine data uses "app", "pack" and "scenario". |
 | Out of scope for the hackathon | AGENTS.md | No hosted dashboard, LMS integration, accounts, or editing packs in the UI. |
 
-## Views
+## Reading path
 
-### 1. Comparison matrix (main view; needs new data)
+The report answers three questions in order. Each level links to the next with in-page anchors, so no scripts are needed.
 
-One contract run against many builds. This is the core of the pitch: "One contract. Many different builds. Evidence-backed verdicts."
+| Question the reader has | Level | Answer on screen |
+|---|---|---|
+| Which builds meet the contract? | 1. Comparison overview | The verdict matrix |
+| Why did this build get these verdicts? | 2. Build detail | Scenario verdicts with plain reasons |
+| What is the proof? | 3. Scenario evidence | Steps, recorded values and screenshots |
 
-- **Header:** pack name and version, short pack hash, the number of apps, and the date. A line confirming that every app used the same pack hash.
-- **Matrix table:** one row per app and one column per scenario (L1 Add, L3 Remove, L4 Persist, later L2 Read status). Each cell shows a verdict badge and links to that scenario in the app detail view.
-- **Score column:** a percentage when every scenario has PASS or FAIL, otherwise "Provisional".
-- **Legend:** what each of the six verdicts means, in plain words.
-- **Totals strip:** counts per verdict. Credits and time are optional, and are useful in the Gate demo.
+Two supporting sections sit outside the main path: the contract, for transparency and reproducibility, and the calibration summary, for the hackathon demo.
 
-Data status: one `result.json` exists per app run. Combining several runs into one matrix is not built yet.
+## Report structure: one file, three levels
 
-### 2. App detail (exists in basic form)
+The comparison report is a single static HTML file. Screenshots sit next to it in an `evidence/` folder. Anchors give every level a stable address, for example `#build-b` and `#build-b-L3`, so a matrix cell links straight to its evidence. The per-app `report.html` that exists today becomes Level 2 and Level 3 for a single build.
 
-One app's assessment.
+### Level 1: Comparison overview (design first)
 
-- **Summary block:** app URL, run nonce, pack hash, score or "Provisional", Kane version and execution ID.
-- **Run integrity checklist:** run completed; replay decisions = 0; evidence archive present; pack hash matches. Each item is shown as a pass or fail line.
-- **Scenario result list:** one scenario card each (component C3).
+The centrepiece. One screen shows that one contract judged many different builds.
 
-Data status: the score, URL, nonce, hash and results exist today. Kane version, execution ID and the integrity fields are in the trace but not yet copied into `result.json`.
+- **Identity bar:** assessment name (for example "Library assessment"), contract version and short hash, the number of builds, and a line confirming that every build used the same contract hash.
+- **Summary tiles:** builds evaluated, scenarios, verdicts issued, and how many verdicts are resolved (PASS or FAIL) versus unresolved.
+- **Verdict matrix:** one row per build and one column per scenario, with plain names ("Add", "Remove", "Persist") and the scenario ID as a secondary label. Each cell is a verdict badge linking to that scenario's evidence.
+- **Score column:** a percentage per build when every scenario is resolved, otherwise "Provisional".
+- **Legend:** the six verdicts in plain words. INCONCLUSIVE and INFRA_ERROR must read as "no judgement", never as failure.
+- **Mock data rule:** a mock that is not built from real run data is labelled "Illustrative". Real Gate 1 v5 data can be used once the matrix completes.
 
-### 3. Scenario evidence (needs new data)
+Data status: each run already writes `result.json` with the pack hash, app URL, score and scenario results. The matrix only needs a combiner over those files. No new engine data is required.
 
-Why a verdict was given, shown with evidence, not claims.
+### Level 2: Build detail
 
-- **Verdict and reason:** badge, plain-English reason and reason code.
-- **Step timeline:** each pack step in order. For each step: the instruction, whether the action was recorded, and the values recorded at that step. The step that produced the verdict is highlighted.
-- **Before and after comparison:** recorded list values side by side, with entries marked as added, removed or unchanged, and the counts with their difference.
-- **Expected and observed:** for a FAIL, the failing assertion in words, for example "GP Alpha should be gone after removal", with what was observed.
-- **Screenshot pair:** the archived screenshots for the before step and the after step, captioned with the step name.
-- **Evidence references:** the archive path and the step entries, as plain text for auditors.
+One build's assessment, reached from a matrix row.
 
-Data status: recorded values and screenshot references are in the normalized trace, not in `result.json`. Screenshots are inside the sealed evidence archive and would need to be copied next to the report. The page's security policy must allow `img-src 'self'` (or `data:` images) when that is added.
+- **Build header:** build name, app URL, run nonce, score or "Provisional", Kane version and execution ID.
+- **Run integrity checklist:** run completed; replay decisions = 0; evidence archive present; contract hash matches.
+- **Scenario cards:** one per scenario, giving the verdict, a one-sentence reason, and for a FAIL the expected and observed values. Each card links to Level 3.
 
-### 4. Contract view (needs new data)
+Data status: the score, URL, nonce, hash and results exist today. Kane version, execution ID and the integrity fields are in the trace but not yet in `result.json`.
 
-What every app was tested against, and the split between what Kane saw and what Optimus judged.
+### Level 3: Scenario evidence
 
-- **Pack header:** name, version, full hash, support statement and persistence statement.
-- **Per scenario, two clearly separated panels:**
-  - **Sent to Kane:** the title, each step's action, and its "record" prompts. These are neutral instructions only.
-  - **Judged by Optimus:** the assertions in words, prerequisites, designated new values and the evidence rule.
-- **Nonce note:** `{{nonce}}` is replaced per run, and the hash covers the unexpanded pack.
+The proof behind one verdict, reached from a matrix cell or a scenario card.
 
-Data status: everything is in `pack.yaml`. The report does not include it yet.
+- **Verdict and reason:** badge, plain-English reason, reason code.
+- **Step timeline:** each step's instruction, whether the action was recorded, and the values recorded at that step. The step that decided the verdict is highlighted.
+- **Before and after comparison:** recorded lists side by side, with entries marked added, removed or unchanged, and counts with their difference.
+- **Screenshot pair:** the archived before and after screenshots with step captions.
+- **Evidence references:** the archive path and step entries, as plain text for auditors. This is collapsed by default.
 
-### 5. Gate and calibration summary (optional; hackathon demo)
+Data status: recorded values and screenshot references are in the normalized trace. Screenshots must be copied out of the sealed archive into `evidence/`, and the page's security policy must allow `img-src 'self'`.
 
-Proof that the grader itself is trustworthy before it judges anyone.
+### Supporting section A: Contract
 
-- **Expected and actual table:** app, trial, scenario, expected verdict, actual verdict, screenshot agreement, seconds and credits. This mirrors `runs/gate1-v5/REPORT.md`.
-- **Agreement badges:** "matches expected" and "matches screenshots".
-- **Notes list:** infrastructure stops and contract revisions, with their reasons.
+What every build was tested against. It is linked from the identity bar.
 
-Data status: the data exists in run folders and reports. No page renders it yet.
+- Pack name, version, full hash, and the support and persistence statements.
+- Per scenario, two visibly separate panels: **Sent to Kane** (title, actions, record prompts) and **Judged by Optimus** (assertions in words, prerequisites, designated new values, evidence rule).
+- A note that `{{nonce}}` is filled in per run and that the hash covers the unexpanded pack.
 
-Out of scope until after grading is proven: the Phase 4 repair loop view (attempts, briefs, re-runs).
+### Supporting section B: Calibration summary (hackathon demo only)
+
+Proof that the grader agrees with known answers before it judges anyone: expected and actual verdict, screenshot agreement, seconds and credits per case, and notes on void attempts and contract revisions. This is not part of the product report.
+
+Out of scope until after grading is proven: the Phase 4 repair loop view.
 
 ## Components
 
 | # | Component | Used in | Content and states |
 |---|---|---|---|
 | C1 | Verdict badge | All views | Six states: PASS, FAIL, INCONCLUSIVE, NOT_RUN, INFRA_ERROR, UNSUPPORTED. Each needs a colour, an icon and its text, because colour alone is not enough. A compact variant for matrix cells and a full variant for headers. |
-| C2 | Score display | 1, 2 | A percentage, or "Provisional" with a one-line explanation. |
-| C3 | Scenario card | 2 | Title, verdict badge, reason, reason code chip, failing step, and expected and observed values. A collapsed and an expanded state, using `<details>`. |
-| C4 | Reason code chip | 2, 3 | A monospace token such as `recording_inconsistent`, with a plain-English line beside it. |
-| C5 | Hash and ID chip | 1, 2, 4 | A shortened hash (first 8 and last 4 characters) with the full value available in a disclosure. There is no copy button, because the page runs no scripts. |
-| C6 | Matrix cell | 1 | A compact verdict badge that links to the scenario. It also needs an empty state for "not run". |
-| C7 | Integrity checklist | 2 | Four lines, each with an OK or problem state and short text. |
-| C8 | Step timeline | 3 | A vertical list of steps showing the action text, "action recorded: yes / no / unknown", and the recorded values. One step can be highlighted as decisive. |
-| C9 | List difference | 3 | Before and after columns with added, removed and unchanged markers. It must handle long titles and empty lists ("none"). |
-| C10 | Count difference | 3 | Before → after with the signed change, for example 4 → 3 (−1). |
-| C11 | Screenshot pair | 3 | Two framed screenshots with captions. Full-size viewing through a link to the image file or a `:target` overlay. A missing-screenshot placeholder. |
-| C12 | Contract step block | 4 | The instruction text, the record prompts, and an evaluator-only panel with a different visual treatment. |
-| C13 | Legend | 1 | All six verdicts with one-sentence meanings. |
-| C14 | Totals strip | 1, 5 | Counts per verdict; optional credits and duration. |
+| C2 | Score display | Overview, Build | A percentage, or "Provisional" with a one-line explanation. |
+| C3 | Scenario card | Build | Title, verdict badge, reason, reason code chip, failing step, and expected and observed values. A collapsed and an expanded state, using `<details>`. |
+| C4 | Reason code chip | Build, Scenario | A monospace token such as `recording_inconsistent`, with a plain-English line beside it. |
+| C5 | Hash and ID chip | Overview, Build, Contract | A shortened hash (first 8 and last 4 characters) with the full value available in a disclosure. There is no copy button, because the page runs no scripts. |
+| C6 | Matrix cell | Overview | A compact verdict badge that links to the scenario. It also needs an empty state for "not run". |
+| C7 | Integrity checklist | Build | Four lines, each with an OK or problem state and short text. |
+| C8 | Step timeline | Scenario | A vertical list of steps showing the action text, "action recorded: yes / no / unknown", and the recorded values. One step can be highlighted as decisive. |
+| C9 | List difference | Scenario | Before and after columns with added, removed and unchanged markers. It must handle long titles and empty lists ("none"). |
+| C10 | Count difference | Scenario | Before → after with the signed change, for example 4 → 3 (−1). |
+| C11 | Screenshot pair | Scenario | Two framed screenshots with captions. Full-size viewing through a link to the image file or a `:target` overlay. A missing-screenshot placeholder. |
+| C12 | Contract step block | Contract | The instruction text, the record prompts, and an evaluator-only panel with a different visual treatment. |
+| C13 | Legend | Overview | All six verdicts with one-sentence meanings. |
+| C14 | Totals strip | Overview, Calibration | Counts per verdict; optional credits and duration. |
 | C15 | Empty and error states | All | "No scenario results", "trace missing", and "evidence archive unavailable". |
-| C16 | Notes list | 5 | Dated, plain-text entries for stops and contract revisions. |
+| C16 | Notes list | Calibration | Dated, plain-text entries for stops and contract revisions. |
 
 ## Verdict meanings for the legend and badges
 
@@ -116,10 +122,11 @@ Out of scope until after grading is proven: the Phase 4 repair loop view (attemp
 6. **Print style:** instructors may print or export to PDF. Verdict badges must stay readable in greyscale.
 7. **Sample content for mocks:** use the real Gate 1 v5 data, for example "GP Beta g5-a-1" or "The Hobbit | Kindred | GP Book g5-b-1", and one long reason string. This tests wrapping.
 
-## Build order once the designs are ready
+## Design order and build order
 
-1. Restyle the existing app detail view (2) and the scenario card (C3) with the new tokens and icons. This needs no new data.
-2. Add the integrity checklist (C7) and run identifiers to `result.json`, then render them.
-3. Add a combined report across apps: the comparison matrix (1).
-4. Copy the screenshot pair and recorded values into the report folder: the scenario evidence view (3).
-5. Add the contract view (4) and the optional Gate summary (5).
+Design in reading order. Build in dependency order. The two now mostly agree.
+
+1. **Design** the Level 1 overview first: matrix, tiles, legend and verdict badges. **Build** it as a combiner over existing `result.json` files. No new engine data is needed.
+2. Design and build Level 2: restyle the existing per-app report with the new tokens, and add the integrity checklist and run identifiers to `result.json`.
+3. Design and build Level 3: copy the screenshots and recorded values into the report folder.
+4. Add the contract section, then the calibration summary for the demo.
