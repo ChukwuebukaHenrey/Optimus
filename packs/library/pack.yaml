@@ -1,5 +1,5 @@
 pack: library
-version: 4
+version: 5
 support: DOM-rendered apps that list books as visible text and keep data in the browser
 persistence: Survives a page reload in the same browser session
 scenarios:
@@ -69,7 +69,7 @@ scenarios:
           count_before: the number of books currently shown
       - id: reload
         action: reload
-        do: Reload the page in the current browser session.
+        do: Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.
         record:
           titles_after: the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none'
           count_after: the number of books currently shown

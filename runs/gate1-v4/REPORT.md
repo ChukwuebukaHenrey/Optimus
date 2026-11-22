@@ -31,3 +31,7 @@ Optimus returned INCONCLUSIVE because no navigation was recorded for the reload 
 The evidence is in `raw/g4-b-1/L4/` (stdout, metrics with the server request log, and the archive path). In the archive, the press is in `logs/2-actions.ndjson` and `steps/14-2-1/step.json`.
 
 The queue is paused with `raw/pause`. Remaining: B trial 1 is done; C and D trial 1 and all of trial 2 (18 cases) have not run.
+
+## Outcome
+
+v4 is superseded by v5, which rewords only the reload action so that it asks for the browser's refresh action and rules out a keyboard shortcut. These six v4 cases stay archived and do not count toward v5. Gate 1 restarts from the reference apps under v5 in `runs/gate1-v5/`.
