@@ -6,13 +6,15 @@ Revision 2 adopts a design review. The comparison matrix is the visual centrepie
 
 Revision 3 adds the repair loop after the closed-loop audit (`Optimus_Kane_Closed_Loop_Audit.md`). The hackathon's third requirement is that the coding agent and Kane CLI communicate through a feedback loop. The report must therefore show the full chain: verified failure → brief to the agent → code change → fresh Kane run → outcome. It must also show the proof that the contract and grader stayed unchanged. This adds a fourth level (the repair record) and a repair state in the matrix.
 
+Revision 4 applies a critical review of Revision 3 (`docs/Optimus_UI_Structure_v3_Critical_Review.md`). Level 4 now appears only for builds with a recorded repair session. Every repair claim is rendered from a machine-generated chain of IDs. Aggregation is repair-aware. The report is an offline bundle, not a single file. Baseline verdicts are never struck through. The repair controller and its records come before any styling of the repair view. This is the last UI revision before the closed loop runs for real.
+
 ## Build constraints the design must respect
 
 | Constraint | Source | What it means for design |
 |---|---|---|
-| Static HTML report written by `src/core/report.ts` next to `result.json` | AGENTS.md layout | One self-contained HTML file per report, opened from disk. No server and no login. |
-| Content Security Policy `default-src 'none'`, inline styles only | `report.ts` | No JavaScript, web fonts from a CDN, external images or icon fonts. Interactions must be pure HTML and CSS: links, `<details>` disclosure, `:target`. Icons must be inline SVG. Fonts must be system fonts, or a font embedded in the file if the policy is widened for it. |
-| Every value is escaped text | `report.ts` | App titles, reasons and recorded values can be long or odd. Layouts must wrap and must not depend on short strings. |
+| Offline report bundle written next to `result.json` | AGENTS.md layout and the v3 review | An `index.html` entry point plus an `evidence/` folder for screenshots, opened from disk. No server and no login. It is a bundle, not one self-contained file. |
+| Content Security Policy `default-src 'none'`, inline styles only | `report.ts` | No JavaScript, web fonts from a CDN, external images or icon fonts. Interactions must be pure HTML and CSS: links, `<details>` disclosure, `:target`. Icons must be inline SVG. Fonts must be system fonts, or a font embedded in the file if the policy is widened for it. The policy must add `img-src 'self'` for the bundle's screenshots, and this must be tested. |
+| Every value is escaped text | `report.ts` | App titles, reasons, recorded values, agent output, diffs and paths are untrusted. They are always escaped. Layouts must wrap and must not depend on short strings. |
 | No LLM, no subjective quality | AGENTS.md rule 1 and scope | The UI shows verdicts, reasons and evidence. It shows no AI summaries, grades out of 10, or code-quality opinions. |
 | The agent repairs; it never judges | AGENTS.md rule 1 (amended) and the closed-loop audit | Content from the coding agent (its brief, its code diff, its final message) is shown in clearly labelled agent panels. Verdicts always come from Optimus and are never shown in an agent panel. |
 | Education wording only in reports and README | AGENTS.md | The UI may say "submission", "assignment" and "student". The engine data uses "app", "pack" and "scenario". |
@@ -33,7 +35,7 @@ Two supporting sections sit outside the main path: the contract, for transparenc
 
 ## Report structure: one file, four levels
 
-The comparison report is a single static HTML file. Screenshots sit next to it in an `evidence/` folder. Anchors give every level a stable address, for example `#build-b`, `#build-b-L3` and `#repair-c`, so a matrix cell links straight to its evidence or repair record. The per-app `report.html` that exists today becomes Level 2 and Level 3 for a single build.
+The comparison report is an offline bundle: `index.html` with screenshots in an `evidence/` folder beside it. Anchors give every level a stable address, for example `#build-b`, `#build-b-L3` and `#repair-c`, so a matrix cell links straight to its evidence or repair record. The per-app `report.html` that exists today becomes Level 2 and Level 3 for a single build.
 
 ### Level 1: Comparison overview (design first)
 
@@ -44,11 +46,11 @@ The centrepiece. One screen shows that one contract judged many different builds
 - **Verdict matrix:** one row per build and one column per scenario, with plain names ("Add", "Remove", "Persist") and the scenario ID as a secondary label. Each cell is a verdict badge linking to that scenario's evidence.
 - **Score column:** a percentage per build when every scenario is resolved, otherwise "Provisional".
 - **Legend:** the six verdicts in plain words. INCONCLUSIVE and INFRA_ERROR must read as "no judgement", never as failure.
-- **Repair state:** a build that went through the repair loop shows both runs in its cells, for example "FAIL → PASS", with the baseline verdict dimmed or struck through. The row links to its repair record. A build whose loop stopped shows the stopping decision, for example "Stopped: needs evidence".
+- **Repair state:** for a build that went through the repair loop, each cell shows the baseline verdict and the latest verified verdict as two clearly labelled states, for example "Baseline FAIL · Verified PASS". The baseline is never struck through or dimmed, because it is a valid record of what Kane observed. A build-level column shows the repair state ("No repair", "Repaired", "Stopped: needs evidence") and links to the repair record. A post-repair verdict appears only after a fresh Kane run has established it.
 - **Repair summary tiles:** loops run, repairs that reached PASS, loops stopped, and total attempts.
 - **Mock data rule:** a mock that is not built from real run data is labelled "Illustrative". Real Gate 1 v5 data can be used once the matrix completes.
 
-Data status: each run already writes `result.json` with the pack hash, app URL, score and scenario results. The matrix only needs a combiner over those files. No new engine data is required.
+Data status: each run already writes `result.json` with the pack hash, app URL, score and scenario results. That is enough for the baseline matrix. The repair-aware matrix needs a report assembler that groups runs by explicit keys: build ID, unexpanded pack hash and calibrated scenario scope, repair-session ID, baseline run ID, numbered attempts, and final verification run ID. It never infers the latest valid result from timestamps, file names or folder order.
 
 ### Level 2: Build detail
 
@@ -74,13 +76,13 @@ Data status: recorded values and screenshot references are in the normalized tra
 
 ### Level 4: Repair record (the closed-loop proof)
 
-One loop for one build, reached from the matrix row or the build header. It reads top to bottom as a timeline, and each stage shows its evidence.
+Optional. It is rendered only for builds with a recorded repair session, so ordinary grading reports make complete sense without it. One loop for one build, reached from the matrix row or the build header. It reads top to bottom as a timeline, and each stage shows its evidence.
 
 1. **Baseline run.** The Kane execution ID, pack hash, and the scenario verdicts. The verified FAIL that started the loop is highlighted and links to its Level 3 evidence.
 2. **Decision gate.** The controller's decision with its reason: `REPAIR`, `COMPLETE`, `NEEDS_EVIDENCE`, `RETRY_INFRASTRUCTURE` or `STOP`. The page states that only a verified FAIL can start a repair, and that INCONCLUSIVE never does.
-3. **Brief sent to the agent.** The exact text the agent received: scenario, requirement in plain language, expected and observed values, screenshot reference and allowed scope. It is labelled "Sent to the coding agent". A note confirms that the pack and expected values were not included.
+3. **Brief sent to the agent.** The exact text the agent received: scenario, requirement in plain language, expected and observed values, screenshot reference and allowed scope. It is labelled "Sent to the coding agent". A note confirms that the agent received only this failure's plain-language requirement and expected-versus-observed behaviour, never the full pack, unrelated assertions or the evaluator.
 4. **Agent action.** Agent name and version, start and end times, and the agent's final message, collapsed by default and labelled as agent output.
-5. **Code change.** The diff of the app files, rendered as static `<pre>` lines marked added or removed, with a file list and line counts.
+5. **Code change.** The app's source revision before and after the repair, and the diff between them, rendered as static `<pre>` lines marked added or removed, with a file list and line counts.
 6. **Integrity checks.** Only allowed app files changed; the pack hash is unchanged; the evaluator and adapter file hashes are unchanged; the browser profile was fresh. Each check is a pass or problem line.
 7. **Fresh Kane run.** A new execution ID and nonce, the same pack hash, and the full Gate 1 scope (L1, L3, L4), not only the failed scenario. Each verdict links to its Level 3 evidence.
 8. **Outcome.** The final state, for example "Repaired: L3 FAIL → PASS; L1 and L4 still PASS", or the stopping reason.
@@ -88,7 +90,7 @@ One loop for one build, reached from the matrix row or the build header. It read
 
 A loop with several attempts repeats stages 3–7 per attempt, as numbered attempt blocks.
 
-Data status: needs `repair-history.json` from the new repair controller, recording the baseline execution, brief, agent invocation, diff, hashes, new execution, attempts, budget and stopping reason. Nothing produces it yet.
+Data status: needs `repair-history.json` from the new repair controller. Each session has an ID and a machine-generated chain: `baselineRunId → decisionId → briefId → agentInvocationId → sourceRevisionBefore/After → verificationRunId`. Each link carries timestamps, execution status, sanitized agent input and output, hashes and the Kane archive reference. The timeline is rendered only from these records, never assembled by hand. This is an inspectable audit trail, not a proof of causality. Nothing produces it yet.
 
 ### Supporting section A: Contract
 
@@ -102,7 +104,7 @@ What every build was tested against. It is linked from the identity bar.
 
 Proof that the grader agrees with known answers before it judges anyone: expected and actual verdict, screenshot agreement, seconds and credits per case, and notes on void attempts and contract revisions. This is not part of the product report.
 
-Out of scope until after grading is proven: the Phase 4 repair loop view.
+Level 4 is rendered only when repair history exists.
 
 ## Components
 
@@ -124,12 +126,12 @@ Out of scope until after grading is proven: the Phase 4 repair loop view.
 | C14 | Totals strip | Overview, Calibration | Counts per verdict; optional credits and duration. |
 | C15 | Empty and error states | All | "No scenario results", "trace missing", and "evidence archive unavailable". |
 | C16 | Notes list | Calibration | Dated, plain-text entries for stops and contract revisions. |
-| C17 | Repair cell state | Overview | A matrix cell showing a baseline and a post-repair verdict, for example "FAIL → PASS". The baseline is dimmed or struck through. |
+| C17 | Repair cell state | Overview | A matrix cell showing the baseline verdict and the latest verified verdict as two labelled states. The baseline is never struck through or dimmed. |
 | C18 | Decision badge | Repair | Five states: COMPLETE, REPAIR, NEEDS_EVIDENCE, RETRY_INFRASTRUCTURE, STOP. These need a visual family distinct from the verdict badges, because a decision is not a verdict. |
 | C19 | Repair timeline | Repair | Vertical stages (baseline, decision, brief, agent, change, integrity, rerun, outcome) with connectors, and repeated attempt blocks. |
 | C20 | Agent panel | Repair | A container for content that came from or went to the coding agent (the brief, its final message), with a distinct label and border, so that it is never mistaken for an Optimus verdict. |
 | C21 | Diff view | Repair | Static code diff with added and removed lines, line numbers, the file name header, and a "no other files changed" footer. Long diffs collapse with `<details>`. |
-| C22 | Integrity seal | Repair | Four checks (allowed files only, pack hash unchanged, grader hashes unchanged, fresh profile), each with the hash or file list available in a disclosure. |
+| C22 | Integrity seal | Repair | Checks for: changes only inside the isolated app checkout; pack hash recomputed and unchanged; evaluator and adapter hashes unchanged; fresh browser context with a new execution ID and nonce; every calibrated scenario rerun; original Kane archives preserved. Each has its hash or file list in a disclosure. Matching hashes do not prove that a protected file was never read; workspace isolation is the primary control. |
 | C23 | Budget meter | Repair, Overview | Attempts out of 3, credits out of 1,500, and minutes out of 20, plus a void-attempt count. |
 
 ## Verdict meanings for the legend and badges
@@ -158,10 +160,17 @@ Repair decisions (C18) use their own neutral family, such as outlined badges, so
 
 ## Design order and build order
 
-Design in reading order. Build in dependency order.
+Design in reading order. Build in dependency order, and never render a repair journey that real records have not produced.
 
-1. **Design** the Level 1 overview first, including the repair cell state: matrix, tiles, legend, verdict badges and decision badges. **Build** it as a combiner over existing `result.json` files.
-2. **Design** the Level 4 repair record next, because it is the closed-loop proof the hackathon judges look for. **Build** it once the repair controller writes `repair-history.json`.
-3. Design and build Level 2: restyle the per-app report, and add the integrity checklist and run identifiers to `result.json`.
-4. Design and build Level 3: copy the screenshots and recorded values into the report folder.
-5. Add the contract section, then the calibration summary.
+| Priority | Deliverable | Acceptance criterion |
+|---|---|---|
+| P0 | Repair controller | A real verified FAIL triggers constrained agent work |
+| P0 | Agent feedback and repair | The agent invocation and code changes are recorded |
+| P0 | Fresh Kane verification | Same approved contract, fresh run, full calibrated scenario scope |
+| P0 | Minimal repair record (Level 4) | Rendered only from real `repair-history.json` data |
+| P0 | Comparison matrix (Level 1) | Baseline and post-repair outcomes stay distinguishable |
+| P1 | Build detail and scenario evidence (Levels 2 and 3) | Screenshots and observations trace back to their archives |
+| P1 | Contract section and integrity disclosures | Hashes and method can be inspected |
+| P2 | Diff styling, budget visuals, calibration summary, polish | Only after the loop runs reliably |
+
+Designs for Levels 1 and 4 can be gathered now. Implementation of the repair view follows the controller.
