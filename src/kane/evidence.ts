@@ -90,6 +90,25 @@ async function readSmallEntry(zip: ZipFile, entry: Entry): Promise<string | null
   return Buffer.concat(data).toString('utf8');
 }
 
+// Kane's action log sometimes stores a list recording as a JSON array of strings while run_end.final_state
+// holds the same list joined with '|'. Translate only an unambiguous array: non-empty strings without '|'.
+// Anything else is kept as recorded, so a real disagreement with final_state still withholds the value.
+export function loggedRecording(value: unknown): string | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? String(value) : null;
+  if (typeof value !== 'string') return null;
+  if (!value.trimStart().startsWith('[')) return value;
+  try {
+    const entries: unknown = JSON.parse(value);
+    if (Array.isArray(entries) && entries.length > 0 &&
+      entries.every((entry) => typeof entry === 'string' && entry.trim() !== '' && !entry.includes('|'))) {
+      return entries.join('|');
+    }
+  } catch {
+    // Not JSON: keep the recorded text unchanged.
+  }
+  return value;
+}
+
 function readActionLog(source: string | null): { refresh: boolean; recordings: Map<string, string | null> } {
   const recordings = new Map<string, string | null>();
   let refresh = false;
@@ -102,8 +121,7 @@ function readActionLog(source: string | null): { refresh: boolean; recordings: M
       if (record.action_type === 'refresh') refresh = true;
       if (record.action_type !== 'analyze' || !('output_variable' in record) || typeof record.output_variable !== 'string' ||
         !record.output_variable || !('output_value' in record)) continue;
-      const value = record.output_value;
-      const output = typeof value === 'number' && Number.isFinite(value) ? String(value) : typeof value === 'string' ? value : null;
+      const output = loggedRecording(record.output_value);
       const previous = recordings.get(record.output_variable);
       recordings.set(record.output_variable, previous !== undefined && previous !== output ? null : output);
     }

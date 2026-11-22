@@ -2,7 +2,7 @@ import { mkdtemp, rmdir, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, expect, it } from 'vitest';
-import { checkEvidenceArchive, loadKaneEvidence } from '../src/kane/evidence.js';
+import { checkEvidenceArchive, loadKaneEvidence, loggedRecording } from '../src/kane/evidence.js';
 
 // Synthetic ZIP with a manifest, matching test files, repeated action IDs, and two refresh attempts.
 const archive = Buffer.from([
@@ -61,4 +61,20 @@ it('reads the execution ID, step-specific actions, and only successful refreshes
     ['count_before', '2'],
     ['ambiguous', null],
   ]));
+});
+
+it.each([
+  ['["GP Beta d","GP Alpha d"]', 'GP Beta d|GP Alpha d'],
+  [' ["Only one"]', 'Only one'],
+  ['GP Beta d|GP Alpha d', 'GP Beta d|GP Alpha d'],
+  ['[Draft] notes', '[Draft] notes'],
+  ['[]', '[]'],
+  ['["a|b","c"]', '["a|b","c"]'],
+  ['["a",2]', '["a",2]'],
+  ['["a",""]', '["a",""]'],
+  [2, '2'],
+  [Number.NaN, null],
+  [null, null],
+] as const)('translates the logged recording %j only when it is an unambiguous list', (value, expected) => {
+  expect(loggedRecording(value)).toBe(expected);
 });
