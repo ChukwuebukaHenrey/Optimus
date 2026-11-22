@@ -1,4 +1,4 @@
-import { mkdir, readFile, rmdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rmdir, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { z } from 'zod';
@@ -8,13 +8,17 @@ import { loadPack } from './core/pack.js';
 import { writeReport } from './core/report.js';
 import { nonceSchema, scenarioTraceSchema, type ScenarioResult, type Verdict } from './core/types.js';
 import { checkEvidenceArchive } from './kane/evidence.js';
-import { controlledAppUrl, runKaneAssessment } from './kane/run.js';
+import { controlledAppUrl, readKaneBalance, runKaneAssessment } from './kane/run.js';
+import { claudeCodeCommand, customAgentCommand, invokeAgent } from './loop/agent.js';
+import { runRepairLoop } from './loop/repair.js';
 
 const usage = `Usage
   optimus gen-tests --pack <path> --nonce <id> [--scenario <id>] [--out <directory>]
   optimus lint <file_test.md> --pack <path> --nonce <id> [--scenario <id>]
   optimus evaluate <trace.json> --pack <path>
-  optimus run --pack <path> --url <loopback-url> [--nonce <id>] [--scenario <id>] [--out <new-directory>]`;
+  optimus run --pack <path> --url <loopback-url> [--nonce <id>] [--scenario <id>] [--out <new-directory>]
+  optimus repair --pack <path> --app <static-app-folder> --scenarios <id,id,...> [--agent <claude|path>]
+                 [--max-attempts 3] [--max-credits 1500] [--max-minutes 20]`;
 
 const exitCodes: Record<Verdict, number> = {
   PASS: 0, FAIL: 10, INCONCLUSIVE: 20, NOT_RUN: 20, INFRA_ERROR: 30, UNSUPPORTED: 20,
@@ -25,7 +29,7 @@ async function main([command, ...args]: string[]): Promise<number> {
     console.log(usage);
     return 0;
   }
-  if (!['gen-tests', 'lint', 'evaluate', 'run'].includes(command)) throw new Error(`Unknown command '${command}'.\n${usage}`);
+  if (!['gen-tests', 'lint', 'evaluate', 'run', 'repair'].includes(command)) throw new Error(`Unknown command '${command}'.\n${usage}`);
   const { values, positionals } = parseArgs({
     args,
     allowPositionals: true,
@@ -35,6 +39,12 @@ async function main([command, ...args]: string[]): Promise<number> {
       scenario: { type: 'string' },
       out: { type: 'string' },
       url: { type: 'string' },
+      app: { type: 'string' },
+      scenarios: { type: 'string' },
+      agent: { type: 'string' },
+      'max-attempts': { type: 'string' },
+      'max-credits': { type: 'string' },
+      'max-minutes': { type: 'string' },
     },
   });
   const takesFile = command === 'lint' || command === 'evaluate';
@@ -63,6 +73,35 @@ async function main([command, ...args]: string[]): Promise<number> {
     const issues = lintGeneratedTest(await readFile(path, 'utf8'), loaded.pack, scenarioId, nonce);
     for (const issue of issues) console.error(`${path}:${issue.line} ${issue.message}`);
     return issues.length ? 10 : 0;
+  }
+
+  if (command === 'repair') {
+    if (!values.app || !values.scenarios) throw new Error(usage);
+    const scope = values.scenarios.split(',').map((id) => id.trim()).filter(Boolean);
+    const cap = (value: string | undefined, fallback: number) => {
+      const number = value === undefined ? fallback : Number(value);
+      if (!Number.isFinite(number) || number <= 0) throw new Error('Caps must be positive numbers.');
+      return number;
+    };
+    const root = process.cwd();
+    const packFile = (await stat(values.pack)).isDirectory() ? join(values.pack, 'pack.yaml') : values.pack;
+    const history = await runRepairLoop({
+      root, loaded, packFile, appSource: values.app, scope,
+      caps: { attempts: cap(values['max-attempts'], 3), credits: cap(values['max-credits'], 1500), minutes: cap(values['max-minutes'], 20) },
+    }, {
+      assess: ({ appUrl, nonce, scope: scenarioIds }) => runKaneAssessment({ loaded, appUrl, nonce, scenarioIds, workingDirectory: root }),
+      balance: () => readKaneBalance(root),
+      agent: ({ cwd, prompt, timeoutMs, logDirectory, briefDirectory }) => invokeAgent(
+        values.agent && values.agent !== 'claude' ? customAgentCommand(resolve(values.agent)) : claudeCodeCommand('claude', [briefDirectory]),
+        cwd, prompt, timeoutMs, logDirectory),
+    });
+    console.log(JSON.stringify({
+      sessionId: history.sessionId, outcome: history.outcome, budget: history.budget,
+      runs: history.runs.map(({ runId, kind, results }) => ({ runId, kind, verdicts: Object.fromEntries(results.map((r) => [r.scenarioId, r.verdict])) })),
+      attempts: history.attempts.map(({ attempt, changedFiles, integrity, verificationRunId }) => ({ attempt, changedFiles, integrity, verificationRunId })),
+      history: join(root, '.optimus', 'repair', history.sessionId, 'repair-history.json'),
+    }, null, 2));
+    return { COMPLETE: 0, NEEDS_EVIDENCE: 20, REPAIR: 40, RETRY_INFRASTRUCTURE: 30, STOP: 40 }[history.outcome!.decision];
   }
 
   if (command === 'run') {

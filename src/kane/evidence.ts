@@ -176,3 +176,34 @@ export async function loadKaneEvidence(path: string): Promise<KaneEvidence | nul
     zip?.close();
   }
 }
+
+/** Copies one archive entry (for example a step screenshot) to a file. Returns false when it is absent or too large. */
+export async function extractArchiveEntry(archivePath: string, entryName: string, outputPath: string, maxBytes = 10 * 1024 * 1024): Promise<boolean> {
+  let zip: ZipFile | undefined;
+  try {
+    const file = await evidenceFile(archivePath);
+    if (!file) return false;
+    zip = await openArchive(file.path);
+    const entry = await new Promise<Entry | null>((resolve, reject) => {
+      zip!.once('error', reject);
+      zip!.on('entry', (candidate: Entry) => {
+        if (candidate.fileName === entryName) resolve(candidate);
+        else zip!.readEntry();
+      });
+      zip!.once('end', () => resolve(null));
+      zip!.readEntry();
+    });
+    if (!entry || entry.uncompressedSize > maxBytes || entry.generalPurposeBitFlag & 1) return false;
+    const stream = await new Promise<NodeJS.ReadableStream>((resolve, reject) => {
+      zip!.openReadStream(entry, (error, opened) => (error ? reject(error) : resolve(opened)));
+    });
+    const { createWriteStream } = await import('node:fs');
+    const { pipeline } = await import('node:stream/promises');
+    await pipeline(stream, createWriteStream(outputPath, { flags: 'wx' }));
+    return true;
+  } catch {
+    return false;
+  } finally {
+    zip?.close();
+  }
+}

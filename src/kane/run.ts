@@ -22,6 +22,8 @@ interface RunOptions {
   appUrl: string;
   nonce?: string;
   scenarioId?: string;
+  /** Run exactly these scenarios, in pack order. Overrides scenarioId. */
+  scenarioIds?: readonly string[];
   workingDirectory?: string;
   kaneExecutable?: string;
 }
@@ -35,6 +37,16 @@ export interface KaneAssessment {
   nonce: string;
   results: ScenarioResult[];
   score: number | 'provisional';
+  /** The attempt that produced each scenario's result. */
+  executions: ScenarioExecution[];
+}
+
+export interface ScenarioExecution {
+  scenarioId: string;
+  attempts: number;
+  directory: string;
+  executionId: string | null;
+  evidencePackPath: string | null;
 }
 
 const attemptLimit = 2;
@@ -188,7 +200,7 @@ async function runAttempt(
   loaded: LoadedPack,
   scenario: Scenario,
   test: GeneratedTest,
-): Promise<{ result: ScenarioResult; uploadFailed: boolean }> {
+): Promise<{ result: ScenarioResult; uploadFailed: boolean; executionId: string | null; evidencePackPath: string | null }> {
   await mkdir(directory, { recursive: true });
   await checkFreshProfile(command, directory);
   const testPath = join(directory, test.fileName);
@@ -211,15 +223,34 @@ async function runAttempt(
     result.reasonCode = 'invalid_evidence_archive';
     result.reason = 'Kane did not produce exactly one readable single-test evidence archive.';
   }
-  return { result, uploadFailed };
+  return { result, uploadFailed, executionId: trace.run.executionId, evidencePackPath: trace.run.evidencePackPath };
+}
+
+/** Reads the Kane credit balance, or null when it cannot be established. */
+export async function readKaneBalance(workingDirectory = process.cwd(), kaneExecutable?: string): Promise<number | null> {
+  const directory = resolve(workingDirectory);
+  const command = await resolveKaneCommand(directory, kaneExecutable ?? process.env.OPTIMUS_KANE_CLI);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { child, exit } = launchKane(command, directory, ['balance']);
+    const [code, stdout, stderr] = await Promise.all([exit, streamText(child.stdout), streamText(child.stderr)]);
+    const match = code === 0 ? /Available credits:\s*([0-9][0-9,]*(?:\.[0-9]+)?)/iu.exec(`${stdout}
+${stderr}`) : null;
+    if (match) return Number(match[1].replaceAll(',', ''));
+  }
+  return null;
 }
 
 export async function runKaneAssessment(options: RunOptions): Promise<KaneAssessment> {
-  const { loaded, scenarioId } = options;
+  const { loaded, scenarioId, scenarioIds } = options;
+  if (scenarioIds) {
+    const unknown = scenarioIds.filter((id) => !loaded.pack.scenarios.some((scenario) => scenario.id === id));
+    if (unknown.length || !scenarioIds.length) throw new Error(`Unknown or empty scenario selection: ${unknown.join(', ')}`);
+  }
+  const wanted = (id: string) => scenarioIds ? scenarioIds.includes(id) : scenarioId === undefined || id === scenarioId;
   const appUrl = controlledAppUrl(options.appUrl);
   const nonce = nonceSchema.parse(options.nonce ?? randomBytes(8).toString('hex'));
-  const tests = generateTests(loaded.pack, nonce, scenarioId);
-  const selected = loaded.pack.scenarios.filter((scenario) => scenarioId === undefined || scenario.id === scenarioId);
+  const selected = loaded.pack.scenarios.filter((scenario) => wanted(scenario.id));
+  const tests = selected.map((scenario) => generateTests(loaded.pack, nonce, scenario.id)[0]);
   const workingDirectory = resolve(options.workingDirectory ?? process.cwd());
   const command = await resolveKaneCommand(workingDirectory, options.kaneExecutable ?? process.env.OPTIMUS_KANE_CLI);
   const runParent = join(workingDirectory, '.optimus', 'runs', `pack-${loaded.pack.pack}`);
@@ -228,7 +259,9 @@ export async function runKaneAssessment(options: RunOptions): Promise<KaneAssess
   const generated = join(directory, 'generated');
   await mkdir(generated);
   await Promise.all(tests.map((test) => writeFile(join(generated, test.fileName), test.markdown, 'utf8')));
-  const assessment: KaneAssessment = { directory, packHash: loaded.packHash, appUrl, nonce, results: [], score: 'provisional' };
+  const assessment: KaneAssessment = {
+    directory, packHash: loaded.packHash, appUrl, nonce, results: [], score: 'provisional', executions: [],
+  };
 
   for (const [index, scenario] of selected.entries()) {
     try {
@@ -237,6 +270,10 @@ export async function runKaneAssessment(options: RunOptions): Promise<KaneAssess
         const outcome = await runAttempt(command, attemptDirectory, assessment, loaded, scenario, tests[index]);
         if (outcome.uploadFailed && attempt < attemptLimit) continue;
         assessment.results.push(outcome.result);
+        assessment.executions.push({
+          scenarioId: scenario.id, attempts: attempt, directory: attemptDirectory,
+          executionId: outcome.executionId, evidencePackPath: outcome.evidencePackPath,
+        });
         break;
       }
     } catch (error) {
