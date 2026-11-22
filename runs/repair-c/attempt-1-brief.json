@@ -1,0 +1,21 @@
+{
+  "briefId": "brief-142a6e6f-2d6f-4608-9f0a-29eea662cc73",
+  "scenarioId": "L3",
+  "scenarioTitle": "Scenario L3: remove a record and record the list",
+  "actions": [
+    "Open the page.",
+    "Add a new book with title \"GP Beta 1b7e12-run-0\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+    "Add a new book with title \"GP Alpha 1b7e12-run-0\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+    "Remove the book titled \"GP Alpha 1b7e12-run-0\"."
+  ],
+  "requirement": "After \"Remove the book titled \"GP Alpha 1b7e12-run-0\".\", the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none' should include \"GP Beta 1b7e12-run-0\".",
+  "failingStep": {
+    "id": "remove",
+    "action": "Remove the book titled \"GP Alpha 1b7e12-run-0\"."
+  },
+  "expected": "GP Beta 1b7e12-run-0",
+  "observed": "none",
+  "screenshot": "<tmp>\\optimus-repair-20261122205046-1b7e12\\brief\\attempt-1-L3.jpg",
+  "appPath": "<tmp>\\optimus-repair-20261122205046-1b7e12\\app",
+  "allowedScope": "Only the files of this app folder. Do not create or edit anything outside it."
+}

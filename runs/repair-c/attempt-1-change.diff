@@ -1,0 +1,19 @@
+diff --git a/app.js b/app.js
+index c2819b5..0d66382 100644
+--- a/app.js
++++ b/app.js
+@@ -36,9 +36,12 @@ function addCard(book) {
+   });
+ 
+   remove.addEventListener('click', () => {
+-    const removedCard = list.firstElementChild;
++    const removedCard = card;
+     const adjacentCard = removedCard.nextElementSibling ?? removedCard.previousElementSibling;
+-    books.splice(0, 1);
++    const index = books.indexOf(book);
++    if (index !== -1) {
++      books.splice(index, 1);
++    }
+     saveBooks();
+     removedCard.remove();
+     updateEmptyMessage();

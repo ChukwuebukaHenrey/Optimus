@@ -49,4 +49,21 @@ npm run optimus -- run --pack packs/library --url http://127.0.0.1:3000/ --scena
 
 Optimus runs Kane in author mode and evaluates each scenario sequentially. Kane uploads each live run to TestMu and uses credits. The command prints the run directory and writes `result.json` and `report.html` there. An optional `--out` points to a new report directory. Generated authoring inputs, raw streams, and evidence stay in the ignored `.optimus/runs/` directory. A selected scenario returns its own verdict exit code and leaves the whole-pack score provisional.
 
-The [Gate 1 report](runs/gate1/REPORT.md) records the live reference-app results and the React recording mismatch that halted the matrix.
+The [Gate 1 report](runs/gate1/REPORT.md) records the live reference-app results and the React recording mismatch that halted the matrix. The [Gate 1 v5 report](runs/gate1-v5/REPORT.md) records the completed calibration: 24 of 24 cases matched their expected verdicts.
+
+## Repair loop
+
+`optimus repair` closes the loop between Kane, Optimus and a coding agent for a static app folder:
+
+```sh
+npm run optimus -- repair --pack packs/library --app corpus/c-remove-wrong --scenarios L1,L3,L4
+```
+
+1. The app is copied into a disposable git workspace outside the Optimus folder and served on a random loopback port.
+2. Kane runs every scenario in scope. Optimus judges each one.
+3. The decision gate reads every result. Only a verified FAIL with nothing unresolved starts a repair. INCONCLUSIVE stops the loop for review, and an infrastructure error gets one rerun.
+4. The agent receives a brief: the failing requirement in plain language, expected versus observed values, and the failing step's screenshot. It never receives the pack. By default the agent is Claude Code in headless mode, limited to file tools in the workspace. `--agent <path>` runs any other agent that reads the brief on stdin.
+5. Optimus commits the agent's change, records the diff, and checks that the pack and the grader sources (`src/core`, `src/kane`) are unchanged.
+6. Kane reruns the whole scope with a new nonce. The loop repeats until every scenario passes or a cap is reached: `--max-attempts 3`, `--max-credits 1500` (void attempts included) and `--max-minutes 20` (from the first agent call).
+
+Each session writes `.optimus/repair/<session>/repair-history.json`. It links the baseline run, the decision, the brief, the agent invocation, the source revisions before and after, the diff, the integrity checks and the verification run. Exit codes: 0 when every scenario passes, 20 when evidence is unresolved, and 40 when the loop stops.

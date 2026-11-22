@@ -98,12 +98,29 @@ export interface RepairHistory {
   outcome: { decision: LoopDecision; reason: string; finalRunId: string | null } | null;
 }
 
-/** Extracts the failing step's screenshot from the run's sealed archive, if the trace links one. */
+/**
+ * Extracts the last screenshot Kane took during the failing step, which shows the page after the step.
+ * The trace's own screenshot belongs to the recorded action and can predate its effect.
+ */
 async function failureScreenshot(run: RunEntry, failure: ScenarioResult, output: string): Promise<string | null> {
   const execution = run.executions.find(({ scenarioId }) => scenarioId === failure.scenarioId);
   if (!execution?.evidencePackPath) return null;
   const trace = JSON.parse(await readFile(join(execution.directory, 'trace.json'), 'utf8')) as ScenarioTrace;
-  const reference = trace.observations.find(({ stepId }) => stepId === failure.stepId)?.screenshotRef;
+  const observation = trace.observations.find(({ stepId }) => stepId === failure.stepId);
+  const prefix = trace.observations.map(({ screenshotRef }) => screenshotRef?.split('/steps/')[0]).find(Boolean);
+  if (!observation || !prefix) return null;
+  let current = -1;
+  let last: string | null = null;
+  for (const line of (await readFile(join(execution.directory, 'stdout.ndjson'), 'utf8')).split(/\r?\n/u)) {
+    if (!line.trim()) continue;
+    const event = JSON.parse(line) as Record<string, unknown>;
+    if (event.type === 'test_md_step_start') current = Number(event.step_index) - 1;
+    if (current === observation.stepIndex && event.type === 'step_end' && typeof event.screenshot === 'string' &&
+      typeof event.id === 'string' && Number.isSafeInteger(event.ordinal)) {
+      last = `${prefix}/steps/${String(event.ordinal)}-${event.id}/${event.screenshot}`;
+    }
+  }
+  const reference = last ?? observation.screenshotRef;
   if (!reference) return null;
   return await extractArchiveEntry(execution.evidencePackPath, reference, output) ? output : null;
 }
