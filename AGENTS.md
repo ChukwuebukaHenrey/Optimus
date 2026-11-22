@@ -20,7 +20,10 @@ Kane CLI Online Hackathon deadline: 26 Nov 2026, 11:59 PM IST. Repo started on o
 ## Non-negotiable rules
 
 1. **Kane never judges.** Kane acts and records. Verdicts come only from `src/core/evaluate.ts`
-   (declarative expectations, or an optional pack oracle). No LLM calls anywhere in Optimus.
+   (declarative expectations, or an optional pack oracle). No LLM may determine, override or
+   reinterpret a verdict, and the evaluator makes no LLM calls. The repair controller may invoke
+   an external coding agent, which receives only validated failure briefs and may change only
+   the app under repair, never the contract, the evaluator or the adapter.
 2. **Kane-facing test files are neutral.** Steps say what to do and what to record, never what
    should happen. No verify lines, no expected values, no titles that hint at the outcome.
 3. **One contract, unchanged, for every app.** Never edit a pack to suit one implementation.
@@ -181,16 +184,33 @@ scenarios:
 - Every authoring run uploads to TestMu Test Manager; upload failure ends the run →
   INFRA_ERROR, retry once.
 
-## Repair loop (Phase 4, after grading is proven; written for Claude Code hooks; adapt if Codex runs the loop)
+## Repair loop (Phase 4, after grading is proven; agent-independent controller)
 
-- Stop hook prints `{"decision":"block","reason":"..."}`. Do NOT use the `stop_hook_active`
-  early exit; the attempt counter lives in `.optimus/state.json`. Cap 3 attempts (Claude
-  Code's own cap is 8), 1,500 credits, 20 minutes.
-- The app under repair lives outside the Optimus folder; packs/evaluator are outside the
-  agent's working directory; deny-rules + a PreToolUse path guard + a hash check of grader
-  files before every run. Honest limit: an agent with shell access could still read packs.
-- The brief contains only: scenario id, plain-language requirement, expected vs observed for
-  the failing step, screenshot path. After a repair: the full pack again.
+The loop is driven by Optimus, not by one agent's lifecycle hooks:
+verified failure → brief → coding agent → integrity checks → fresh full Kane run → recorded outcome.
+
+- **Decision gate** (`src/loop/decision.ts`). Read every scenario in `result.json`; never rely
+  on the process exit code. Decisions: `COMPLETE` (all PASS), `REPAIR` (at least one verified
+  FAIL and nothing unresolved), `NEEDS_EVIDENCE` (any INCONCLUSIVE or NOT_RUN),
+  `RETRY_INFRASTRUCTURE` (INFRA_ERROR; one retry, separate count), `STOP` (UNSUPPORTED, caps
+  reached, or a mix of FAIL and unresolved). Only a verified FAIL may start a repair.
+- **Brief** (`src/loop/brief.ts`). JSON plus Markdown with only: scenario id, plain-language
+  requirement rendered from the assertions, expected vs observed for the failing step,
+  screenshot path, app path and the allowed edit scope. Never the pack or the expected verdicts.
+- **Agent invocation.** A configurable agent CLI (default Claude Code in headless mode) runs in
+  a disposable copy of the app outside the Optimus folder. A Claude Code Stop hook may be used
+  as an optional adapter; the controller never depends on it.
+- **Integrity checks before every rerun.** Only files inside the app copy changed (diff);
+  the pack hash and the hashes of `src/core/` and `src/kane/` are unchanged; the browser
+  profile is fresh. Honest limit: an agent with shell access could still read the packs.
+- **Rerun.** The full calibrated scenario set (Gate 1 scope: L1, L3, L4) with a new nonce and a
+  new execution ID, never only the failing scenario.
+- **Caps.** 3 repair attempts, 1,500 credits (void attempts included), 20 minutes. When a cap
+  is reached the loop stops; it never changes the contract, broadens permissions or retries
+  silently.
+- **Audit record** (`repair-history.json`). Baseline execution, decision, brief, agent
+  invocation and final message, code diff, hashes, new execution, attempts, budget used and the
+  stopping reason.
 
 ## Out of scope for the hackathon
 
