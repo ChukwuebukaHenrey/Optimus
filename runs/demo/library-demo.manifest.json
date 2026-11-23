@@ -38,6 +38,12 @@
       "label": "D · Loses books on reload",
       "appSource": "../../corpus/d-no-persist",
       "repairHistory": "../../.optimus/repair/repair-20261123000518-fe7a64/repair-history.json"
+    },
+    {
+      "buildId": "u-unseen",
+      "label": "U · Blind, defect unseen",
+      "appSource": "../../corpus/u-unseen",
+      "repairHistory": "../../.optimus/repair/repair-20261123014521-c61591/repair-history.json"
     }
   ],
   "calibration": {

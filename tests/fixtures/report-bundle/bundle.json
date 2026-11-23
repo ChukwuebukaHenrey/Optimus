@@ -1,6 +1,6 @@
 {
   "bundleVersion": 2,
-  "generatedAt": "2026-11-23T00:38:04.386Z",
+  "generatedAt": "2026-11-23T08:59:36.799Z",
   "assessment": {
     "name": "Library assessment",
     "pack": {
@@ -289,6 +289,20 @@
         "L4": "repair-20261123000518-fe7a64/run-1"
       },
       "repairSessionId": "repair-20261123000518-fe7a64",
+      "repairState": "repaired"
+    },
+    {
+      "buildId": "u-unseen",
+      "label": "U · Blind, defect unseen",
+      "appSource": "corpus/u-unseen",
+      "baselineRunId": "repair-20261123014521-c61591/run-0",
+      "latestRunId": "repair-20261123014521-c61591/run-2",
+      "latestRuns": {
+        "L1": "repair-20261123014521-c61591/run-1",
+        "L3": "repair-20261123014521-c61591/run-2",
+        "L4": "repair-20261123014521-c61591/run-2"
+      },
+      "repairSessionId": "repair-20261123014521-c61591",
       "repairState": "repaired"
     }
   ],
@@ -1342,6 +1356,410 @@
           ]
         }
       ]
+    },
+    {
+      "runId": "repair-20261123014521-c61591/run-0",
+      "buildId": "u-unseen",
+      "source": "repair",
+      "kind": "baseline",
+      "nonce": "c61591-run-0",
+      "appUrl": "http://127.0.0.1:57620/",
+      "packHash": "b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74",
+      "sourceRevision": "2959f1b49a02e6485556f55e704c9499104bb10e",
+      "startedAt": "2026-11-23T01:46:00.745Z",
+      "finishedAt": "2026-11-23T02:02:39.684Z",
+      "creditsUsed": 164.1364,
+      "scenarios": [
+        {
+          "scenarioId": "L1",
+          "executionId": "2686e4d4-3d59-43e4-a1a4-67ded611a781",
+          "result": {
+            "scenarioId": "L1",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 2,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "before",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "none",
+                "count_before": "0"
+              },
+              "screenshot": "evidence/repair-20261123014521-c61591-run-0/L1-before.jpg"
+            },
+            {
+              "stepId": "add",
+              "action": "Add a new book with title \"GP Book c61591-run-0\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Book c61591-run-0",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/repair-20261123014521-c61591-run-0/L1-add.jpg"
+            }
+          ]
+        },
+        {
+          "scenarioId": "L3",
+          "executionId": "f51b3047-8ffb-401b-80f4-2724221d6123",
+          "result": {
+            "scenarioId": "L3",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 4,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "open",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add_beta",
+              "action": "Add a new book with title \"GP Beta c61591-run-0\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add_alpha",
+              "action": "Add a new book with title \"GP Alpha c61591-run-0\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "GP Beta c61591-run-0 | GP Alpha c61591-run-0",
+                "count_before": "2"
+              },
+              "screenshot": "evidence/repair-20261123014521-c61591-run-0/L3-add_alpha.jpg"
+            },
+            {
+              "stepId": "remove",
+              "action": "Remove the book titled \"GP Alpha c61591-run-0\".",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Beta c61591-run-0",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/repair-20261123014521-c61591-run-0/L3-remove.jpg"
+            }
+          ]
+        },
+        {
+          "scenarioId": "L4",
+          "executionId": "78dd65b8-ff96-4d30-979f-b744231c5118",
+          "result": {
+            "scenarioId": "L4",
+            "verdict": "FAIL",
+            "reasonCode": "assertion_failed",
+            "reason": "The recording 'titles_after' did not satisfy 'list_contains'.",
+            "stepId": "reload",
+            "expected": "GP Keep c61591-run-0",
+            "observed": "none"
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 3,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "open",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add",
+              "action": "Add a new book with title \"GP Keep c61591-run-0\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "GP Keep c61591-run-0",
+                "count_before": "1"
+              },
+              "screenshot": "evidence/repair-20261123014521-c61591-run-0/L4-add.jpg"
+            },
+            {
+              "stepId": "reload",
+              "action": "Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.",
+              "actionKind": "reload",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "none",
+                "count_after": "0"
+              },
+              "screenshot": "evidence/repair-20261123014521-c61591-run-0/L4-reload.jpg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "runId": "repair-20261123014521-c61591/run-1",
+      "buildId": "u-unseen",
+      "source": "repair",
+      "kind": "verification",
+      "nonce": "c61591-run-1",
+      "appUrl": "http://127.0.0.1:57620/",
+      "packHash": "b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74",
+      "sourceRevision": "371eb967f8c14cc26d390c2026e4db4e1568b6ad",
+      "startedAt": "2026-11-23T02:03:20.772Z",
+      "finishedAt": "2026-11-23T02:15:00.112Z",
+      "creditsUsed": 46.531,
+      "scenarios": [
+        {
+          "scenarioId": "L1",
+          "executionId": "b07ad51f-f768-4d43-ac8b-1cc4174f465d",
+          "result": {
+            "scenarioId": "L1",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 2,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "before",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "none",
+                "count_before": "0"
+              },
+              "screenshot": "evidence/repair-20261123014521-c61591-run-1/L1-before.jpg"
+            },
+            {
+              "stepId": "add",
+              "action": "Add a new book with title \"GP Book c61591-run-1\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Book c61591-run-1",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/repair-20261123014521-c61591-run-1/L1-add.jpg"
+            }
+          ]
+        },
+        {
+          "scenarioId": "L3",
+          "executionId": null,
+          "result": {
+            "scenarioId": "L3",
+            "verdict": "INFRA_ERROR",
+            "reasonCode": "run_incomplete",
+            "reason": "The browser run did not finish with a usable exit status."
+          },
+          "integrity": {
+            "completed": false,
+            "kaneExitCode": 2,
+            "replayDecisions": null,
+            "authorDecisions": null,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": false
+          },
+          "steps": []
+        },
+        {
+          "scenarioId": "L4",
+          "executionId": null,
+          "result": {
+            "scenarioId": "L4",
+            "verdict": "INFRA_ERROR",
+            "reasonCode": "run_incomplete",
+            "reason": "The browser run did not finish with a usable exit status."
+          },
+          "integrity": {
+            "completed": false,
+            "kaneExitCode": 2,
+            "replayDecisions": null,
+            "authorDecisions": null,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": false
+          },
+          "steps": []
+        }
+      ]
+    },
+    {
+      "runId": "repair-20261123014521-c61591/run-2",
+      "buildId": "u-unseen",
+      "source": "repair",
+      "kind": "infrastructure_retry",
+      "nonce": "c61591-run-2",
+      "appUrl": "http://127.0.0.1:57620/",
+      "packHash": "b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74",
+      "sourceRevision": "371eb967f8c14cc26d390c2026e4db4e1568b6ad",
+      "startedAt": "2026-11-23T02:16:30.323Z",
+      "finishedAt": "2026-11-23T02:47:33.018Z",
+      "creditsUsed": 154.4104,
+      "scenarios": [
+        {
+          "scenarioId": "L3",
+          "executionId": "fe985ea8-5a4f-4ce1-ac8c-6eb1ce28b1d8",
+          "result": {
+            "scenarioId": "L3",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 4,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "open",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add_beta",
+              "action": "Add a new book with title \"GP Beta c61591-run-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add_alpha",
+              "action": "Add a new book with title \"GP Alpha c61591-run-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "GP Beta c61591-run-2|GP Alpha c61591-run-2",
+                "count_before": "2"
+              },
+              "screenshot": "evidence/repair-20261123014521-c61591-run-2/L3-add_alpha.jpg"
+            },
+            {
+              "stepId": "remove",
+              "action": "Remove the book titled \"GP Alpha c61591-run-2\".",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Beta c61591-run-2",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/repair-20261123014521-c61591-run-2/L3-remove.jpg"
+            }
+          ]
+        },
+        {
+          "scenarioId": "L4",
+          "executionId": "1389bb93-6571-4695-aa73-7a1f2da262e6",
+          "result": {
+            "scenarioId": "L4",
+            "verdict": "PASS",
+            "reasonCode": "assertions_satisfied",
+            "reason": "The required actions were recorded and all assertions were satisfied."
+          },
+          "integrity": {
+            "completed": true,
+            "kaneExitCode": 0,
+            "replayDecisions": 0,
+            "authorDecisions": 3,
+            "kaneVersion": "0.10.6",
+            "evidenceArchive": true
+          },
+          "steps": [
+            {
+              "stepId": "open",
+              "action": "Open the page.",
+              "actionKind": "open",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {},
+              "screenshot": null
+            },
+            {
+              "stepId": "add",
+              "action": "Add a new book with title \"GP Keep c61591-run-2\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+              "actionKind": "interact",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_before": "GP Keep c61591-run-2",
+                "count_before": "1"
+              },
+              "screenshot": "evidence/repair-20261123014521-c61591-run-2/L4-add.jpg"
+            },
+            {
+              "stepId": "reload",
+              "action": "Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.",
+              "actionKind": "reload",
+              "actionRecorded": true,
+              "targetAgreement": "unknown",
+              "values": {
+                "titles_after": "GP Keep c61591-run-2",
+                "count_after": "1"
+              },
+              "screenshot": "evidence/repair-20261123014521-c61591-run-2/L4-reload.jpg"
+            }
+          ]
+        }
+      ]
     }
   ],
   "repairs": [
@@ -1573,6 +1991,144 @@
         "decision": "COMPLETE",
         "reason": "Every scenario in scope passed.",
         "finalRunId": "repair-20261123000518-fe7a64/run-1"
+      }
+    },
+    {
+      "sessionId": "repair-20261123014521-c61591",
+      "buildId": "u-unseen",
+      "packHash": "b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74",
+      "graderHash": "fcdbfa8c752b8efd4991dfe1bfc9e7dd6d52f9369f732fdb7575499146ade13b",
+      "scope": [
+        "L1",
+        "L3",
+        "L4"
+      ],
+      "startedAt": "2026-11-23T01:45:25.725Z",
+      "finishedAt": "2026-11-23T02:47:38.173Z",
+      "caps": {
+        "attempts": 3,
+        "credits": 1500,
+        "minutes": 20
+      },
+      "budget": {
+        "creditsStart": 7271.516,
+        "creditsUsed": 365.0778,
+        "attemptsUsed": 1,
+        "infrastructureRetriesUsed": 1,
+        "repairMinutesUsed": 0.59
+      },
+      "baselineRunId": "repair-20261123014521-c61591/run-0",
+      "decisions": [
+        {
+          "decisionId": "decision-0",
+          "runId": "repair-20261123014521-c61591/run-0",
+          "decision": "REPAIR",
+          "reason": "L4 failed after an established action.",
+          "basis": [
+            {
+              "scenarioId": "L1",
+              "runId": "repair-20261123014521-c61591/run-0",
+              "verdict": "PASS"
+            },
+            {
+              "scenarioId": "L3",
+              "runId": "repair-20261123014521-c61591/run-0",
+              "verdict": "PASS"
+            },
+            {
+              "scenarioId": "L4",
+              "runId": "repair-20261123014521-c61591/run-0",
+              "verdict": "FAIL"
+            }
+          ]
+        },
+        {
+          "decisionId": "decision-1",
+          "runId": "repair-20261123014521-c61591/run-1",
+          "decision": "RETRY_INFRASTRUCTURE",
+          "reason": "The browser run did not complete for L3, L4; the whole scope is run again without code changes.",
+          "basis": [
+            {
+              "scenarioId": "L1",
+              "runId": "repair-20261123014521-c61591/run-1",
+              "verdict": "PASS"
+            },
+            {
+              "scenarioId": "L3",
+              "runId": "repair-20261123014521-c61591/run-1",
+              "verdict": "INFRA_ERROR"
+            },
+            {
+              "scenarioId": "L4",
+              "runId": "repair-20261123014521-c61591/run-1",
+              "verdict": "INFRA_ERROR"
+            }
+          ]
+        },
+        {
+          "decisionId": "decision-2",
+          "runId": "repair-20261123014521-c61591/run-2",
+          "decision": "COMPLETE",
+          "reason": "Every scenario in scope passed.",
+          "basis": [
+            {
+              "scenarioId": "L1",
+              "runId": "repair-20261123014521-c61591/run-1",
+              "verdict": "PASS"
+            },
+            {
+              "scenarioId": "L3",
+              "runId": "repair-20261123014521-c61591/run-2",
+              "verdict": "PASS"
+            },
+            {
+              "scenarioId": "L4",
+              "runId": "repair-20261123014521-c61591/run-2",
+              "verdict": "PASS"
+            }
+          ]
+        }
+      ],
+      "attempts": [
+        {
+          "attempt": 1,
+          "decisionId": "decision-0",
+          "briefId": "brief-a6a0d9cc-3ecc-481b-8bda-00d4f085c9f5",
+          "briefMarkdown": "# Repair brief\n\nA behavioural check of this web app failed. Fix the app so the behaviour below works for any data, not only the example values. (Brief brief-a6a0d9cc-3ecc-481b-8bda-00d4f085c9f5.)\n\n## What a user does\n\n1. Open the page.\n2. Add a new book with title \"GP Keep c61591-run-0\", author \"Ada Okafor\", 123 pages, not read yet, and save it.\n3. Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.\n\n## What went wrong\n\n- Requirement: After \"Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.\", the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none' should include \"GP Keep c61591-run-0\".\n- Checked after step: Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.\n- Expected: GP Keep c61591-run-0\n- Observed: none\n- Screenshot of the page after that step: <tmp>\\optimus-repair-20261123014521-c61591\\brief\\attempt-1-L4.jpg\n\n## Rules\n\n- App folder: <tmp>\\optimus-repair-20261123014521-c61591\\app\n- Allowed scope: Only the files of this app folder. Do not create or edit anything outside it.\n- Fix the general behaviour. Do not special-case the example titles or detect that a test is running.\n- Keep every other behaviour of the app working. The full set of behavioural checks runs again after your change.\n- When the fix is done, stop. Do not run browsers or test tools; the app will be re-checked independently.\n",
+          "requirement": "After \"Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.\", the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none' should include \"GP Keep c61591-run-0\".",
+          "expected": "GP Keep c61591-run-0",
+          "observed": "none",
+          "failingStepAction": "Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.",
+          "briefScreenshot": "evidence/repair-20261123014521-c61591/attempt-1-brief.jpg",
+          "agent": {
+            "agentInvocationId": "agent-6b2986d2-7365-4a04-84f0-d1cf925e1b15",
+            "agent": "claude-code",
+            "exitCode": 0,
+            "timedOut": false,
+            "startedAt": "2026-11-23T02:02:44.378Z",
+            "finishedAt": "2026-11-23T02:03:19.458Z",
+            "finalMessage": "I fixed it: books you add now stay on the page after a reload. I haven't run the app or any tests, as the brief asked; it will be re-checked independently.\n\n**Cause:** When you added a book, the app put it in its in-memory list and drew its card, but never saved it to the browser's local storage. Toggling and removing books already saved, but adding didn't. So after a reload the app read the stored list, found nothing there, and showed \"No books yet.\"\n\n**Fix:** In `app.js`, the add-book form handler now calls `saveBooks()` right after adding the book to the list (`app.js:62`). This works for any book, not just the example values, and nothing else in the app changed."
+          },
+          "sourceRevisionBefore": "2959f1b49a02e6485556f55e704c9499104bb10e",
+          "sourceRevisionAfter": "371eb967f8c14cc26d390c2026e4db4e1568b6ad",
+          "changedFiles": [
+            "app.js"
+          ],
+          "diffStat": "app.js | 1 +\n 1 file changed, 1 insertion(+)",
+          "diff": "diff --git a/app.js b/app.js\nindex 98436cf..c610b5c 100644\n--- a/app.js\n+++ b/app.js\n@@ -59,6 +59,7 @@ form.addEventListener('submit', (event) => {\n   };\n \n   books.push(book);\n+  saveBooks();\n   addCard(book);\n   updateEmptyMessage();\n   form.reset();\n",
+          "integrity": {
+            "workspaceOutsideOptimus": true,
+            "packHashUnchanged": true,
+            "graderUnchanged": true,
+            "changedGraderFiles": []
+          },
+          "verificationRunId": "repair-20261123014521-c61591/run-1"
+        }
+      ],
+      "outcome": {
+        "decision": "COMPLETE",
+        "reason": "Every scenario in scope passed.",
+        "finalRunId": "repair-20261123014521-c61591/run-2"
       }
     }
   ],

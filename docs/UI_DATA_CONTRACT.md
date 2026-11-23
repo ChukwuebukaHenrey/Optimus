@@ -88,5 +88,6 @@ Scenario display names are not in the pack. The UI may map `L1` to "Add", `L3` t
 ## Known values in the fixture
 
 - Builds: `a-vanilla` and `b-react` pass everything. `c-remove-wrong` has L3 baseline FAIL, then verified PASS after one repair attempt. `d-no-persist` has L4 baseline FAIL, then verified PASS after one repair attempt.
-- Repairs: session `repair-20261122205046-1b7e12` (C: `app.js`, 310.78 credits) and session `repair-20261123000518-fe7a64` (D: `app.js` gains saving to browser storage, 306.45 credits). Every integrity check passed.
+- `u-unseen` is the blind build: its defect was sealed until grading finished. L4 baseline FAIL, then verified PASS. Its verification is split across two runs of the same repaired revision (L1 from `run-1`; L3 and L4 from the infrastructure retry `run-2`), so it exercises `latestRuns` and `decisions[].basis`.
+- Repairs: session `repair-20261123014521-c61591` (U: one `saveBooks()` call added, 365.08 credits), session `repair-20261122205046-1b7e12` (C: `app.js`, 310.78 credits) and session `repair-20261123000518-fe7a64` (D: `app.js` gains saving to browser storage, 306.45 credits). Every integrity check passed.
 - The attempt's `briefScreenshot` in this session shows the page mid-step (a backend issue, fixed after this session). Later sessions attach the end-of-step screenshot.
