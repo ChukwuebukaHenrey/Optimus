@@ -16,6 +16,9 @@ export type Verdict = ComparisonBundle["runs"][number]["scenarios"][number]["res
 /** Where the committed real-data fixture lives, relative to website/. */
 export const BUNDLE_DIR = path.join(process.cwd(), "..", "tests", "fixtures", "report-bundle");
 
+/** The repair the page walks through, when the bundle has it (the blind build in the Library demo). */
+const FEATURED_REPAIR_BUILD = "u-unseen";
+
 /** Plain names for the Library demo; any other pack falls back to the scenario id (data contract). */
 const SCENARIO_NAMES: Record<string, string> = { L1: "Add", L2: "Toggle read", L3: "Remove", L4: "Persist" };
 
@@ -135,9 +138,12 @@ export function getSiteData(): SiteData {
       }
     : null;
 
-  // The repair story: only a session that exists, has an attempt and a verified outcome.
+  // The repair story: only a session that exists, has an attempt and a verified outcome. The page
+  // features the blind build: its defect was sealed until grading, like a real submission nobody
+  // has seen. Any other bundle falls back to its first session with an attempt.
   let repair: RepairStory | null = null;
-  const session = bundle.repairs.find((r) => r.attempts.length > 0);
+  const withAttempts = bundle.repairs.filter((r) => r.attempts.length > 0);
+  const session = withAttempts.find((r) => r.buildId === FEATURED_REPAIR_BUILD) ?? withAttempts[0];
   if (session) {
     const build = bundle.builds.find((b) => b.buildId === session.buildId)!;
     const attempt = session.attempts[session.attempts.length - 1];
