@@ -12,7 +12,7 @@
 
 | Area | Where | Status |
 |---|---|---|
-| Contract | `packs/library/pack.yaml` (v5, SHA-256 `b5295a39…fc74`) | L1 add, L3 remove and L4 persist are calibrated. L2 (read status) is implemented but not calibrated. |
+| Contract | `packs/library/pack.yaml` (v5, SHA-256 `b5295a39…fc74`) | L1 add, L3 remove and L4 persist are calibrated (Gate 1). L2 read status is calibrated on the reference apps (Gate 2), without a negative control. |
 | Evaluator | `src/core/` | Integrity → action evidence → change plausibility and continuity → assertions. A list may only gain the values a step declares in `new_values`. |
 | Kane adapter | `src/kane/` | Parses the stream and sealed archive. It checks that each step stayed on the app's origin, reads JSON-array lists as the same list, withholds conflicting values, and finds end-of-step screenshots. |
 | Runner | `src/kane/run.ts` | Runs one scenario at a time in a fresh folder, retries an upload failure once after 90 s, and reads the balance with back-off. |
@@ -52,6 +52,6 @@ Raw streams, archives and repair sessions stay in the ignored `.optimus/` and `r
 
 1. The owner reviews the screenshot labels on the review page.
 2. AGENTS.md has two small typos from the last edit: "Test Managerupload" and "scenario.After". The owner owns the file.
-3. Gate 2: calibrate L2 (read status) on A and B. There is no L2-defective corpus app yet, so a negative control needs a separate corpus session.
+3. Gate 2 is done: L2 (read status) passed 4 of 4 on A and B ([report](runs/gate2-v5/REPORT.md)). It still lacks a negative control, which needs an L2-defective corpus app from a separate session. L2 can join the repair scope once that exists.
 4. Merge the UI agent's renderer when ready. It must render only from the bundle (see the contract doc).
 5. Demo walkthrough: [docs/DEMO.md](docs/DEMO.md).
