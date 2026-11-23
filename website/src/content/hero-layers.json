@@ -59,6 +59,32 @@
       "delay": -4.8
     }
   ],
+  "clouds": [
+    {
+      "src": "/art/hero/cloud-1.png",
+      "w": 56,
+      "h": 16,
+      "y": 2.0,
+      "duration": 170,
+      "delay": -25.5
+    },
+    {
+      "src": "/art/hero/cloud-2.png",
+      "w": 40,
+      "h": 12,
+      "y": 6.5,
+      "duration": 125,
+      "delay": -56.2
+    },
+    {
+      "src": "/art/hero/cloud-3.png",
+      "w": 28,
+      "h": 9,
+      "y": 3.5,
+      "duration": 100,
+      "delay": -75.0
+    }
+  ],
   "scene": {
     "src": "/art/scene/H-01-plate.png",
     "w": 640,

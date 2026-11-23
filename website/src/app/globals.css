@@ -267,6 +267,42 @@
   image-rendering: pixelated;
 }
 
+/*
+ * Drifting clouds. The band covers the top sky only (above the hero copy, so text contrast is
+ * untouched) and fades out before the observatory, which the clouds cannot pass behind.
+ * Each track is the band's width and slides one band-width, so the transform stays compositor-only.
+ */
+.cloud-band {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 62%;
+  height: 16%;
+  overflow: hidden;
+  pointer-events: none;
+  mask-image: linear-gradient(90deg, transparent 0%, black 8%, black 76%, transparent 100%);
+}
+.cloud-track {
+  position: absolute;
+  inset: 0;
+  animation: cloud-drift 120s linear infinite;
+}
+.cloud-track > img {
+  position: absolute;
+  left: 0;
+  max-width: none;
+  translate: -100% 0;
+  image-rendering: pixelated;
+}
+@keyframes cloud-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
 /* waterfall strips: a 12-frame sheet slid one frame at a time */
 .fall {
   overflow: hidden;
@@ -354,7 +390,8 @@
     opacity: 0.6;
   }
   .handoff-track,
-  .handoff-tick {
+  .handoff-tick,
+  .cloud-band {
     display: none;
   }
 }

@@ -1,5 +1,8 @@
 import { AGENTS, FOOT_Y, HERO_LAYERS, SCENE, px, py } from "@/content/scene";
 
+/** The clouds' band, in percent of the scene: top sky only, ending before the observatory. */
+const CLOUD_BAND = { w: 62, h: 16 };
+
 /**
  * Keyframes for the hand-off spark. The track is a full-scene layer, so translate percentages are
  * percentages of the scene: the spark hops prop to prop along small arcs, compositor-only.
@@ -53,6 +56,26 @@ export function HeroScene() {
         height={SCENE.h}
         fetchPriority="high"
       />
+      <div aria-hidden="true" className="cloud-band">
+        {HERO_LAYERS.clouds.map((c) => (
+          <div
+            key={c.src}
+            className="cloud-track"
+            style={{ animationDuration: `${c.duration}s`, animationDelay: `${c.delay}s` }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={c.src}
+              alt=""
+              style={{
+                top: `${(c.y / CLOUD_BAND.h) * 100}%`,
+                width: `${(c.w / (SCENE.w * CLOUD_BAND.w / 100)) * 100}%`,
+                height: `${(c.h / (SCENE.h * CLOUD_BAND.h / 100)) * 100}%`,
+              }}
+            />
+          </div>
+        ))}
+      </div>
       {HERO_LAYERS.falls.map((f) => (
         <div
           key={f.src}

@@ -85,6 +85,33 @@ def main() -> None:
         layers["lanterns"].append({"src": f"/art/hero/{name}", "x": x0, "y": y0, "w": x1 - x0, "h": y1 - y0,
                                    "delay": round(-6 * i / len(LANTERNS), 2)})
 
+    # Drifting clouds: small pixel clouds in the plate's sky whites. They live in the top band of
+    # sky (above the hero copy) and fade out before the observatory, which they cannot pass behind.
+    crng = np.random.default_rng(11)                  # separate seed: falls and lanterns stay identical
+    tones = [(255, 255, 255), (238, 247, 255), (207, 232, 252), (169, 212, 247)]
+    layers["clouds"] = []
+    for i, (w, h, speed, y) in enumerate([(56, 16, 170, 2.0), (40, 12, 125, 6.5), (28, 9, 100, 3.5)]):
+        yy, xx = np.mgrid[0:h, 0:w]
+        body = np.zeros((h, w), bool)
+        for _ in range(7):                            # union of puffs along a flat base
+            cx = crng.uniform(0.15, 0.85) * w
+            r = crng.uniform(0.25, 0.45) * h
+            cy = h - r - 1 - crng.uniform(0, 0.25) * h
+            body |= (xx - cx) ** 2 / (r * 1.6) ** 2 + (yy - cy) ** 2 / r ** 2 <= 1
+        body[h - 2:, :] &= body[h - 3:h - 2, :].repeat(2, axis=0)   # flat underside
+        img = np.zeros((h, w, 4), np.uint8)
+        top = np.argmax(body, axis=0)
+        for x in range(w):
+            col = np.where(body[:, x])[0]
+            for y0 in col:
+                depth = (y0 - top[x]) / max(1, h - top[x])
+                tone = tones[0] if depth < 0.2 else tones[1] if depth < 0.55 else tones[2] if depth < 0.85 else tones[3]
+                img[y0, x] = (*tone, 255)
+        name = f"cloud-{i + 1}.png"
+        Image.fromarray(img, "RGBA").save(OUT / name)
+        layers["clouds"].append({"src": f"/art/hero/{name}", "w": w, "h": h, "y": y, "duration": speed,
+                                 "delay": round(-speed * (0.15 + 0.3 * i), 1)})
+
     layers["scene"] = {"src": "/art/scene/H-01-plate.png", "w": 640, "h": 360}
     CONFIG.write_text(json.dumps(layers, indent=2) + "\n")
     for p in sorted(OUT.iterdir()):
