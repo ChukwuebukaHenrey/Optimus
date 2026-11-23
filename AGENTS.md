@@ -182,7 +182,7 @@ scenarios:
   rect), `screenshot.png`, `annotated.png`, `failure.yaml`. **Unverified:** whether every
   interaction (click, fill, reload) is recorded in `step.json` — Phase 1 checks this.
 - Exit codes: 0 passed, 1 failed, 2 error (auth/Chrome/network), 3 timeout/cancelled.
-- Every authoring run uploads to TestMu Test Managerupload failure ends the run → INFRA_ERROR, retry once after a 90-second pause (an immediate relaunch can fail with "TMS did not return an org_id")
+- Every authoring run uploads to TestMu Test Manager; upload failure ends the run → INFRA_ERROR, retry once after a 90-second pause (an immediate relaunch can fail with "TMS did not return an org_id")
 
 ## Repair loop (Phase 4, after grading is proven; agent-independent controller)
 
@@ -204,7 +204,7 @@ verified failure → brief → coding agent → integrity checks → fresh full 
   the pack hash and the hashes of `src/core/` and `src/kane/` are unchanged; the browser
   profile is fresh. Honest limit: an agent with shell access could still read the packs.
 - **Rerun.** The full calibrated scenario set (Gate 1 scope: L1, L3, L4) with a new nonce and a
-  new execution ID, never only the failing scenario.After an infrastructure retry, a decision may combine verdicts from runs of the same source revision. It records which run supplied each verdict and never combines verdicts from different revisions.
+  new execution ID, never only the failing scenario. After an infrastructure retry, a decision may combine verdicts from runs of the same source revision. It records which run supplied each verdict and never combines verdicts from different revisions.
 - **Caps.** 3 repair attempts, 1,500 credits (void attempts included), 20 minutes. When a cap
   is reached the loop stops; it never changes the contract, broadens permissions or retries
   silently.
