@@ -143,6 +143,12 @@ summary{cursor:pointer;font-weight:800;color:var(--dominant)}
 .stage h4{font-weight:800}
 .agent{margin-top:16px;padding:16px;border:2px dashed var(--dominant);background:var(--surface)}
 .agent>.label{color:var(--dominant)}
+.md h4,.md h5,.md h6{font-weight:800;margin:16px 0 8px}
+.md h4:first-child{margin-top:0}
+.md p{margin:8px 0;max-width:75ch;overflow-wrap:anywhere}
+.md ul{list-style:disc;padding-left:24px;display:grid;gap:4px}
+.md ol{list-style:decimal;padding-left:24px;display:grid;gap:4px}
+.md li{overflow-wrap:anywhere}
 .diff{margin-top:16px;border:1px solid var(--rule);background:var(--surface);overflow-x:auto}
 .diff span{display:block;padding:0 16px;white-space:pre-wrap;overflow-wrap:anywhere}
 .diff .add{background:var(--pass-bg)}

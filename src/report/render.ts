@@ -10,6 +10,7 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { BundleBuild, BundleRepair, BundleRun, ComparisonBundle } from './schema.js';
+import { renderMarkdown } from './markdown.js';
 import { MARK_PATH, MARK_VIEWBOX } from './mark.js';
 import { stylesheet } from './styles.js';
 
@@ -219,7 +220,7 @@ export async function renderReport(bundle: ComparisonBundle, bundleDirectory: st
     const attemptStages = (attempt: BundleRepair['attempts'][number]) => [
       stage(`Attempt ${attempt.attempt}: brief sent to the coding agent`, `<div class="agent">
         <p class="label">Sent to the coding agent — exactly this, nothing else</p>
-        <pre class="gap">${e(attempt.briefMarkdown)}</pre>
+        <div class="md gap">${renderMarkdown(attempt.briefMarkdown)}</div>
         ${attempt.briefScreenshot ? `<a class="shot gap-l narrow" href="${e(attempt.briefScreenshot)}"><img src="${e(attempt.briefScreenshot)}" alt="Screenshot sent with the brief" loading="lazy" width="480" height="270"></a>` : ''}
         <p class="muted gap">The agent received this failure’s plain-language requirement and expected-versus-observed behaviour — never the full contract, unrelated checks or the evaluator.</p>
       </div>`),

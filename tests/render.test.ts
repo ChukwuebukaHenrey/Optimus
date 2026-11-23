@@ -2,6 +2,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, expect, it } from 'vitest';
+import { renderMarkdown } from '../src/report/markdown.js';
 import { renderReport } from '../src/report/render.js';
 import { comparisonBundleSchema, type ComparisonBundle } from '../src/report/schema.js';
 
@@ -80,4 +81,24 @@ it('keeps a score provisional while any scenario is unresolved', async () => {
   const aRow = html.slice(html.indexOf('A · Vanilla JS'), html.indexOf('B · React'));
   expect(aRow).toContain('Provisional');
   expect(aRow).toContain('v-INCONCLUSIVE');
+});
+
+it('renders a repair brief as formatted text without letting it inject markup', () => {
+  const html = renderMarkdown([
+    '# Repair brief',
+    '',
+    '## What went wrong',
+    '',
+    '- Expected: `GP Beta`',
+    '- Observed: <img src=x onerror=alert(1)>',
+    '',
+    '1. Open the page.',
+    '2. Remove it.',
+  ].join('\n'));
+  expect(html).toContain('<h4>Repair brief</h4>');
+  expect(html).toContain('<h5>What went wrong</h5>');
+  expect(html).toContain('<li>Expected: <code>GP Beta</code></li>');
+  expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+  expect(html).not.toMatch(/<img/u);
+  expect(html).toContain('<ol>\n<li>Open the page.</li>');
 });
