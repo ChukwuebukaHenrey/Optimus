@@ -3,7 +3,7 @@
 @import "shadcn/tailwind.css";
 
 /*
- * Optimus website tokens (docs/design/HERO_PROPOSAL.md §2).
+ * Optimus website tokens (from the hero design proposal, kept locally).
  * One dominant (azure) + one accent (lime). Verdict colours live only inside verdict badges.
  * Contrast measured: white on --glass 5.92:1, white on --azure-deep 6.53:1, ink on paper 15.6:1,
  * paper on charcoal 10.26:1, ink-muted on paper 4.89:1.

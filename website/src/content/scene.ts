@@ -1,6 +1,6 @@
 /**
  * Hero scene layout in native art pixels (the plate is 640x360).
- * Change positions or timing here instead of regenerating art (AGENT_BUILD_PROMPT, asset management).
+ * Change positions or timing here instead of regenerating art (asset management).
  */
 import layers from "./hero-layers.json";
 import frameData from "./agent-frames.json";

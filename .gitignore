@@ -5,3 +5,11 @@ dist/
 *.evidence
 .optimus/
 runs/**/raw/
+
+# Design notes and agent/art prompts: kept locally, not published
+docs/AGENT_BUILD_PROMPT.md
+docs/Optimus_Updated_Website_Agent_Prompt.md
+docs/REFERENCE_ANALYSIS.md
+docs/ASSET_REQUEST_TEMPLATE.md
+docs/design/HERO_PROPOSAL.md
+docs/design/requests/

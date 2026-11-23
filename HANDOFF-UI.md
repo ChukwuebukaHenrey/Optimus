@@ -5,6 +5,10 @@ The owner's main checkout `C:\Users\ADMIN\Optimus` is on `main` and belongs to t
 never switch its branch or commit UI work there. The root `HANDOFF.md` is the backend's; this file is
 the UI handoff.
 
+**Note:** the design notes and prompts this brief mentions (`docs/design/requests/`, `HERO_PROPOSAL.md`,
+`REFERENCE_ANALYSIS.md`, `AGENT_BUILD_PROMPT.md`, the website agent prompt, the asset template) are
+gitignored and live only in the local checkout.
+
 ### 1. Goal & Current Status
 - **Overall Objective:** Build the Optimus marketing website (`website/`, Next.js static export for
   Vercel) and the offline comparison report (`src/report/render.ts`), both rendered only from the

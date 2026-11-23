@@ -11,8 +11,8 @@ The hackathon requires that work is made during the event (from 21 Nov 2026).
 | `website-kit-mockup.png` (1536×1024) | Website mock-up board; source of the only full dusk scene (F-01) | ChatGPT (OpenAI image generation), generated 22 Nov 2026; to be edited by the owner later, and this entry updated after the edits | supplied 23 Nov 2026 |
 | `observatory-plate.png` (1672×941) | Hero environment without characters (H-01a) | ChatGPT (OpenAI image generation), generated 22 Nov 2026; to be edited by the owner later, and this entry updated after the edits | supplied 23 Nov 2026 |
 
-The boards were generated from the requests in `docs/design/requests/` (H-01, A-05, A-00, E-01…E-04,
-F-01). They are presentation boards, not individual files: the claims printed on them ("exact-grid
+The boards were generated from the art requests H-01, A-05, A-00, E-01…E-04 and F-01 (the prompts are
+kept locally, not in the repository). They are presentation boards, not individual files: the claims printed on them ("exact-grid
 exports", "≤32 colours") describe the request, not the delivered pixels.
 
 ## A-06 movement sheets (supplied by the project owner, 23 Nov 2026)
@@ -25,7 +25,7 @@ exports", "≤32 colours") describe the request, not the delivered pixels.
 | `Pixel Robot Inspector Sprite Sheet.png` (2172×724) | verdict | ChatGPT (OpenAI image generation), per the owner | supplied 23 Nov 2026 |
 | `Chibi Robot Mechanic Sprite Sheet.png` (2172×724) | repair smith | ChatGPT (OpenAI image generation), per the owner | supplied 23 Nov 2026 |
 
-Generated from `docs/design/requests/A-06.md` (v2). Delivered as 8 columns × 3 rows (turnaround,
+Generated from the A-06 (v2) art request (prompt kept locally, not in the repository). Delivered as 8 columns × 3 rows (turnaround,
 walk, action) on a transparent canvas, but not on the requested exact 384 px grid (cells are
 271.5 × 241.3 px) and with soft alpha edges; the slicer below compensates.
 
