@@ -11,6 +11,9 @@ import type { SiteData } from "@/lib/bundle";
 
 const shortHash = (h: string) => `${h.slice(0, 8)}…${h.slice(-4)}`;
 const nf = new Intl.NumberFormat("en", { maximumFractionDigits: 0 });
+const WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+/** Small counts read as words in running text ("five builds"); larger ones stay numerals. */
+const words = (n: number) => WORDS[n] ?? String(n);
 
 /** A small label that marks real data as coming from the example used on this page. */
 function ExampleTag({ dark = false, children = "Example: Library assignment" }: { dark?: boolean; children?: string }) {
@@ -44,9 +47,9 @@ export function ProofStrip({ data }: { data: SiteData }) {
   const items = [
     cal && { value: `${cal.matched} / ${cal.cases}`, label: "calibration cases matched the expected verdict" },
     cal && { value: String(cal.replays), label: "replays counted toward any verdict" },
-    data.repair && {
-      value: String(data.repair.attempts),
-      label: `live repair: ${data.repair.baseline} → fresh Kane run → ${data.repair.latest}`,
+    data.verifiedRepairs > 0 && {
+      value: String(data.verifiedRepairs),
+      label: `live repair${data.verifiedRepairs === 1 ? "" : "s"}: verified FAIL → fresh Kane run → PASS`,
     },
     cal && {
       value: `≈ ${nf.format(cal.seconds / cal.cases / 60)} min`,
@@ -65,9 +68,11 @@ export function ProofStrip({ data }: { data: SiteData }) {
           ))}
         </Stagger>
         <p className="py-4 text-ink-muted">
-          Measured on the example used throughout this page: the {data.assessmentName.replace(/ assessment$/i, "")} assignment, four builds ×{" "}
-          {data.scope.length} scenarios × 2 trials, contract <span className="font-mono">{data.pack.name} v{data.pack.version}</span>.
-          Screenshot labels from calibration are still pending independent review.
+          Measured on the example used throughout this page: calibration of the{" "}
+          {data.assessmentName.replace(/ assessment$/i, "")} assignment, {cal ? `${words(cal.apps)} builds × ` : ""}
+          {data.scope.length} scenarios{cal ? ` × ${words(cal.trials)} trials` : ""}, contract{" "}
+          <span className="font-mono">{data.pack.name} v{data.pack.version}</span>. The screenshot labels were reviewed by
+          Claude at the owner&apos;s request, not by an independent human.
         </p>
       </div>
     </section>
@@ -123,8 +128,8 @@ export function WhatItDoes({ data }: { data: SiteData }) {
         <Reveal className="mt-12 flex flex-col gap-4 border-l-4 border-lime bg-paper-2 p-6 md:flex-row md:items-center md:justify-between">
           <p className="max-w-[80ch]">
             <span className="font-extrabold">The example on this page:</span> a {data.assessmentName.replace(/ assessment$/i, "")} assignment — a
-            small book-list app — built four different ways (vanilla JavaScript, React, and two builds with planted bugs),
-            judged by one contract with {data.scope.length} scenarios: {data.scope.map((s) => s.name).join(", ")}. Optimus is not
+            small book-list app — built {words(data.matrix.length)} different ways (vanilla JavaScript, React, two builds
+            with planted bugs, and a blind build whose bug stayed sealed until grading), judged by one contract with {data.scope.length} scenarios: {data.scope.map((s) => s.name).join(", ")}. Optimus is not
             library-specific: the same engine runs any contract, and a calculator contract is part of its test suite.
           </p>
           <a href="/report/" className="inline-flex h-11 shrink-0 items-center gap-2 self-start rounded-full bg-charcoal px-5 font-extrabold text-paper hover:bg-ink md:self-auto">
@@ -312,8 +317,8 @@ export function VerdictsChapter({ data }: { data: SiteData }) {
             A clear answer, <span className="text-ink-muted">backed by a run.</span>
           </h2>
           <p className="mt-6">
-            In the example, four builds of the same Library assignment — vanilla JavaScript, React, and two with planted
-            bugs — are judged by one contract. Each verdict comes from Optimus&apos;s deterministic checks. A repaired build
+            In the example, {words(data.matrix.length)} builds of the same Library assignment — vanilla JavaScript, React,
+            two with planted bugs and one blind build — are judged by one contract. Each verdict comes from Optimus&apos;s deterministic checks. A repaired build
             keeps its baseline verdict next to the verified one; history is never overwritten.
           </p>
         </Reveal>

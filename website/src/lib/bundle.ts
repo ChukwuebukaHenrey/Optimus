@@ -51,7 +51,9 @@ export interface SiteData {
   pack: ComparisonBundle["assessment"]["pack"];
   scope: { id: string; name: string }[];
   matrix: MatrixRow[];
-  calibration: { cases: number; matched: number; replays: number; seconds: number; credits: number; notes: string[] } | null;
+  calibration: { cases: number; matched: number; replays: number; seconds: number; credits: number; apps: number; trials: number; notes: string[] } | null;
+  /** Repaired builds whose latest verdicts all pass: each one a verified FAIL → fresh Kane run → PASS. */
+  verifiedRepairs: number;
   repair: RepairStory | null;
   contractScenario: ComparisonBundle["contract"][number] | null;
   evidence: EvidenceStory | null;
@@ -127,6 +129,8 @@ export function getSiteData(): SiteData {
           .reduce((n, s) => n + (s.integrity.replayDecisions ?? 0), 0),
         seconds: cal.rows.reduce((n, r) => n + (r.seconds ?? 0), 0),
         credits: cal.rows.reduce((n, r) => n + (r.credits ?? 0), 0),
+        apps: new Set(cal.rows.map((r) => r.app)).size,
+        trials: new Set(cal.rows.map((r) => r.trial)).size,
         notes: cal.notes,
       }
     : null;
@@ -210,6 +214,7 @@ export function getSiteData(): SiteData {
     scope: bundle.scope.map((id) => ({ id, name: scenarioName(id) })),
     matrix,
     calibration,
+    verifiedRepairs: matrix.filter((row) => row.repairState === "repaired" && row.score === 1).length,
     repair,
     contractScenario,
     evidence,
