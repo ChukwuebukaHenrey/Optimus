@@ -41,8 +41,9 @@ export function Chapter({
   return (
     <section id={id} aria-labelledby={`${id}-title`} className={cn("scroll-mt-24", dark ? "on-dark bg-azure-deep text-white" : "bg-paper text-ink")}>
       <div className="mx-auto max-w-[1440px] px-4 py-24 md:px-16 md:py-32">
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16">
-          <Reveal className="self-start lg:sticky lg:top-28">
+        {/* grid-cols-1 = minmax(0,1fr): without it the single phone column grows to its widest child (the diff) */}
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16">
+          <Reveal className="min-w-0 self-start lg:sticky lg:top-28">
             <p className={cn("label-mono", dark ? "text-white/75" : "text-ink-muted")}>
               {number} — {label}
             </p>
@@ -66,7 +67,7 @@ export function Chapter({
               ))}
             </Accordion>
           </Reveal>
-          <Reveal delay={0.08} className="flex flex-col gap-8">
+          <Reveal delay={0.08} className="flex min-w-0 flex-col gap-8">
             {/* eslint-disable-next-line @next/next/no-img-element -- pixel art must not be resampled */}
             <img
               src={art}

@@ -99,7 +99,7 @@ export function RunReplay({ evidence, repair }: { evidence: EvidenceStory; repai
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         <div className="border-b border-white/15 lg:border-r lg:border-b-0">
           <p className="flex items-center gap-2 border-b border-white/10 px-4 py-2 font-mono text-white/60">
             <span className="size-2 rounded-full bg-[#ff6b6b]" /> <span className="size-2 rounded-full bg-[#ffd166]" /> <span className="size-2 rounded-full bg-[#06d6a0]" />

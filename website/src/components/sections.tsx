@@ -56,7 +56,7 @@ export function ProofStrip({ data }: { data: SiteData }) {
   return (
     <section aria-label="Measured results" className="bg-paper">
       <div className="mx-auto max-w-[1440px] px-4 md:px-16">
-        <Stagger className="grid border-y border-rule sm:grid-cols-2 lg:grid-cols-4">
+        <Stagger className="grid grid-cols-1 border-y border-rule sm:grid-cols-2 lg:grid-cols-4">
           {items.map((item, i) => (
             <StaggerItem key={item.label} className={cn("flex flex-col gap-2 py-8 sm:px-6", i > 0 && "max-sm:border-t sm:border-l", "border-rule")}>
               <p className="font-display text-[3rem] leading-[3.5rem] font-extrabold tabular-nums">{item.value}</p>
@@ -99,7 +99,7 @@ export function WhatItDoes({ data }: { data: SiteData }) {
             assignment: one contract, applied unchanged, with a verdict you can trace back to evidence.
           </p>
         </Reveal>
-        <Stagger className="mt-12 grid border-t border-rule md:grid-cols-5" gap={0.1}>
+        <Stagger className="mt-12 grid grid-cols-1 border-t border-rule md:grid-cols-5" gap={0.1}>
           {PIPELINE.map((step, i) => {
             const agent = AGENTS.find((a) => a.id === step.id)!;
             return (
@@ -178,7 +178,7 @@ export function ContractChapter({ data }: { data: SiteData }) {
               scenario <span className="font-mono">{s.id}</span>: {s.title.replace(/^Scenario \w+: /, "")}
             </span>
           </p>
-          <Stagger className="grid items-stretch gap-4 md:grid-cols-2" gap={0.18}>
+          <Stagger className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2" gap={0.18}>
             <StaggerItem from="left" className="h-full rounded-sm border border-rule bg-white p-4">
               <p className="label-mono text-ink-muted">Sent to Kane</p>
               <ol className="mt-3 flex flex-col gap-3">
@@ -266,7 +266,7 @@ export function EvidenceChapter({ data }: { data: SiteData }) {
               <VerdictBadge verdict={e.verdict} />
             </span>
           </figcaption>
-          <Stagger className="mt-4 grid gap-6 sm:grid-cols-2" gap={0.15}>
+          <Stagger className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2" gap={0.15}>
             {shots.map((s) => (
               <StaggerItem key={s.stepId}>
                 {/* the archived frame is a full 16:9 browser window; crop in on the app itself */}
@@ -426,7 +426,7 @@ export function RepairChapter({ data }: { data: SiteData }) {
       art="/art/editorial/E-04-repair.png"
       artAlt="Pixel art: the Optimus agent hands a note to the repair smith, who fits a glowing code tile into a model house while the browser runner waits."
     >
-      <Stagger className="flex flex-col gap-4" gap={0.12}>
+      <Stagger className="flex min-w-0 flex-col gap-4" gap={0.12}>
         <StaggerItem from="left" className="rounded-sm border border-white/25 bg-azure-ink/40 p-4">
           <p className="flex flex-wrap items-center gap-2">
             <ExampleTag dark />
@@ -446,7 +446,7 @@ export function RepairChapter({ data }: { data: SiteData }) {
             <dd className="[overflow-wrap:anywhere]">{r.observed}</dd>
           </dl>
         </StaggerItem>
-        <StaggerItem from="left" className="rounded-sm border border-white/25 bg-azure-ink/60 p-4">
+        <StaggerItem from="left" className="min-w-0 rounded-sm border border-white/25 bg-azure-ink/60 p-4">
           <p className="label-mono text-white/75">Code change · {r.changedFiles.join(", ")}</p>
           <pre className="mt-3 max-h-96 overflow-auto font-mono text-[1rem] leading-6">
             {diffLines.map((line, i) => (
@@ -510,7 +510,7 @@ export function DocsTeaser() {
             Run it on your own builds. <span className="text-ink-muted">Four chapters.</span>
           </h2>
         </Reveal>
-        <Stagger className="mt-12 grid border-t border-rule md:grid-cols-4" gap={0.1}>
+        <Stagger className="mt-12 grid grid-cols-1 border-t border-rule md:grid-cols-4" gap={0.1}>
           {DOCS.map((d, i) => (
             <StaggerItem key={d.n} className={cn("border-b border-rule md:border-b-0", i > 0 && "md:border-l")}>
               <a href={d.href} className="group flex h-full flex-col gap-8 p-6 transition-colors hover:bg-paper">

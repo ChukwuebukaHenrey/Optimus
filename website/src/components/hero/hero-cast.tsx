@@ -14,10 +14,10 @@ const loop = (times: number[]) => ({ duration: CYCLE, times, repeat: Infinity, e
 
 /** What each agent does in the cycle, as Motion keyframes (y and x in % of the sprite). */
 const ACTIONS: Record<AgentSpec["id"], { animate: TargetAndTransition; times: number[] }> = {
-  // glances back at the observatory, then turns and lifts the scroll to send it
+  // lifts the scroll as it sends the hand-off (real gesture frames: docs/design/requests/A-06.md)
   contract: {
-    animate: { scaleX: [1, 1, -1, -1, 1, 1], y: ["0%", "-5%", "0%", "0%", "0%", "0%"] },
-    times: [0, 0.03, 0.06, 0.8, 0.86, 1],
+    animate: { y: ["0%", "-5%", "0%", "0%"] },
+    times: [0, 0.03, 0.06, 1],
   },
   // types in short bursts while the evidence arrives
   runner: {
@@ -34,10 +34,10 @@ const ACTIONS: Record<AgentSpec["id"], { animate: TargetAndTransition; times: nu
     animate: { y: ["0%", "0%", "-7%", "0%", "-3%", "0%", "0%"] },
     times: [0, 0.45, 0.48, 0.51, 0.53, 0.55, 1],
   },
-  // looks over at the verdict, then back to the code tile
+  // a small hop when the verdict lands (real gesture frames: docs/design/requests/A-06.md)
   smith: {
-    animate: { scaleX: [1, 1, -1, -1, 1, 1], y: ["0%", "0%", "-3%", "0%", "0%", "0%"] },
-    times: [0, 0.56, 0.6, 0.72, 0.76, 1],
+    animate: { y: ["0%", "0%", "-3%", "0%", "0%"] },
+    times: [0, 0.56, 0.6, 0.64, 1],
   },
 };
 

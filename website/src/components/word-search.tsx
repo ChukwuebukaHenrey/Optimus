@@ -198,7 +198,7 @@ export function WordSearch() {
 
   return (
     <section id="find" aria-labelledby="find-title" className="scroll-mt-24 bg-[#e6eedd]">
-      <div className="mx-auto grid max-w-[1440px] gap-12 px-4 py-24 md:px-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="mx-auto grid grid-cols-1 max-w-[1440px] gap-12 px-4 py-24 md:px-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div>
           <p className="label-mono text-ink-muted">Find your way</p>
           <h2 id="find-title" className="headline mt-4">
