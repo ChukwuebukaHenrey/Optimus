@@ -7,9 +7,9 @@ The hackathon requires that work is made during the event (from 21 Nov 2026).
 
 | File in `assets/source/` | What it is | Generation tool / model | Date |
 |---|---|---|---|
-| `asset-pack-sheet.png` (1536×1024) | Board with the cast (A-01…A-05, main + blink), editorial scenes E-01…E-04, hero layers, dusk scene, palette | OpenAI GPT image generation (generated 22 Nov 2026; to be edited by the owner later, and this entry updated after the edits) | supplied 23 Nov 2026 |
-| `website-kit-mockup.png` (1536×1024) | Website mock-up board; source of the only full dusk scene (F-01) | OpenAI GPT image generation (generated 22 Nov 2026; to be edited by the owner later, and this entry updated after the edits) | supplied 23 Nov 2026 |
-| `observatory-plate.png` (1672×941) | Hero environment without characters (H-01a) | OpenAI GPT image generation (generated 22 Nov 2026; to be edited by the owner later, and this entry updated after the edits) | supplied 23 Nov 2026 |
+| `asset-pack-sheet.png` (1536×1024) | Board with the cast (A-01…A-05, main + blink), editorial scenes E-01…E-04, hero layers, dusk scene, palette | ChatGPT (OpenAI image generation), generated 22 Nov 2026; to be edited by the owner later, and this entry updated after the edits | supplied 23 Nov 2026 |
+| `website-kit-mockup.png` (1536×1024) | Website mock-up board; source of the only full dusk scene (F-01) | ChatGPT (OpenAI image generation), generated 22 Nov 2026; to be edited by the owner later, and this entry updated after the edits | supplied 23 Nov 2026 |
+| `observatory-plate.png` (1672×941) | Hero environment without characters (H-01a) | ChatGPT (OpenAI image generation), generated 22 Nov 2026; to be edited by the owner later, and this entry updated after the edits | supplied 23 Nov 2026 |
 
 The boards were generated from the requests in `docs/design/requests/` (H-01, A-05, A-00, E-01…E-04,
 F-01). They are presentation boards, not individual files: the claims printed on them ("exact-grid
@@ -19,11 +19,11 @@ exports", "≤32 colours") describe the request, not the delivered pixels.
 
 | File in `assets/source/` | Agent | Generation tool / model | Date |
 |---|---|---|---|
-| `Hooded Robot Sprite Sheet.png` (2172×724) | contract | **To be supplied by the owner** | supplied 23 Nov 2026 |
-| `Hooded Hacker Robot Sprite Sheet.png` (2172×724) | browser run (walk row empty, as requested) | **To be supplied by the owner** | supplied 23 Nov 2026 |
-| `Hooded Robot Detective Sprite Sheet.png` (2172×724) | evidence | **To be supplied by the owner** | supplied 23 Nov 2026 |
-| `Pixel Robot Inspector Sprite Sheet.png` (2172×724) | verdict | **To be supplied by the owner** | supplied 23 Nov 2026 |
-| `Chibi Robot Mechanic Sprite Sheet.png` (2172×724) | repair smith | **To be supplied by the owner** | supplied 23 Nov 2026 |
+| `Hooded Robot Sprite Sheet.png` (2172×724) | contract | ChatGPT (OpenAI image generation), per the owner | supplied 23 Nov 2026 |
+| `Hooded Hacker Robot Sprite Sheet.png` (2172×724) | browser run (walk row empty, as requested) | ChatGPT (OpenAI image generation), per the owner | supplied 23 Nov 2026 |
+| `Hooded Robot Detective Sprite Sheet.png` (2172×724) | evidence | ChatGPT (OpenAI image generation), per the owner | supplied 23 Nov 2026 |
+| `Pixel Robot Inspector Sprite Sheet.png` (2172×724) | verdict | ChatGPT (OpenAI image generation), per the owner | supplied 23 Nov 2026 |
+| `Chibi Robot Mechanic Sprite Sheet.png` (2172×724) | repair smith | ChatGPT (OpenAI image generation), per the owner | supplied 23 Nov 2026 |
 
 Generated from `docs/design/requests/A-06.md` (v2). Delivered as 8 columns × 3 rows (turnaround,
 walk, action) on a transparent canvas, but not on the requested exact 384 px grid (cells are

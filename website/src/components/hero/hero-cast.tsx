@@ -268,7 +268,7 @@ export function HeroCast() {
         ))}
       </ul>
 
-      <span ref={spark} aria-hidden="true" className="handoff-track max-md:hidden">
+      <span ref={spark} aria-hidden="true" className="handoff-track">
         <span className="handoff" />
       </span>
       <span

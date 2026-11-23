@@ -25,21 +25,25 @@ export function Hero() {
     <section
       id="top"
       aria-labelledby="hero-title"
-      className="on-dark relative isolate flex flex-col overflow-hidden bg-[#128aef] text-white md:block md:min-h-[max(820px,min(100svh,960px))]"
+      className="on-dark relative isolate flex min-h-[max(100svh,600px)] flex-col overflow-hidden bg-[#128aef] text-white md:min-h-[max(820px,min(100svh,960px))]"
     >
-      <div className="hero-frame relative order-2 md:absolute md:inset-0">
+      {/* the scene fills the hero at every size; the copy sits in its sky */}
+      <div className="hero-frame absolute inset-0">
         <HeroScene />
       </div>
 
-      {/* scrim: only behind the copy column, so white body text reaches 4.5:1 over the sky */}
+      {/* scrims, so white body text reaches 4.5:1 over the sky: a column on desktop, a top band on phones */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-y-0 left-0 hidden w-[62%] bg-[linear-gradient(90deg,rgb(6_33_61/0.42)_0%,rgb(6_33_61/0.3)_55%,transparent_100%)] [mask-image:linear-gradient(180deg,black_0%,black_55%,transparent_75%)] md:block"
       />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[72%] bg-[linear-gradient(180deg,rgb(6_33_61/0.5)_0%,rgb(6_33_61/0.38)_55%,transparent_100%)] md:hidden"
+      />
 
-      {/* Desktop: one copy column over the sky. Phones: headline above the scene, explanation below it. */}
-      <div className="max-md:contents md:relative md:z-10 md:mx-auto md:max-w-[1440px] md:px-16 md:pt-36 md:pb-10">
-        <Entrance className="relative z-10 order-1 px-4 md:max-w-[560px] pt-24 pb-6 max-md:bg-[linear-gradient(180deg,#0b5fa8_0%,#0e74cc_70%,#128aef_100%)] md:px-0 md:pt-0 md:pb-0">
+      <div className="relative z-10 w-full px-4 pt-24 md:mx-auto md:max-w-[1440px] md:px-16 md:pt-36 md:pb-10">
+        <Entrance className="md:max-w-[560px]">
           <EntranceItem>
             <p className="label-mono text-white/85">Behavioural assessment for web apps</p>
           </EntranceItem>
@@ -50,9 +54,9 @@ export function Hero() {
             </h1>
           </EntranceItem>
         </Entrance>
-        <Entrance start={2} className="relative z-10 order-3 px-4 md:max-w-[560px] pt-6 pb-14 max-md:bg-azure-deep md:px-0 md:pt-0 md:pb-0">
+        <Entrance start={2} className="md:max-w-[560px]">
           <EntranceItem>
-            <p className="font-extrabold md:mt-6">One contract. Many different builds. Evidence-backed verdicts.</p>
+            <p className="mt-6 font-extrabold">One contract. Many different builds. Evidence-backed verdicts.</p>
             <p className="mt-2 text-white/90">
               Kane CLI acts in a real browser and records what it sees. Optimus judges that evidence against one
               unchanged contract — deterministically, with no AI deciding the verdict.
@@ -75,6 +79,9 @@ export function Hero() {
           </EntranceItem>
         </Entrance>
       </div>
+      {/* room for the terrace and agents under the copy: they stand in the scene's lowest 40%, and the
+          scene is 100vw tall on phones (zoomed to four agents) and 56.25vw from tablets up (full width) */}
+      <div aria-hidden="true" className="min-h-[44vw] flex-1 md:min-h-[25vw]" />
 
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 z-10 h-6">
         <PixelEdge />

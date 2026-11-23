@@ -224,39 +224,40 @@
 
 /* ---------- hero scene ---------- */
 /*
- * The scene keeps its 16:9 art coordinates and covers the frame. The scene point (--fx, --fy) is
- * pinned to the same fraction of the frame, so a scene at least as large as the frame always
- * reaches every edge, and the terrace and agents stay in view at any viewport.
+ * The scene keeps its 16:9 art coordinates. It covers the frame, but never zooms in further than
+ * --cap allows, so the agents on the terrace are never cut off. When the frame is taller than
+ * that (narrow or portrait screens), the scene stands on the frame's bottom edge and the sky
+ * continues above it: the section's background is the plate's own sky colour (#128aef), and the
+ * plate's top edge fades into it. The copy sits in that sky, as on a full-bleed hero.
+ *
+ *   --cap  widest the scene may get, in frame widths (640 / visible art px)
+ *   --fxn  horizontal pin (0 = scene's left edge on the frame's, 1 = right edge on right)
+ *   --fyn  vertical pin while the scene is taller than the frame (crops sky and wall evenly)
  */
 .hero-frame {
   container-type: size;
   overflow: hidden;
 }
 .hero-scene {
-  /* 68%: keeps the Smith's right edge (96% of the scene) in view when a short window crops the sides */
-  --fx: 68%;
-  --fy: 72%;
-  --px: var(--fx);
-  --py: var(--fy);
+  /* tablet and desktop: the whole 640 art px width, never zoomed in, so all five agents are always
+     in view and the copy (which the hero reserves room for, above the terrace) never meets them */
+  --cap: 100cqw;
+  --fxn: 0.5;
+  --fyn: 0.72;
+  --sw: max(100cqw, min(calc(100cqh * 16 / 9), var(--cap)));
+  --sh: calc(var(--sw) * 9 / 16);
   position: absolute;
-  left: var(--px);
-  top: var(--py);
-  width: max(100cqw, calc(100cqh * 16 / 9));
+  width: var(--sw);
   aspect-ratio: 16 / 9;
-  transform: translate(calc(var(--fx) * -1), calc(var(--fy) * -1));
+  left: calc((100cqw - var(--sw)) * var(--fxn));
+  top: max(calc((100cqh - var(--sh)) * var(--fyn)), calc(100cqh - var(--sh)));
+  mask-image: linear-gradient(180deg, transparent 0%, black 4%);
 }
 @media (max-width: 767px) {
-  /* phones: a band between headline and explanation, cropped to Contract, Browser run and Verdict */
-  .hero-frame {
-    height: 84vw;
-  }
   .hero-scene {
-    /* visible x = native 159-519: Contract (163-233) and Verdict (440-514) fully in view.
-       The terrace edge (scene y 94%) sits on the frame's bottom edge. */
-    --fx: 56.6%;
-    --fy: 94%;
-    --py: 100%;
-    width: 178cqw;
+    /* phones: 360 art px wide (native 159-519): Contract, Browser run, Evidence and Verdict */
+    --cap: calc(100cqw * 640 / 360);
+    --fxn: 0.566;
   }
   .headline {
     font-size: 2.5rem;

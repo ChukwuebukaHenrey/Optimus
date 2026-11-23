@@ -40,7 +40,7 @@ export interface AgentSpec {
   x: number;
   /** Where the hand-off spark touches this agent's prop (native px). */
   prop: { x: number; y: number } | null;
-  /** Shown in the hero on phones (three agents only). */
+  /** Shown in the hero on phones (the four that fit: all but the Smith, at the right edge). */
   mobile: boolean;
 }
 
@@ -72,7 +72,7 @@ export const AGENTS: AgentSpec[] = [
   }),
   agent({
     id: "evidence", name: "The evidence", caption: "Every step, every screenshot", href: "#evidence",
-    x: 384, prop: { x: 404, y: 270 }, mobile: false,
+    x: 384, prop: { x: 404, y: 270 }, mobile: true,
   }),
   agent({
     id: "verdict", name: "The verdict", caption: "Optimus decides, deterministically", href: "#verdicts",

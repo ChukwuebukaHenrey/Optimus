@@ -221,6 +221,12 @@ def main() -> None:
         rr, gg, bb = region[..., 0], region[..., 1], region[..., 2]
         water = (bb > 170) & (gg > 140) & (rr < 150) & (bb - rr > 60)
         water[region.shape[0] - 24:, :] = False          # bottom band is spray only
+        # Only the falling water itself: the colour test also catches sky seen through the wall's
+        # arches and balustrade, and patches of mist, which then flickered with the water.
+        labels = components(water)
+        sizes = np.bincount(labels.ravel())
+        sizes[0] = 0
+        water = labels == int(sizes.argmax())
         h, w = water.shape
         phase = rng.integers(0, 12, size=w)
         speed = rng.choice([1, 2], size=w)                # 12 or 6 frames per stripe cycle

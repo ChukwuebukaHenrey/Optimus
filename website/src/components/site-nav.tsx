@@ -53,7 +53,7 @@ export function SiteNav({ overHero = true }: { overHero?: boolean }) {
       <nav aria-label="Main" className={cn("mx-auto flex h-18 max-w-[1440px] items-center justify-between gap-4 px-4 md:px-16", onDark && "on-dark")}>
         <Wordmark onDark={onDark} />
 
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-2 whitespace-nowrap xl:flex">
           <ul className={cn("flex h-11 items-center rounded-full px-2", onDark ? "glass" : "border border-rule bg-paper-2")}>
             {CHAPTERS.map((c) => (
               <li key={c.href}>
@@ -99,7 +99,7 @@ export function SiteNav({ overHero = true }: { overHero?: boolean }) {
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger
             className={cn(
-              "inline-flex size-11 items-center justify-center rounded-sm lg:hidden",
+              "inline-flex size-11 items-center justify-center rounded-sm xl:hidden",
               onDark ? "glass text-white" : "border border-rule bg-paper-2 text-ink",
             )}
             aria-label="Open menu"
