@@ -66,9 +66,22 @@ it('renders the repair record only for a session with attempts, in the order thi
   expect(positions.every((p) => p > 0)).toBe(true);
   expect([...positions].sort((a, b) => a - b)).toEqual(positions);
 
+  // every session with an attempt gets its own record
+  for (const repair of fresh().repairs) expect(html).toContain(`Session <code>${repair.sessionId}</code>`);
+
+  // a session without attempts is left out; with none left, so is the whole section
   const bundle = fresh();
-  bundle.repairs[0].attempts = [];
-  bundle.builds[2].repairState = 'repair_stopped';
+  const [dropped] = bundle.repairs;
+  dropped.attempts = [];
+  bundle.builds.find((b) => b.buildId === dropped.buildId)!.repairState = 'repair_stopped';
+  const partial = await render(bundle);
+  expect(partial).toContain('id="repairs"');
+  expect(partial).not.toContain(`Session <code>${dropped.sessionId}</code>`);
+
+  for (const repair of bundle.repairs) {
+    repair.attempts = [];
+    bundle.builds.find((b) => b.buildId === repair.buildId)!.repairState = 'repair_stopped';
+  }
   expect(await render(bundle)).not.toContain('id="repairs"');
 });
 
