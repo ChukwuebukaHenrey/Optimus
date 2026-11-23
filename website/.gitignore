@@ -4,3 +4,6 @@ out/
 next-env.d.ts
 *.tsbuildinfo
 public/report/
+
+# Python bytecode from the art scripts
+__pycache__/
