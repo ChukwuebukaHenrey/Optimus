@@ -174,11 +174,11 @@ A ruled strip on paper, Atkinson Mono labels, Bricolage 800 numerals:
 |---|---|---|
 | **24 / 24** | calibration cases matched the expected verdict | `runs/gate1-v5/REPORT.md` |
 | **0** | replays counted toward any verdict | same |
-| **1** | live repair: verified FAIL → fresh Kane run → PASS | bundle `repairs[]` (C, L3) |
+| **3** | live repairs: verified FAIL → fresh Kane run → PASS | bundle `builds[]` repaired with every latest verdict PASS (C L3, D L4, U L4) |
 | **≈ 5 min · ≈ 52 credits** | per scenario run | Gate 1 v5: 7,362 s and 1,246.58 credits over 24 valid cases |
 
-The report also says the screenshot labels are **pending independent review**. The site doesn't
-claim screenshot agreement until that's done.
+The screenshot labels were reviewed by Claude; the owner delegated this review to Claude on 23 Nov
+2026 (not an independent human check). The site says so next to the proof strip.
 
 ## 8. Page flow after the hero
 
