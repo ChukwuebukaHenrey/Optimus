@@ -113,6 +113,15 @@ Commits on `ui/website` since base `1a40da9` (oldest first): `7300c80`, `153b8e6
   `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 
 ### 4. Remaining Work (Ordered Next Steps)
+**Deployed 23 Nov 2026 (owner's go-ahead): https://optimus-one-mu.vercel.app** (Vercel project
+`optimus`, static upload of `website/out`, not Git-connected; `ui/website` is still not pushed).
+Redeploy: `cd website && rm -rf .next && VERCEL_PROJECT_PRODUCTION_URL=optimus-one-mu.vercel.app npm run build`,
+copy `out/.` into a staging folder that holds `.vercel/` (link: `npx vercel link --yes --project optimus`)
+and a `.vercelignore` with `.env*`, then `npx vercel deploy --prod --yes`. `vercel link` writes a
+`.env.local` with an OIDC token into the folder: delete it before any deploy.
+**Gotcha:** the Next build cache served a stale `globals.css` once; always `rm -rf .next` before a
+build you check or ship.
+
 **Update 23 Nov, later session:** steps 1, 2 (counts; the featured repair is still C, the first
 session) and 4 (action rows only) are done: commits `7964d89`…`5144da2`. Root tsc + 190 tests pass;
 website tsc/eslint/build pass. Provenance for the original boards is filled in; the A-06 sheets'
