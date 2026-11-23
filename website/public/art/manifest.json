@@ -1,0 +1,126 @@
+{
+  "contract": {
+    "frameWidth": 70,
+    "frameHeight": 80,
+    "frames": 2,
+    "source": "asset-pack-sheet.png",
+    "box": [
+      25,
+      44,
+      150,
+      200
+    ],
+    "note": "frame 2 = synthesised blink"
+  },
+  "runner": {
+    "frameWidth": 67,
+    "frameHeight": 70,
+    "frames": 2,
+    "source": "asset-pack-sheet.png",
+    "box": [
+      289,
+      60,
+      408,
+      200
+    ],
+    "note": "frame 2 = synthesised blink"
+  },
+  "evidence": {
+    "frameWidth": 73,
+    "frameHeight": 69,
+    "frames": 2,
+    "source": "asset-pack-sheet.png",
+    "box": [
+      548,
+      60,
+      677,
+      200
+    ],
+    "note": "frame 2 = synthesised blink"
+  },
+  "verdict": {
+    "frameWidth": 74,
+    "frameHeight": 82,
+    "frames": 2,
+    "source": "asset-pack-sheet.png",
+    "box": [
+      824,
+      40,
+      955,
+      200
+    ],
+    "note": "frame 2 = synthesised blink"
+  },
+  "smith": {
+    "frameWidth": 98,
+    "frameHeight": 86,
+    "frames": 2,
+    "source": "asset-pack-sheet.png",
+    "note": "blink frame synthesised from the idle pose"
+  },
+  "smith-work": {
+    "frameWidth": 100,
+    "frameHeight": 71,
+    "frames": 1
+  },
+  "E-01-contract": {
+    "width": 320,
+    "height": 181,
+    "source": "asset-pack-sheet.png",
+    "box": [
+      14,
+      287,
+      379,
+      493
+    ]
+  },
+  "E-02-evidence": {
+    "width": 320,
+    "height": 185,
+    "source": "asset-pack-sheet.png",
+    "box": [
+      404,
+      287,
+      761,
+      493
+    ]
+  },
+  "E-03-verdicts": {
+    "width": 320,
+    "height": 185,
+    "source": "asset-pack-sheet.png",
+    "box": [
+      786,
+      287,
+      1142,
+      493
+    ]
+  },
+  "E-04-repair": {
+    "width": 320,
+    "height": 185,
+    "source": "asset-pack-sheet.png",
+    "box": [
+      1168,
+      287,
+      1524,
+      493
+    ]
+  },
+  "F-01-dusk": {
+    "width": 480,
+    "height": 190,
+    "source": "website-kit-mockup.png",
+    "box": [
+      14,
+      738,
+      650,
+      990
+    ]
+  },
+  "H-01-plate": {
+    "width": 640,
+    "height": 360,
+    "source": "observatory-plate.png"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "falls": [
+    {
+      "src": "/art/hero/fall-1.png",
+      "x": 358,
+      "y": 150,
+      "w": 31,
+      "h": 142,
+      "frames": 12
+    },
+    {
+      "src": "/art/hero/fall-2.png",
+      "x": 423,
+      "y": 150,
+      "w": 33,
+      "h": 142,
+      "frames": 12
+    }
+  ],
+  "lanterns": [
+    {
+      "src": "/art/hero/lantern-1.png",
+      "x": 200,
+      "y": 236,
+      "w": 19,
+      "h": 34,
+      "delay": 0.0
+    },
+    {
+      "src": "/art/hero/lantern-2.png",
+      "x": 293,
+      "y": 236,
+      "w": 19,
+      "h": 34,
+      "delay": -1.2
+    },
+    {
+      "src": "/art/hero/lantern-3.png",
+      "x": 385,
+      "y": 236,
+      "w": 19,
+      "h": 34,
+      "delay": -2.4
+    },
+    {
+      "src": "/art/hero/lantern-4.png",
+      "x": 477,
+      "y": 236,
+      "w": 19,
+      "h": 34,
+      "delay": -3.6
+    },
+    {
+      "src": "/art/hero/lantern-5.png",
+      "x": 563,
+      "y": 236,
+      "w": 19,
+      "h": 34,
+      "delay": -4.8
+    }
+  ],
+  "scene": {
+    "src": "/art/scene/H-01-plate.png",
+    "w": 640,
+    "h": 360
+  }
+}

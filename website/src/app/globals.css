@@ -1,0 +1,360 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+ * Optimus website tokens (docs/design/HERO_PROPOSAL.md §2).
+ * One dominant (azure) + one accent (lime). Verdict colours live only inside verdict badges.
+ * Contrast measured: white on --glass 5.92:1, white on --azure-deep 6.53:1, ink on paper 15.6:1,
+ * paper on charcoal 10.26:1, ink-muted on paper 4.89:1.
+ */
+:root {
+  --sky: #198de5;
+  --azure-deep: #0b5fa8;
+  --azure-ink: #06213d;
+  --paper: #f5f5f2;
+  --paper-2: #ecebe6;
+  --ink: #1c1c1c;
+  --ink-muted: #6b6b68;
+  --charcoal: #3b3b3b;
+  --rule: #d6d4cc;
+  --lime: #d9f53b;
+  --glass: rgb(6 33 61 / 0.35);
+  --glass-edge: rgb(255 255 255 / 0.18);
+  --paper-glass: rgb(245 245 242 / 0.82);
+
+  /* verdicts (semantic, badges only) */
+  --pass-fg: #0f5132;
+  --pass-bg: #ddf1e4;
+  --fail-fg: #8e1c1c;
+  --fail-bg: #fbe3e0;
+  --inconc-fg: #7a4a00;
+  --inconc-bg: #fcebc7;
+  --neutral-fg: #4a4a4a;
+  --neutral-bg: #eceae4;
+
+  /* shadcn mapping */
+  --radius: 4px;
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--charcoal);
+  --primary-foreground: var(--paper);
+  --secondary: var(--paper-2);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper-2);
+  --muted-foreground: var(--ink-muted);
+  --accent: var(--paper-2);
+  --accent-foreground: var(--ink);
+  --destructive: var(--fail-fg);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--azure-deep);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sky: var(--sky);
+  --color-azure-deep: var(--azure-deep);
+  --color-azure-ink: var(--azure-ink);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-charcoal: var(--charcoal);
+  --color-rule: var(--rule);
+  --color-lime: var(--lime);
+
+  --font-display: "Bricolage Grotesque Variable", Georgia, serif;
+  --font-sans: "Atkinson Hyperlegible Next Variable", Verdana, sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono Variable", Consolas, monospace;
+
+  /* type scale: 3x jumps (16 / 48 / 144), weights 200 / 400 / 800 only */
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-display: 3rem;
+  --text-display--line-height: 3.5rem;
+  --text-mega: 9rem;
+  --text-mega--line-height: 9rem;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 96px;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-size: 1rem;
+    line-height: 1.5rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  .on-dark :focus-visible {
+    outline-color: var(--lime);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/* ---------- reusable type ---------- */
+@utility label-mono {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+@utility headline {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  line-height: var(--text-display--line-height);
+  font-weight: 200;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+@utility pixelated {
+  image-rendering: pixelated;
+}
+
+/* ---------- rendered README on /docs/ ---------- */
+.docs h1,
+.docs h2 {
+  font-family: var(--font-display);
+  font-weight: 200;
+  font-size: var(--text-display);
+  line-height: var(--text-display--line-height);
+  margin: 4rem 0 1.5rem;
+  scroll-margin-top: 96px;
+}
+.docs h1 {
+  margin-top: 0;
+}
+.docs h3 {
+  font-weight: 800;
+  margin: 2rem 0 0.5rem;
+}
+.docs p,
+.docs ul,
+.docs ol,
+.docs pre,
+.docs table {
+  margin: 0 0 1rem;
+}
+.docs ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+.docs ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}
+.docs code {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.docs pre {
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+.docs table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+.docs th,
+.docs td {
+  border-bottom: 1px solid var(--rule);
+  padding: 0.5rem 1rem 0.5rem 0;
+  text-align: left;
+  vertical-align: top;
+}
+.docs a {
+  text-decoration: underline;
+}
+
+/* ---------- glass ---------- */
+@utility glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+}
+
+/* ---------- hero scene ---------- */
+/*
+ * The scene keeps its 16:9 art coordinates and covers the frame. The scene point (--fx, --fy) is
+ * pinned to the same fraction of the frame, so a scene at least as large as the frame always
+ * reaches every edge, and the terrace and agents stay in view at any viewport.
+ */
+.hero-frame {
+  container-type: size;
+  overflow: hidden;
+}
+.hero-scene {
+  --fx: 52%;
+  --fy: 72%;
+  --px: var(--fx);
+  --py: var(--fy);
+  position: absolute;
+  left: var(--px);
+  top: var(--py);
+  width: max(100cqw, calc(100cqh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  transform: translate(calc(var(--fx) * -1), calc(var(--fy) * -1));
+}
+@media (max-width: 767px) {
+  /* phones: a band between headline and explanation, cropped to Contract, Browser run and Verdict */
+  .hero-frame {
+    height: 84vw;
+  }
+  .hero-scene {
+    /* visible x = native 159-519: Contract (163-233) and Verdict (440-514) fully in view.
+       The terrace edge (scene y 94%) sits on the frame's bottom edge. */
+    --fx: 56.6%;
+    --fy: 94%;
+    --py: 100%;
+    width: 178cqw;
+  }
+  .headline {
+    font-size: 2.5rem;
+    line-height: 3rem;
+  }
+}
+.scene-layer {
+  position: absolute;
+  image-rendering: pixelated;
+}
+
+/* waterfall strips: a 12-frame sheet slid one frame at a time */
+.fall {
+  overflow: hidden;
+}
+.fall > img {
+  display: block;
+  height: 100%;
+  width: 1200%;
+  max-width: none;
+  image-rendering: pixelated;
+  animation: fall-run 1s steps(12) infinite;
+}
+@keyframes fall-run {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.lantern-glow {
+  animation: lantern 6s ease-in-out infinite;
+}
+@keyframes lantern {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* agents: 2-frame sheets (open eyes, blink) */
+.agent-sprite {
+  background-repeat: no-repeat;
+  background-size: 200% 100%;
+  background-position: 0 0;
+  image-rendering: pixelated;
+  animation: blink var(--blink, 5s) step-end infinite;
+  animation-delay: var(--blink-delay, 0s);
+}
+@keyframes blink {
+  0%,
+  95% {
+    background-position: 0 0;
+  }
+  96%,
+  99% {
+    background-position: 100% 0;
+  }
+}
+
+/* the hand-off spark: contract -> browser run -> evidence -> verdict, then a tick */
+.handoff-track {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  animation: handoff 10s linear infinite;
+}
+.handoff {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(100% * 3 / 640);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: var(--lime);
+}
+/* keyframes for .handoff and .handoff-tick are generated from scene.ts in hero-scene.tsx */
+.handoff-tick {
+  position: absolute;
+  opacity: 0;
+  animation: tick 10s steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fall > img,
+  .lantern-glow,
+  .agent-sprite,
+  .handoff-track,
+  .handoff-tick {
+    animation: none !important;
+  }
+  .lantern-glow {
+    opacity: 0.6;
+  }
+  .handoff-track,
+  .handoff-tick {
+    display: none;
+  }
+}

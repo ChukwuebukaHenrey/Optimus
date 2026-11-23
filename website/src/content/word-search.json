@@ -1,0 +1,209 @@
+{
+  "size": 12,
+  "grid": [
+    "ENAKPUKGTSPW",
+    "ONIHRRIOKDXT",
+    "EBVIHXRDEVCV",
+    "HCKNQQNVGAER",
+    "OKBCAZILRRCI",
+    "NNXXJDDTIUZA",
+    "WEYIEDNFSMNP",
+    "FHBNQOYFDKBE",
+    "LQCACKBBAVUR",
+    "JEQMXSEIOEIZ",
+    "JZJOIMTTLELA",
+    "AQVWENSDBNDX"
+  ],
+  "words": [
+    {
+      "word": "CONTRACT",
+      "href": "#contract",
+      "label": "The contract",
+      "cells": [
+        [
+          8,
+          4
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          4,
+          8
+        ],
+        [
+          3,
+          9
+        ],
+        [
+          2,
+          10
+        ],
+        [
+          1,
+          11
+        ]
+      ]
+    },
+    {
+      "word": "EVIDENCE",
+      "href": "#evidence",
+      "label": "The evidence",
+      "cells": [
+        [
+          2,
+          8
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          8,
+          2
+        ],
+        [
+          9,
+          1
+        ]
+      ]
+    },
+    {
+      "word": "VERIFY",
+      "href": "#verdicts",
+      "label": "The verdicts",
+      "cells": [
+        [
+          2,
+          11
+        ],
+        [
+          3,
+          10
+        ],
+        [
+          4,
+          9
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          7,
+          6
+        ]
+      ]
+    },
+    {
+      "word": "REPAIR",
+      "href": "#repair",
+      "label": "The repair loop",
+      "cells": [
+        [
+          8,
+          11
+        ],
+        [
+          7,
+          11
+        ],
+        [
+          6,
+          11
+        ],
+        [
+          5,
+          11
+        ],
+        [
+          4,
+          11
+        ],
+        [
+          3,
+          11
+        ]
+      ]
+    },
+    {
+      "word": "BUILD",
+      "href": "/report/",
+      "label": "Every build, one report",
+      "cells": [
+        [
+          7,
+          10
+        ],
+        [
+          8,
+          10
+        ],
+        [
+          9,
+          10
+        ],
+        [
+          10,
+          10
+        ],
+        [
+          11,
+          10
+        ]
+      ]
+    },
+    {
+      "word": "KANE",
+      "href": "https://github.com/LambdaTest/kane-cli",
+      "label": "Kane CLI",
+      "cells": [
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    }
+  ]
+}
