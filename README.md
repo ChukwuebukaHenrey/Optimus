@@ -61,7 +61,7 @@ npm run optimus -- repair --pack packs/library --app corpus/c-remove-wrong --sce
 
 1. The app is copied into a disposable git workspace outside the Optimus folder and served on a random loopback port.
 2. Kane runs every scenario in scope. Optimus judges each one.
-3. The decision gate reads every result. Only a verified FAIL with nothing unresolved starts a repair. INCONCLUSIVE stops the loop for review, and an infrastructure error gets one rerun.
+3. The decision gate reads every result. Only a verified FAIL with nothing unresolved starts a repair. INCONCLUSIVE stops the loop for review. An infrastructure error gets one rerun per code revision, covering only the scenarios that got no verdict. A decision then uses, for each scenario, the latest verdict from runs of that same revision, and records which run supplied it. Verdicts from before and after a repair are never combined.
 4. The agent receives a brief: the failing requirement in plain language, expected versus observed values, and the failing step's screenshot. It never receives the pack. By default the agent is Claude Code in headless mode, limited to file tools in the workspace. `--agent <path>` runs any other agent that reads the brief on stdin.
 5. Optimus commits the agent's change, records the diff, and checks that the pack and the grader sources (`src/core`, `src/kane`) are unchanged.
 6. Kane reruns the whole scope with a new nonce. The loop repeats until every scenario passes or a cap is reached: `--max-attempts 3`, `--max-credits 1500` (void attempts included) and `--max-minutes 20` (from the first agent call).

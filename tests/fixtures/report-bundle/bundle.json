@@ -1,6 +1,6 @@
 {
-  "bundleVersion": 1,
-  "generatedAt": "2026-11-22T22:17:06.910Z",
+  "bundleVersion": 2,
+  "generatedAt": "2026-11-23T00:01:47.362Z",
   "assessment": {
     "name": "Library assessment",
     "pack": {
@@ -241,6 +241,11 @@
       "appSource": "corpus/a-vanilla",
       "baselineRunId": "gate/g5-a-2",
       "latestRunId": "gate/g5-a-2",
+      "latestRuns": {
+        "L1": "gate/g5-a-2",
+        "L3": "gate/g5-a-2",
+        "L4": "gate/g5-a-2"
+      },
       "repairSessionId": null,
       "repairState": "no_repair"
     },
@@ -250,6 +255,11 @@
       "appSource": "corpus/b-react",
       "baselineRunId": "gate/g5-b-2",
       "latestRunId": "gate/g5-b-2",
+      "latestRuns": {
+        "L1": "gate/g5-b-2",
+        "L3": "gate/g5-b-2",
+        "L4": "gate/g5-b-2"
+      },
       "repairSessionId": null,
       "repairState": "no_repair"
     },
@@ -259,6 +269,11 @@
       "appSource": "corpus/c-remove-wrong",
       "baselineRunId": "repair-20261122205046-1b7e12/run-0",
       "latestRunId": "repair-20261122205046-1b7e12/run-1",
+      "latestRuns": {
+        "L1": "repair-20261122205046-1b7e12/run-1",
+        "L3": "repair-20261122205046-1b7e12/run-1",
+        "L4": "repair-20261122205046-1b7e12/run-1"
+      },
       "repairSessionId": "repair-20261122205046-1b7e12",
       "repairState": "repaired"
     },
@@ -268,6 +283,11 @@
       "appSource": "corpus/d-no-persist",
       "baselineRunId": "gate/g5-d-2",
       "latestRunId": "gate/g5-d-2",
+      "latestRuns": {
+        "L1": "gate/g5-d-2",
+        "L3": "gate/g5-d-2",
+        "L4": "gate/g5-d-2"
+      },
       "repairSessionId": null,
       "repairState": "no_repair"
     }
@@ -1181,13 +1201,47 @@
           "decisionId": "decision-0",
           "runId": "repair-20261122205046-1b7e12/run-0",
           "decision": "REPAIR",
-          "reason": "L3 failed after an established action."
+          "reason": "L3 failed after an established action.",
+          "basis": [
+            {
+              "scenarioId": "L1",
+              "runId": "repair-20261122205046-1b7e12/run-0",
+              "verdict": "PASS"
+            },
+            {
+              "scenarioId": "L3",
+              "runId": "repair-20261122205046-1b7e12/run-0",
+              "verdict": "FAIL"
+            },
+            {
+              "scenarioId": "L4",
+              "runId": "repair-20261122205046-1b7e12/run-0",
+              "verdict": "PASS"
+            }
+          ]
         },
         {
           "decisionId": "decision-1",
           "runId": "repair-20261122205046-1b7e12/run-1",
           "decision": "COMPLETE",
-          "reason": "Every scenario in scope passed."
+          "reason": "Every scenario in scope passed.",
+          "basis": [
+            {
+              "scenarioId": "L1",
+              "runId": "repair-20261122205046-1b7e12/run-1",
+              "verdict": "PASS"
+            },
+            {
+              "scenarioId": "L3",
+              "runId": "repair-20261122205046-1b7e12/run-1",
+              "verdict": "PASS"
+            },
+            {
+              "scenarioId": "L4",
+              "runId": "repair-20261122205046-1b7e12/run-1",
+              "verdict": "PASS"
+            }
+          ]
         }
       ],
       "attempts": [

@@ -1,5 +1,5 @@
 /**
- * The report data contract (bundle version 1). The UI renders only from a validated ComparisonBundle.
+ * The report data contract (bundle version 2). The UI renders only from a validated ComparisonBundle.
  * Owned by the backend; see docs/UI_DATA_CONTRACT.md. Change it only with a version bump.
  */
 import { z } from 'zod';
@@ -72,8 +72,13 @@ const buildSchema = z.strictObject({
   /** App folder relative to the Optimus repository. */
   appSource: z.string(),
   baselineRunId: id,
-  /** The most recent verified run; equals baselineRunId when there was no repair. */
+  /** The most recent run of this build; equals baselineRunId when there was no repair or retry. */
   latestRunId: id,
+  /**
+   * The run that supplied each in-scope scenario's latest verdict. After an infrastructure retry these can be
+   * different runs, always of the same source revision. Read latest verdicts from here, not from latestRunId.
+   */
+  latestRuns: z.record(z.string(), id),
   repairSessionId: z.string().nullable(),
   repairState: z.enum(['no_repair', 'repaired', 'repair_stopped']),
 });
@@ -144,7 +149,11 @@ const repairSchema = z.strictObject({
     repairMinutesUsed: z.number(),
   }),
   baselineRunId: id,
-  decisions: z.array(z.strictObject({ decisionId: id, runId: id, decision, reason: z.string() })),
+  decisions: z.array(z.strictObject({
+    decisionId: id, runId: id, decision, reason: z.string(),
+    /** Which run supplied each scenario's verdict for this decision. */
+    basis: z.array(z.strictObject({ scenarioId: id, runId: id, verdict })),
+  })),
   attempts: z.array(attemptSchema),
   outcome: z.strictObject({ decision, reason: z.string(), finalRunId: z.string().nullable() }),
 });
@@ -159,7 +168,7 @@ const calibrationSchema = z.strictObject({
 });
 
 export const comparisonBundleSchema = z.strictObject({
-  bundleVersion: z.literal(1),
+  bundleVersion: z.literal(2),
   generatedAt: z.string(),
   assessment: z.strictObject({
     name: z.string(),
@@ -186,6 +195,13 @@ export const comparisonBundleSchema = z.strictObject({
     for (const runId of [build.baselineRunId, build.latestRunId]) {
       if (runs.get(runId)?.buildId !== build.buildId) issue(`Build ${build.buildId} points at run ${runId}, which is not its own.`);
     }
+    if (Object.keys(build.latestRuns).sort().join() !== [...bundle.scope].sort().join()) issue(`Build ${build.buildId} must name a latest run for every scenario in scope.`);
+    for (const [scenarioId, runId] of Object.entries(build.latestRuns)) {
+      const run = runs.get(runId);
+      if (run?.buildId !== build.buildId || !run.scenarios.some((scenario) => scenario.scenarioId === scenarioId)) {
+        issue(`Build ${build.buildId} takes ${scenarioId} from run ${runId}, which did not assess it for this build.`);
+      }
+    }
     const repair = bundle.repairs.find(({ sessionId }) => sessionId === build.repairSessionId);
     if ((build.repairSessionId !== null && repair?.buildId !== build.buildId) || (build.repairState !== 'no_repair' && !repair) ||
       (build.repairState === 'no_repair' && (repair?.attempts.length ?? 0) > 0)) {
@@ -193,7 +209,7 @@ export const comparisonBundleSchema = z.strictObject({
     }
   }
   for (const repair of bundle.repairs) {
-    const referenced = [repair.baselineRunId, ...repair.decisions.map(({ runId }) => runId),
+    const referenced = [repair.baselineRunId, ...repair.decisions.flatMap(({ runId, basis }) => [runId, ...basis.map((entry) => entry.runId)]),
       ...repair.attempts.flatMap(({ verificationRunId }) => verificationRunId ? [verificationRunId] : []),
       ...(repair.outcome.finalRunId ? [repair.outcome.finalRunId] : [])];
     for (const runId of referenced) if (runs.get(runId)?.buildId !== repair.buildId) issue(`Repair ${repair.sessionId} references run ${runId} outside its build.`);

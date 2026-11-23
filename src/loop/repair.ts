@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import type { LoadedPack } from '../core/pack.js';
-import type { ScenarioResult, ScenarioTrace } from '../core/types.js';
+import type { ScenarioResult, ScenarioTrace, Verdict } from '../core/types.js';
 import { extractArchiveEntry } from '../kane/evidence.js';
 import { lastStepScreenshots } from '../kane/screens.js';
 import type { KaneAssessment } from '../kane/run.js';
@@ -55,9 +55,12 @@ interface RunEntry {
 
 interface DecisionEntry {
   decisionId: string;
+  /** The most recent run before this decision. */
   runId: string;
   decision: LoopDecision;
   reason: string;
+  /** Which run supplied each scenario's verdict. All runs share the current source revision. */
+  basis: { scenarioId: string; runId: string; verdict: Verdict }[];
 }
 
 interface AttemptEntry {
@@ -147,21 +150,36 @@ export async function runRepairLoop(options: RepairOptions, deps: RepairDeps): P
     if (balance !== null && history.budget.creditsStart !== null) history.budget.creditsUsed = Number((history.budget.creditsStart - balance).toFixed(4));
     return balance;
   };
-  const doRun = async (kind: RunEntry['kind']): Promise<RunEntry> => {
+  const doRun = async (kind: RunEntry['kind'], scope: readonly string[] = options.scope): Promise<RunEntry> => {
     const runId = `run-${history.runs.length}`;
     const nonce = `${short}-${runId}`;
     const startedAt = new Date(now()).toISOString();
     const creditsBefore = await spend();
-    const assessment = await deps.assess({ appUrl: server.url, nonce, scope: options.scope });
+    const assessment = await deps.assess({ appUrl: server.url, nonce, scope });
     const creditsAfter = await spend();
     const entry: RunEntry = {
       runId, kind, nonce, sourceRevision: revision, startedAt, finishedAt: new Date(now()).toISOString(),
       creditsBefore, creditsAfter, runDirectory: assessment.directory,
-      results: assessment.results.filter(({ scenarioId }) => options.scope.includes(scenarioId)), executions: assessment.executions,
+      results: assessment.results.filter(({ scenarioId }) => scope.includes(scenarioId)), executions: assessment.executions,
     };
     history.runs.push(entry);
     await save();
     return entry;
+  };
+  /**
+   * The verdict for each scenario on the current source revision: the most recent run of this revision that
+   * judged it. An infrastructure error only stands when no run of this revision produced a verdict.
+   */
+  const composed = () => {
+    const sameRevision = history.runs.filter(({ sourceRevision }) => sourceRevision === revision).reverse();
+    const picks = options.scope.map((scenarioId) => {
+      const candidates = sameRevision.flatMap((entry) => entry.results.filter((result) => result.scenarioId === scenarioId).map((result) => ({ entry, result })));
+      return candidates.find(({ result }) => result.verdict !== 'INFRA_ERROR') ?? candidates[0];
+    });
+    return {
+      results: picks.flatMap((pick) => pick ? [pick.result] : []),
+      basis: picks.flatMap((pick) => pick ? [{ scenarioId: pick.result.scenarioId, runId: pick.entry.runId, verdict: pick.result.verdict }] : []),
+    };
   };
   const finish = async (decision: LoopDecision, reason: string, run: RunEntry | null) => {
     history.outcome = { decision, reason, finalRunId: run?.runId ?? null };
@@ -171,16 +189,20 @@ export async function runRepairLoop(options: RepairOptions, deps: RepairDeps): P
     history.budget.creditsStart = await deps.balance();
     await save();
     let run = await doRun('baseline');
+    let retriesForRevision = 0;
     for (;;) {
-      const outcome = decide(run.results, options.scope, 1 - history.budget.infrastructureRetriesUsed);
+      const { results, basis } = composed();
+      const outcome = decide(results, options.scope, 1 - retriesForRevision);
       const decision: DecisionEntry = {
-        decisionId: `decision-${history.decisions.length}`, runId: run.runId, decision: outcome.decision, reason: outcome.reason,
+        decisionId: `decision-${history.decisions.length}`, runId: run.runId, decision: outcome.decision, reason: outcome.reason, basis,
       };
       history.decisions.push(decision);
       await save();
       if (outcome.decision === 'RETRY_INFRASTRUCTURE') {
+        // Rerun only the scenarios that got no verdict, on the same source revision.
+        retriesForRevision++;
         history.budget.infrastructureRetriesUsed++;
-        run = await doRun('infrastructure_retry');
+        run = await doRun('infrastructure_retry', basis.filter(({ verdict }) => verdict === 'INFRA_ERROR').map(({ scenarioId }) => scenarioId));
         continue;
       }
       if (outcome.decision !== 'REPAIR') { await finish(outcome.decision, outcome.reason, run); break; }
@@ -198,8 +220,9 @@ export async function runRepairLoop(options: RepairOptions, deps: RepairDeps): P
       const attemptDirectory = join(sessionDirectory, `attempt-${attemptNumber}`);
       await mkdir(attemptDirectory, { recursive: true });
       const failure = outcome.failures[0];
-      const screenshot = await failureScreenshot(run, failure, join(workspace.briefDirectory, `attempt-${attemptNumber}-${failure.scenarioId}.jpg`)).catch(() => null);
-      const brief = buildBrief(options.loaded.pack, failure, run.nonce, workspace.appDirectory, screenshot);
+      const failureRun = history.runs.find(({ runId }) => runId === basis.find(({ scenarioId }) => scenarioId === failure.scenarioId)?.runId) ?? run;
+      const screenshot = await failureScreenshot(failureRun, failure, join(workspace.briefDirectory, `attempt-${attemptNumber}-${failure.scenarioId}.jpg`)).catch(() => null);
+      const brief = buildBrief(options.loaded.pack, failure, failureRun.nonce, workspace.appDirectory, screenshot);
       const prompt = briefMarkdown(brief);
       const briefPath = join(attemptDirectory, 'brief.md');
       await writeFile(briefPath, prompt, 'utf8');
@@ -241,6 +264,7 @@ export async function runRepairLoop(options: RepairOptions, deps: RepairDeps): P
       if (!change.files.length) { await finish('STOP', 'The agent made no change to the app.', run); break; }
       revision = attempt.sourceRevisionAfter;
       run = await doRun('verification');
+      retriesForRevision = 0;
       attempt.verificationRunId = run.runId;
       await save();
     }

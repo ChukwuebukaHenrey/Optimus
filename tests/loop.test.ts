@@ -110,13 +110,13 @@ describe('repair controller', { timeout: 60000 }, () => {
     let runs = 0;
     const agentCalls: string[] = [];
     const deps: RepairDeps = {
-      assess: async ({ appUrl, nonce }) => {
+      assess: async ({ appUrl, nonce, scope: selected }) => {
         const body = await (await fetch(appUrl)).text();
         credits -= 50;
         const verdicts = verdictsFor(body, runs++);
         return {
           directory: join(base, nonce), packHash: library.packHash, appUrl, nonce, score: 'provisional',
-          results: scope.map((id) => result(id, verdicts[id] ?? 'PASS', verdicts[id] === 'FAIL'
+          results: selected.map((id) => result(id, verdicts[id] ?? 'PASS', verdicts[id] === 'FAIL'
             ? { reason: "The recording 'titles_after' did not satisfy 'list_contains'.", stepId: 'remove', expected: `GP Beta ${nonce}`, observed: 'none' } : {})),
           executions: [],
         } satisfies KaneAssessment;
@@ -179,10 +179,33 @@ describe('repair controller', { timeout: 60000 }, () => {
     expect(history.outcome).toMatchObject({ decision: 'STOP', reason: 'A repair is needed but the attempt cap (2) is reached.' });
   });
 
-  it('retries the whole scope once after an infrastructure error', async () => {
+  it('retries only the scenarios without a verdict, on the same revision', async () => {
     const { history, agentCalls } = await setup('fix', (_body, run): Record<string, Verdict> => run === 0 ? { L1: 'INFRA_ERROR' } : {});
-    expect(history.runs.map(({ kind }) => kind)).toEqual(['baseline', 'infrastructure_retry']);
-    expect(history.outcome?.decision).toBe('COMPLETE');
+    expect(history.runs.map(({ kind, results }) => [kind, results.map(({ scenarioId }) => scenarioId)])).toEqual([
+      ['baseline', ['L1', 'L3', 'L4']], ['infrastructure_retry', ['L1']],
+    ]);
+    expect(history.outcome).toMatchObject({ decision: 'COMPLETE', finalRunId: 'run-1' });
+    expect(history.decisions.at(-1)?.basis).toEqual([
+      { scenarioId: 'L1', runId: 'run-1', verdict: 'PASS' },
+      { scenarioId: 'L3', runId: 'run-0', verdict: 'PASS' },
+      { scenarioId: 'L4', runId: 'run-0', verdict: 'PASS' },
+    ]);
     expect(agentCalls).toHaveLength(0);
   });
+
+  it('completes a repair whose verification is split across runs of the repaired revision', async () => {
+    const { history } = await setup('fix', (body, run): Record<string, Verdict> => body.includes('BUG') ? { L3: 'FAIL' } : run === 1 ? { L4: 'INFRA_ERROR' } : {});
+    expect(history.runs.map(({ kind }) => kind)).toEqual(['baseline', 'verification', 'infrastructure_retry']);
+    expect(history.runs[2].results.map(({ scenarioId }) => scenarioId)).toEqual(['L4']);
+    expect(new Set(history.runs.slice(1).map(({ sourceRevision }) => sourceRevision)).size).toBe(1);
+    expect(history.outcome?.decision).toBe('COMPLETE');
+    expect(history.decisions.at(-1)?.basis.map(({ runId }) => runId)).toEqual(['run-1', 'run-1', 'run-2']);
+  });
+
+  it('never combines verdicts from before and after a repair', async () => {
+    const { history } = await setup('fix', (body, run): Record<string, Verdict> => body.includes('BUG') ? { L3: 'FAIL' } : run >= 1 ? { L4: 'INFRA_ERROR' } : {});
+    expect(history.outcome).toMatchObject({ decision: 'STOP' });
+    expect(history.decisions.at(-1)?.basis.find(({ scenarioId }) => scenarioId === 'L4')).toMatchObject({ verdict: 'INFRA_ERROR', runId: 'run-2' });
+  });
+
 });

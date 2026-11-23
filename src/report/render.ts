@@ -17,8 +17,9 @@ export async function renderReport(bundle: ComparisonBundle, bundleDirectory: st
     runs.get(runId)?.scenarios.find((scenario) => scenario.scenarioId === scenarioId)?.result.verdict ?? 'NOT_RUN';
   const rows = bundle.builds.map((build) => `<tr><th scope="row">${escapeHtml(build.label)}</th>${bundle.scope.map((id) => {
     const baseline = verdict(build.baselineRunId, id);
-    const latest = verdict(build.latestRunId, id);
-    return `<td>${escapeHtml(baseline)}${build.latestRunId === build.baselineRunId ? '' : ` · verified ${escapeHtml(latest)}`}</td>`;
+    const latestRun = build.latestRuns[id] ?? build.latestRunId;
+    const latest = verdict(latestRun, id);
+    return `<td>${escapeHtml(baseline)}${latestRun === build.baselineRunId ? '' : ` · latest ${escapeHtml(latest)}`}</td>`;
   }).join('')}<td>${escapeHtml(build.repairState)}</td></tr>`).join('\n');
   const html = `<!doctype html>
 <html lang="en">

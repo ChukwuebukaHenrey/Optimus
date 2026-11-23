@@ -1,4 +1,4 @@
-# Report data contract (bundle version 1)
+# Report data contract (bundle version 2)
 
 This is the agreement between the backend (Kane runs, evaluation and the repair loop) and the report UI, which are built by separate agents working at the same time. The UI renders **only** from a comparison bundle. It never reads Kane output, traces, packs or `.optimus/` directly.
 
@@ -56,9 +56,9 @@ Delivery is an offline bundle, not one self-contained file. The page's Content S
 | `assessment.name`, `assessment.pack` | Assessment title; contract name, version, hash, support and persistence statements | Identity bar, contract section |
 | `scope` | Calibrated scenario IDs every build was assessed on, in display order (`L1`, `L3`, `L4`) | Matrix columns |
 | `contract[]` | Every pack scenario, with `sentToKane` (actions and record prompts, `{{nonce}}` left unexpanded) and `judgedByOptimus` (plain-language checks, designated new values, evidence rule). `inScope` marks the calibrated ones. | Contract section |
-| `builds[]` | One row per build, with `baselineRunId`, `latestRunId`, `repairSessionId` and `repairState` (`no_repair`, `repaired` or `repair_stopped`) | Matrix rows, Level 2 |
+| `builds[]` | One row per build, with `baselineRunId`, `latestRunId`, `latestRuns` (scenario → run that supplied its latest verdict), `repairSessionId` and `repairState` (`no_repair`, `repaired` or `repair_stopped`) | Matrix rows, Level 2 |
 | `runs[]` | Every assessed run, keyed by `runId`. Each has `scenarios[]` with the Optimus `result`, the Kane `executionId`, `integrity` and `steps[]` (action text, whether the action was recorded, recorded `values`, and the end-of-step `screenshot`). | Levels 1–3 |
-| `repairs[]` | One record per repair session: caps, budget, `decisions[]`, `attempts[]` (brief, agent, revisions, diff, integrity, `verificationRunId`) and `outcome` | Level 4 |
+| `repairs[]` | One record per repair session: caps, budget, `decisions[]` (each with a `basis`: which run supplied each scenario's verdict), `attempts[]` (brief, agent, revisions, diff, integrity, `verificationRunId`) and `outcome` | Level 4 |
 | `calibration` | Gate 1 expected-versus-actual rows and notes, or `null` | Calibration summary |
 
 Scenario display names are not in the pack. The UI may map `L1` to "Add", `L3` to "Remove" and `L4` to "Persist" for the Library demo, but must fall back to the scenario ID and `contract[].title` for any other pack.
@@ -66,7 +66,8 @@ Scenario display names are not in the pack. The UI may map `L1` to "Add", `L3` t
 ## How to read a build
 
 - **Baseline verdict** for a scenario: `runs[baselineRunId].scenarios[scenarioId].result.verdict`.
-- **Latest verified verdict:** the same lookup with `latestRunId`. If it equals `baselineRunId`, there was no repair.
+- **Latest verdict:** `runs[build.latestRuns[scenarioId]].scenarios[scenarioId].result.verdict`. After an infrastructure retry, scenarios can come from different runs; all of them assessed the same source revision. Show which run each latest verdict came from. If `latestRuns[scenarioId]` equals `baselineRunId`, that scenario has no newer verdict.
+- **Decision basis:** `repairs[].decisions[].basis` lists the run behind every verdict the controller acted on. Level 4 can show it as "verified by run-1 (L1, L3) and run-2 (L4)".
 - **Repair record:** `repairs.find(r => r.sessionId === build.repairSessionId)`. Render Level 4 only when this exists and has attempts.
 - **Score:** a percentage only when every in-scope verdict of the run is PASS or FAIL; otherwise "Provisional". Compute it from the run; it is not stored.
 
@@ -79,6 +80,10 @@ Scenario display names are not in the pack. The UI may map `L1` to "Add", `L3` t
 5. **Render repair claims only from `repairs[]`.** Never assemble a repair story by hand or infer links from timestamps or file names.
 6. **Content that came from or went to the coding agent** (`briefMarkdown`, `agent.finalMessage`, `diff`) goes in clearly labelled agent panels.
 7. **Local paths are masked as `<optimus>`, `<tmp>` and `<home>`.** Show them as given.
+
+## Changes
+
+- **Version 2:** added `builds[].latestRuns` and `repairs[].decisions[].basis`. An infrastructure retry now reruns only the scenarios without a verdict, on the same source revision, so one build's latest verdicts can come from several runs. Read latest verdicts through `latestRuns`; `latestRunId` is only the build's most recent run.
 
 ## Known values in the fixture
 

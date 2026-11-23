@@ -140,7 +140,9 @@ export async function buildBundle(manifestPath: string, outDirectory: string, ro
         });
         runIds.push(runId);
       }
-      builds.push({ buildId: build.buildId, label: build.label, appSource, baselineRunId: runIds[0], latestRunId: runIds.at(-1)!, repairSessionId: null, repairState: 'no_repair' });
+      const latestRuns = Object.fromEntries(manifest.scope.map((scenarioId) => [scenarioId,
+        [...runIds].reverse().find((runId) => runs.find((run) => run.runId === runId)?.scenarios.some((scenario) => scenario.scenarioId === scenarioId)) ?? runIds.at(-1)!]));
+      builds.push({ buildId: build.buildId, label: build.label, appSource, baselineRunId: runIds[0], latestRunId: runIds.at(-1)!, latestRuns, repairSessionId: null, repairState: 'no_repair' });
       continue;
     }
 
@@ -196,11 +198,18 @@ export async function buildBundle(manifestPath: string, outDirectory: string, ro
       });
     }
     const outcome = history.outcome ?? { decision: 'STOP' as const, reason: 'No outcome was recorded.', finalRunId: null };
+    // Sessions recorded before decisions carried a basis ran the whole scope every time; their basis is that run.
+    const basisOf = (decision: RepairHistory['decisions'][number]) => ((decision as { basis?: { scenarioId: string; runId: string; verdict: ScenarioResult['verdict'] }[] }).basis ??
+      (history.runs.find(({ runId: local }) => local === decision.runId)?.results ?? []).map((result) => ({ scenarioId: result.scenarioId, runId: decision.runId, verdict: result.verdict })))
+      .map((entry) => ({ ...entry, runId: runId(entry.runId) }));
+    const finalBasis = history.decisions.length ? basisOf(history.decisions.at(-1)!) : [];
     repairs.push({
       sessionId: history.sessionId, buildId: build.buildId, packHash: history.pack.packHash, graderHash: history.graderHash,
       scope: history.scope, startedAt: history.startedAt, finishedAt: history.finishedAt, caps: history.caps, budget: history.budget,
       baselineRunId: runId(history.runs[0].runId),
-      decisions: history.decisions.map((decision) => ({ ...decision, runId: runId(decision.runId) })),
+      decisions: history.decisions.map((decision) => ({
+        decisionId: decision.decisionId, runId: runId(decision.runId), decision: decision.decision, reason: decision.reason, basis: basisOf(decision),
+      })),
       attempts,
       outcome: { ...outcome, finalRunId: outcome.finalRunId ? runId(outcome.finalRunId) : null },
     });
@@ -208,6 +217,8 @@ export async function buildBundle(manifestPath: string, outDirectory: string, ro
       buildId: build.buildId, label: build.label, appSource,
       baselineRunId: runId(history.runs[0].runId),
       latestRunId: runId(outcome.finalRunId ?? history.runs.at(-1)!.runId),
+      latestRuns: Object.fromEntries(manifest.scope.map((scenarioId) => [scenarioId,
+        finalBasis.find((entry) => entry.scenarioId === scenarioId)?.runId ?? runId(outcome.finalRunId ?? history.runs.at(-1)!.runId)])),
       repairSessionId: history.sessionId,
       repairState: history.attempts.length === 0 ? 'no_repair' : outcome.decision === 'COMPLETE' ? 'repaired' : 'repair_stopped',
     });
@@ -229,7 +240,7 @@ export async function buildBundle(manifestPath: string, outDirectory: string, ro
   }
 
   const bundle = comparisonBundleSchema.parse({
-    bundleVersion: 1,
+    bundleVersion: 2,
     generatedAt: new Date().toISOString(),
     assessment: {
       name: manifest.name,

@@ -41,6 +41,8 @@ describe('report data contract', () => {
     ['a repaired build without a repair record', (bundle) => { bundle.builds[0].repairState = 'repaired'; }],
     ['a repair referencing another build\'s run', (bundle) => { bundle.repairs[0].baselineRunId = bundle.builds[0].baselineRunId; }],
     ['a duplicate run ID', (bundle) => { bundle.runs[1].runId = bundle.runs[0].runId; }],
+    ['a latest verdict taken from another build run', (bundle) => { bundle.builds[0].latestRuns.L1 = bundle.builds[2].baselineRunId; }],
+    ['a build without a latest run for a scenario in scope', (bundle) => { delete bundle.builds[0].latestRuns.L4; }],
   ];
   it.each(broken)('rejects %s', (_name, corrupt) => {
     const bundle = structuredClone(raw) as ComparisonBundle;
