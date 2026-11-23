@@ -6,7 +6,7 @@
 
 Every session's baseline graded U the same way: **L1 PASS, L3 PASS, L4 FAIL**.
 
-The end-of-step screenshots of L4 (session `9ac091`), checked by eye and pending independent review: after the add, the page shows "GP Keep 9ac091-run-0"; after the reload, it shows "No books yet." The verdict is FAIL, not INCONCLUSIVE, so the reload action was established in the evidence.
+The end-of-step screenshots of L4 (session `9ac091`), checked by eye and reviewed by Claude; the owner delegated this review to Claude on 23 Nov 2026 (not an independent human check): after the add, the page shows "GP Keep 9ac091-run-0"; after the reload, it shows "No books yet." The verdict is FAIL, not INCONCLUSIVE, so the reload action was established in the evidence.
 
 ## Unsealed defect description
 

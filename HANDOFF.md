@@ -30,7 +30,7 @@
 | [Repair U (blind)](runs/repair-u/REPORT.md) | Blind grade: L4 FAIL. The unsealed defect matches. One `saveBooks()` line, then everything PASS. |
 | Earlier contracts | `runs/gate1/` (v2) and `runs/gate1-v4/` are archived and do not count toward v5. |
 
-The screenshot labels are Claude's and are **pending the owner's independent review**. A local review page is built by the scratchpad script `build-review.mts` into `.optimus/review/index.html`; it is ignored by git and can be rebuilt from raw evidence.
+The screenshot labels are Claude's. The owner delegated the review to Claude on 23 Nov 2026, so they are not an independent human check. A local review page is built by the scratchpad script `build-review.mts` into `.optimus/review/index.html`; it is ignored by git and can be rebuilt from raw evidence.
 
 ## Running live (credits)
 
@@ -50,7 +50,7 @@ Raw streams, archives and repair sessions stay in the ignored `.optimus/` and `r
 
 ## Open items
 
-1. The owner reviews the screenshot labels on the review page.
+1. Screenshot review: delegated to Claude by the owner (done). A human spot check on the review page would still strengthen the evidence.
 2. AGENTS.md has two small typos from the last edit: "Test Managerupload" and "scenario.After". The owner owns the file.
 3. Gate 2 is done: L2 (read status) passed 4 of 4 on A and B ([report](runs/gate2-v5/REPORT.md)). It still lacks a negative control, which needs an L2-defective corpus app from a separate session. L2 can join the repair scope once that exists.
 4. Merge the UI agent's renderer when ready. It must render only from the bundle (see the contract doc).

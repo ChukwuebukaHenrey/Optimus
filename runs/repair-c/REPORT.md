@@ -24,7 +24,7 @@ Remove used to delete `list.firstElementChild` and `books[0]`, whatever card was
 
 ## Screenshot check
 
-These are the end-of-step screenshots from the sealed archives, checked by eye. They are pending independent review.
+These are the end-of-step screenshots from the sealed archives, checked by eye and reviewed by Claude; the owner delegated this review to Claude on 23 Nov 2026 (not an independent human check).
 
 | Run | Before removal | After removal | Recorded after |
 |---|---|---|---|

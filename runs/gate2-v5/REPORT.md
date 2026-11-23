@@ -11,7 +11,7 @@ L2 adds a book that is not read yet, toggles its read status once, and records t
 | A | 2 | PASS | PASS | Not read → Read | 0 | 159 | 45.5171 |
 | B | 2 | PASS | PASS | To read → Finished | 0 | 191 | 48.1036 |
 
-**Result: 4 of 4 cases match the expected verdict, with zero replays.** Total: 861 seconds and 203.2056 credits. The end-of-step screenshots after the toggle show "Read" on A and "Finished" on the new row on B, matching the recordings. They were checked by eye and are pending independent review.
+**Result: 4 of 4 cases match the expected verdict, with zero replays.** Total: 861 seconds and 203.2056 credits. The end-of-step screenshots after the toggle show "Read" on A and "Finished" on the new row on B, matching the recordings. They were checked by eye and reviewed by Claude; the owner delegated this review to Claude on 23 Nov 2026 (not an independent human check).
 
 **Limitation:** this gate has no negative control. No corpus app has a broken read toggle, and AGENTS.md requires corpus apps to be built in separate sessions. L2 is calibrated on the two reference apps (vanilla card layout and React table layout); a defect-detection check for L2 is still to come.
 

@@ -2,7 +2,7 @@
 
 Pack SHA-256 `b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74` for every case. Kane CLI 0.10.6, `--author --agent --headless`, fresh browser profile, loopback fixtures. The expected verdicts were committed in `expected.json` before the first run. The v2 and v4 cases are archived separately and do not count here.
 
-**Result: 24 of 24 cases match the expected verdict, with zero replay decisions, and agree with their screenshots.** A and B pass L1, L3 and L4 in both trials. C fails only L3, and D fails only L4, in both trials. All screenshot labels are pending independent review.
+**Result: 24 of 24 cases match the expected verdict, with zero replay decisions, and agree with their screenshots.** A and B pass L1, L3 and L4 in both trials. C fails only L3, and D fails only L4, in both trials. The screenshot labels were reviewed by Claude; the owner delegated this review to Claude on 23 Nov 2026 (not an independent human check).
 
 The verdicts below come from re-evaluating every case from its original evidence with the final adapter.
 
