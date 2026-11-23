@@ -16,7 +16,7 @@ describe('report data contract', () => {
   it('accepts the committed real-data fixture', () => {
     const bundle = comparisonBundleSchema.parse(raw);
     expect(bundle.builds.map(({ buildId, repairState }) => [buildId, repairState])).toEqual([
-      ['a-vanilla', 'no_repair'], ['b-react', 'no_repair'], ['c-remove-wrong', 'repaired'], ['d-no-persist', 'no_repair'],
+      ['a-vanilla', 'no_repair'], ['b-react', 'no_repair'], ['c-remove-wrong', 'repaired'], ['d-no-persist', 'repaired'],
     ]);
   });
 
