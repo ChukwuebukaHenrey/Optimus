@@ -4,8 +4,10 @@ import "@fontsource-variable/atkinson-hyperlegible-next";
 import "@fontsource-variable/atkinson-hyperlegible-mono";
 import "./globals.css";
 import { MotionProvider } from "@/components/motion";
+import { SITE_URL } from "@/content/site";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Optimus — Grade the work, not how it was built",
   description:
     "One contract. Many different builds. Evidence-backed verdicts. Kane CLI acts in a real browser; Optimus judges the evidence deterministically.",

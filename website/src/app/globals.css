@@ -275,7 +275,8 @@
   overflow: hidden;
 }
 .hero-scene {
-  --fx: 52%;
+  /* 68%: keeps the Smith's right edge (96% of the scene) in view when a short window crops the sides */
+  --fx: 68%;
   --fy: 72%;
   --px: var(--fx);
   --py: var(--fy);
@@ -317,9 +318,9 @@
 .cloud-band {
   position: absolute;
   left: 0;
-  top: 8%;
+  top: 7%;
   width: 62%;
-  height: 14%;
+  height: 7.5%;
   overflow: hidden;
   pointer-events: none;
   mask-image: linear-gradient(90deg, transparent 0%, black 8%, black 76%, transparent 100%);
@@ -345,19 +346,19 @@
   }
 }
 
-/* waterfall strips: a 12-frame sheet slid one frame at a time */
-.fall {
+/* frame strips (waterfalls, wind): an N-frame sheet slid one frame at a time */
+.strip {
   overflow: hidden;
 }
-.fall > img {
+.strip > img {
   display: block;
   height: 100%;
-  width: 1200%;
+  width: calc(var(--frames) * 100%);
   max-width: none;
   image-rendering: pixelated;
-  animation: fall-run 1s steps(12) infinite;
+  animation: strip-run var(--dur) steps(var(--frames)) infinite;
 }
-@keyframes fall-run {
+@keyframes strip-run {
   to {
     transform: translateX(-100%);
   }
@@ -421,7 +422,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fall > img,
+  .strip > img,
   .lantern-glow,
   .agent-sprite,
   .handoff-track,

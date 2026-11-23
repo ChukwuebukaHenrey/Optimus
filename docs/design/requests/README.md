@@ -30,7 +30,7 @@ each file to the image tool as-is. When something comes back, give me the file. 
 | Mobile-menu line art | SVG pixel-step lines |
 | Icons | Phosphor (`@phosphor-icons/react`), Light for UI, Regular for verdicts |
 | OG image, favicon | Composed from the hero still and the logo |
-| Logo options | SVG drafts for you to choose from. The CoreOS-derived mark stays provisional. |
+| Logo | Uses the supplied mark (`src/report/mark.ts`); see `docs/design/ASSET_PROVENANCE.md`. |
 
 ## Shared rules for every generated asset
 

@@ -2,6 +2,8 @@ import { ArrowRight, CheckCircle, WarningCircle } from "@phosphor-icons/react/di
 import Link from "next/link";
 import { cn } from "cn";
 import { Chapter } from "@/components/chapter";
+import { Logo } from "@/components/logo";
+import { REPO_URL } from "@/content/site";
 import { Reveal } from "@/components/reveal";
 import { VerdictBadge } from "@/components/verdict-badge";
 import type { SiteData } from "@/lib/bundle";
@@ -427,7 +429,7 @@ export function SiteFooter() {
     <footer className="bg-ink text-paper">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-8 px-4 py-12 md:flex-row md:items-start md:justify-between md:px-16">
         <div>
-          <p className="font-display text-[1.5rem] leading-8 font-extrabold">Optimus</p>
+          <Logo markClassName="size-8" />
           <p className="mt-2 max-w-[40ch] text-paper/75">Evidence-backed behavioural verdicts for web apps. Built during the Kane CLI hackathon, 2026.</p>
         </div>
         <nav aria-label="Footer" className="grid grid-cols-2 gap-x-12 gap-y-2">
@@ -437,6 +439,7 @@ export function SiteFooter() {
           <a className="hover:underline" href="/docs/">Docs</a>
           <Link className="hover:underline" href="/#repair">Repair loop</Link>
           <a className="hover:underline" href="https://github.com/LambdaTest/kane-cli">Kane CLI</a>
+          <a className="hover:underline" href={REPO_URL}>GitHub</a>
         </nav>
       </div>
       <p className="mx-auto max-w-[1440px] px-4 pb-8 text-paper/60 md:px-16">

@@ -4,6 +4,7 @@ import { Marked } from "marked";
 import type { Metadata } from "next";
 import { SiteFooter } from "@/components/sections";
 import { SiteNav } from "@/components/site-nav";
+import { REPO_URL } from "@/content/site";
 
 export const metadata: Metadata = {
   title: "Optimus docs",
@@ -18,7 +19,7 @@ const slug = (text: string) =>
     .trim()
     .replace(/\s+/g, "-");
 
-/** The repository README, rendered at build time. Repo-relative links point at files that are not published, so they become plain text. */
+/** The repository README, rendered at build time. */
 function renderReadme() {
   const source = readFileSync(path.join(process.cwd(), "..", "README.md"), "utf8");
   const marked = new Marked({
@@ -30,7 +31,9 @@ function renderReadme() {
       },
       link({ href, tokens }) {
         const text = this.parser.parseInline(tokens);
-        return /^https?:\/\//.test(href) ? `<a href="${href.replace(/"/g, "&quot;")}">${text}</a>` : `<span>${text}</span>`;
+        // Repo-relative links point at files in the public repository on GitHub.
+        const url = /^https?:\/\//.test(href) ? href : href.startsWith("#") ? href : `${REPO_URL}/blob/main/${href.replace(/^\.\//, "")}`;
+        return `<a href="${url.replace(/"/g, "&quot;")}">${text}</a>`;
       },
       html() {
         return "";

@@ -10,6 +10,7 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { BundleBuild, BundleRepair, BundleRun, ComparisonBundle } from './schema.js';
+import { MARK_PATH, MARK_VIEWBOX } from './mark.js';
 import { stylesheet } from './styles.js';
 
 const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -302,7 +303,7 @@ export async function renderReport(bundle: ComparisonBundle, bundleDirectory: st
 </head>
 <body>
 <div class="identity"><div class="wrap">
-  <p><span class="label">Optimus report</span> · <span class="strong">${e(bundle.assessment.name)}</span></p>
+  <p class="brand"><svg viewBox="${MARK_VIEWBOX}" aria-hidden="true"><path d="${MARK_PATH}" fill="currentColor" fill-rule="evenodd"/></svg><span class="strong">Optimus</span> <span class="label">report</span> · <span class="strong">${e(bundle.assessment.name)}</span></p>
   <p><a href="#contract">Contract ${e(pack.name)} v${e(pack.version)}</a> · <span class="mono">${e(shortHash(pack.packHash))}</span> · <span class="same">every build used this contract hash</span></p>
 </div></div>
 <main>

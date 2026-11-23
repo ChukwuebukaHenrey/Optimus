@@ -1,7 +1,8 @@
 import { AGENTS, FOOT_Y, HERO_LAYERS, SCENE, px, py } from "@/content/scene";
 
 /** The clouds' band, in percent of the scene: top sky only, ending before the observatory. */
-const CLOUD_BAND = { top: 8, w: 62, h: 14 };
+// Ends at 14.5% of the scene: above the hero eyebrow even on the tallest hero (960px).
+const CLOUD_BAND = { top: 7, w: 62, h: 7.5 };
 
 /**
  * Keyframes for the hand-off spark. The track is a full-scene layer, so translate percentages are
@@ -76,12 +77,22 @@ export function HeroScene() {
           </div>
         ))}
       </div>
-      {HERO_LAYERS.falls.map((f) => (
+      {[
+        ...HERO_LAYERS.sway.map((f) => ({ ...f, dur: f.frames / 8 })),
+        ...HERO_LAYERS.falls.map((f) => ({ ...f, dur: f.frames / 12 })),
+      ].map((f) => (
         <div
           key={f.src}
           aria-hidden="true"
-          className="scene-layer fall"
-          style={{ left: px(f.x), top: py(f.y), width: px(f.w), height: py(f.h) }}
+          className="scene-layer strip"
+          style={{
+            left: px(f.x),
+            top: py(f.y),
+            width: px(f.w),
+            height: py(f.h),
+            ["--frames" as string]: f.frames,
+            ["--dur" as string]: `${f.dur}s`,
+          }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={f.src} alt="" />

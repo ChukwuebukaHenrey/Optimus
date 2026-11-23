@@ -1,11 +1,13 @@
 "use client";
 
-import { ArrowRight, List, X } from "@phosphor-icons/react";
+import { ArrowRight, GithubLogo, List, X } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { cn } from "cn";
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { REPO_URL } from "@/content/site";
 
 const CHAPTERS = [
   { href: "/#contract", label: "How it works" },
@@ -14,21 +16,13 @@ const CHAPTERS = [
   { href: "/#repair", label: "Repair" },
 ];
 const DOCS = { href: "/docs/", label: "Docs" };
+const GITHUB = { href: REPO_URL, label: "GitHub" };
 const CTA = { href: "/report/", label: "See a real report" };
 
 function Wordmark({ onDark }: { onDark: boolean }) {
   return (
-    <Link href="/#top" className="flex items-center gap-2 rounded-sm" aria-label="Optimus, back to top">
-      <svg viewBox="0 0 4 4" shapeRendering="crispEdges" className="size-5" aria-hidden="true">
-        <rect x="1" y="0" width="2" height="1" fill={onDark ? "#fff" : "var(--ink)"} />
-        <rect x="0" y="1" width="1" height="2" fill={onDark ? "#fff" : "var(--ink)"} />
-        <rect x="3" y="1" width="1" height="2" fill={onDark ? "#fff" : "var(--ink)"} />
-        <rect x="1" y="3" width="2" height="1" fill={onDark ? "#fff" : "var(--ink)"} />
-        <rect x="1" y="1" width="2" height="2" fill="var(--lime)" />
-      </svg>
-      <span className={cn("font-display text-[1.5rem] leading-none font-extrabold tracking-tight", onDark ? "text-white" : "text-ink")}>
-        Optimus
-      </span>
+    <Link href="/#top" className={cn("rounded-sm", onDark ? "text-white" : "text-ink")} aria-label="Optimus, back to top">
+      <Logo />
     </Link>
   );
 }
@@ -75,15 +69,22 @@ export function SiteNav({ overHero = true }: { overHero?: boolean }) {
               </li>
             ))}
           </ul>
-          <a
-            href={DOCS.href}
-            className={cn(
-              "inline-flex h-11 items-center rounded-full px-5 transition-colors",
-              onDark ? "glass text-white hover:bg-[rgb(6_33_61/0.5)]" : "border border-rule bg-paper-2 text-ink hover:bg-paper",
-            )}
-          >
-            {DOCS.label}
-          </a>
+          <ul className={cn("flex h-11 items-center rounded-full px-2", onDark ? "glass" : "border border-rule bg-paper-2")}>
+            {[DOCS, GITHUB].map((c) => (
+              <li key={c.href}>
+                <a
+                  href={c.href}
+                  className={cn(
+                    "inline-flex h-9 items-center gap-2 rounded-full px-4 transition-colors",
+                    onDark ? "text-white hover:bg-white/15" : "text-ink hover:bg-paper",
+                  )}
+                >
+                  {c === GITHUB && <GithubLogo aria-hidden="true" className="size-5" />}
+                  {c.label}
+                </a>
+              </li>
+            ))}
+          </ul>
           <a
             href={CTA.href}
             className={cn(
@@ -122,7 +123,7 @@ export function SiteNav({ overHero = true }: { overHero?: boolean }) {
             <DialogTitle className="sr-only">Menu</DialogTitle>
             <DialogDescription className="sr-only">Sections of the Optimus site</DialogDescription>
             <ul className="relative mt-8 flex flex-col gap-2 px-4">
-              {[...CHAPTERS, DOCS].map((c, i) => (
+              {[...CHAPTERS, DOCS, GITHUB].map((c, i) => (
                 <motion.li
                   key={c.href}
                   initial={{ opacity: 0, y: 12 }}

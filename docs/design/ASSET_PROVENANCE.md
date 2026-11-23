@@ -35,7 +35,10 @@ remain in the owner's checkout and are not committed.
   Fontsource; licences in `src/report/assets/fonts/*.LICENSE`.
 - Phosphor Icons — MIT (`@phosphor-icons/react`).
 
-## Not cleared for public release
+## Logo
 
-- The CoreOS-derived logo in `docs/Optimus_CoreOS_Components.zip` is **not used**. The site shows a
-  text wordmark with a small original pixel glyph until an original mark is approved.
+- The mark is the symbol from `docs/Optimus_CoreOS_Components.zip` (a CoreOS-derived design). The
+  project owner states it is free to use with no copyright restriction (23 Nov 2026). It is used as
+  a single SVG path (`src/report/mark.ts`) in the website nav, menu, footer, favicon and the report.
+- The kit's wordmark SVG set "Optimus" as live text in Inter/Arial; that text is not used. The word
+  is set in Bricolage Grotesque next to the mark.

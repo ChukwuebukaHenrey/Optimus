@@ -68,6 +68,8 @@ section>.wrap>header p{margin-top:16px;max-width:65ch}
 .identity .wrap{display:flex;flex-wrap:wrap;gap:8px 32px;align-items:baseline;justify-content:space-between}
 .identity .label{color:#ffffffcc}
 .identity a{color:#fff}
+.identity .brand{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.identity .brand svg{width:24px;height:24px;flex:none}
 .identity .same{display:inline-block;background:var(--accent);color:var(--ink);padding:0 8px;border-radius:2px}
 .hero{padding:64px 0 48px;border-top:0}
 .hero .wrap{display:grid;gap:32px}

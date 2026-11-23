@@ -59,12 +59,54 @@
       "delay": -4.8
     }
   ],
+  "sway": [
+    {
+      "src": "/art/hero/sway-lupines-left.png",
+      "x": 0,
+      "y": 284,
+      "w": 34,
+      "h": 76,
+      "frames": 16
+    },
+    {
+      "src": "/art/hero/sway-lupines-right.png",
+      "x": 606,
+      "y": 284,
+      "w": 34,
+      "h": 76,
+      "frames": 16
+    },
+    {
+      "src": "/art/hero/sway-grass.png",
+      "x": 34,
+      "y": 318,
+      "w": 572,
+      "h": 42,
+      "frames": 16
+    },
+    {
+      "src": "/art/hero/sway-moss.png",
+      "x": 34,
+      "y": 296,
+      "w": 572,
+      "h": 22,
+      "frames": 16
+    },
+    {
+      "src": "/art/hero/sway-tree.png",
+      "x": 355,
+      "y": 135,
+      "w": 60,
+      "h": 51,
+      "frames": 16
+    }
+  ],
   "clouds": [
     {
       "src": "/art/hero/cloud-1.png",
       "w": 56,
       "h": 16,
-      "y": 9.5,
+      "y": 7.2,
       "duration": 170,
       "delay": -25.5
     },
@@ -72,7 +114,7 @@
       "src": "/art/hero/cloud-2.png",
       "w": 40,
       "h": 12,
-      "y": 15.0,
+      "y": 10.6,
       "duration": 125,
       "delay": -56.2
     },
@@ -80,7 +122,7 @@
       "src": "/art/hero/cloud-3.png",
       "w": 28,
       "h": 9,
-      "y": 12.0,
+      "y": 8.4,
       "duration": 100,
       "delay": -75.0
     }

@@ -85,12 +85,49 @@ def main() -> None:
         layers["lanterns"].append({"src": f"/art/hero/{name}", "x": x0, "y": y0, "w": x1 - x0, "h": y1 - y0,
                                    "delay": round(-6 * i / len(LANTERNS), 2)})
 
+    # Wind: foliage sways in 16-frame strips (2 s at 8 fps). Only foliage pixels move; stone, sky and
+    # buildings never do. Displacement grows with distance from where the plant is anchored, and the
+    # phase follows absolute x, so gusts travel across the scene and neighbouring regions agree.
+    SWAY_FRAMES = 16
+    sway_regions = [
+        # name, box (x0, y0, x1, y1), amplitude in art px, anchor: "bottom" (rooted) or "top" (hanging)
+        ("lupines-left", (0, 284, 34, 360), 2, "bottom"),
+        ("lupines-right", (606, 284, 640, 360), 2, "bottom"),
+        ("grass", (34, 318, 606, 360), 2, "bottom"),
+        ("moss", (34, 296, 606, 318), 1, "top"),
+        ("tree", (355, 135, 415, 186), 1, "bottom"),
+    ]
+    layers["sway"] = []
+    for name, (x0, y0, x1, y1), amp, anchor in sway_regions:
+        region = base[y0:y1, x0:x1]
+        rr, gg, bb = (region[..., k].astype(int) for k in range(3))
+        green = (gg > rr + 8) & (gg > bb - 10) & (gg > 70)
+        petals = (rr > 200) & (gg > 200) & (bb > 190) & (name != "moss")          # white flowers
+        lupine = (bb > rr + 15) & (rr > gg) & (name.startswith("lupines"))        # violet spikes
+        mask = green | petals | lupine
+        h, w = mask.shape
+        ys = np.arange(h)[:, None]
+        xs = np.arange(w)[None, :]
+        weight = (h - 1 - ys) / max(1, h - 1) if anchor == "bottom" else ys / max(1, h - 1)
+        sheet = np.zeros((h, w * SWAY_FRAMES, 3), np.uint8)
+        for f in range(SWAY_FRAMES):
+            phase = 2 * math.pi * (f / SWAY_FRAMES) - 2 * math.pi * (x0 + xs) / 96
+            d = np.rint(amp * weight ** 1.2 * np.sin(phase)).astype(int)
+            src_x = np.clip(xs - d, 0, w - 1)
+            moved = region[ys, src_x]
+            take = mask[ys, src_x] | mask
+            frame = np.where(take[..., None], moved, region)
+            sheet[:, f * w:(f + 1) * w] = frame.astype(np.uint8)
+        fname = f"sway-{name}.png"
+        Image.fromarray(sheet, "RGB").save(OUT / fname)
+        layers["sway"].append({"src": f"/art/hero/{fname}", "x": x0, "y": y0, "w": w, "h": h, "frames": SWAY_FRAMES})
+
     # Drifting clouds: small pixel clouds in the plate's sky whites. They live in the top band of
     # sky (above the hero copy) and fade out before the observatory, which they cannot pass behind.
     crng = np.random.default_rng(11)                  # separate seed: falls and lanterns stay identical
     tones = [(255, 255, 255), (238, 247, 255), (207, 232, 252), (169, 212, 247)]
     layers["clouds"] = []
-    for i, (w, h, speed, y) in enumerate([(56, 16, 170, 9.5), (40, 12, 125, 15.0), (28, 9, 100, 12.0)]):
+    for i, (w, h, speed, y) in enumerate([(56, 16, 170, 7.2), (40, 12, 125, 10.6), (28, 9, 100, 8.4)]):
         yy, xx = np.mgrid[0:h, 0:w]
         body = np.zeros((h, w), bool)
         for _ in range(7):                            # union of puffs along a flat base

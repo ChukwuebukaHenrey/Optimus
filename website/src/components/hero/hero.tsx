@@ -25,7 +25,7 @@ export function Hero() {
     <section
       id="top"
       aria-labelledby="hero-title"
-      className="on-dark relative isolate flex flex-col overflow-hidden bg-[#128aef] text-white md:block md:min-h-[max(640px,min(100svh,960px))]"
+      className="on-dark relative isolate flex flex-col overflow-hidden bg-[#128aef] text-white md:block md:min-h-[max(820px,min(100svh,960px))]"
     >
       <div className="hero-frame relative order-2 md:absolute md:inset-0">
         <HeroScene />
