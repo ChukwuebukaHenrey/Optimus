@@ -3,30 +3,190 @@
     "frameWidth": 90,
     "frameHeight": 84,
     "anchorX": 39.0,
-    "actionFrames": 8
+    "count": 26,
+    "frames": {
+      "rest": 0,
+      "blink": 1,
+      "action": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "turn": [
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "walk": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25
+      ]
+    }
   },
   "runner": {
     "frameWidth": 80,
-    "frameHeight": 84,
+    "frameHeight": 85,
     "anchorX": 39.0,
-    "actionFrames": 8
+    "count": 18,
+    "frames": {
+      "rest": 0,
+      "blink": 1,
+      "action": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "turn": [
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ]
+    }
   },
   "evidence": {
     "frameWidth": 90,
     "frameHeight": 84,
     "anchorX": 50.0,
-    "actionFrames": 8
+    "count": 26,
+    "frames": {
+      "rest": 0,
+      "blink": 1,
+      "action": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "turn": [
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "walk": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25
+      ]
+    }
   },
   "verdict": {
-    "frameWidth": 83,
-    "frameHeight": 86,
+    "frameWidth": 84,
+    "frameHeight": 87,
     "anchorX": 39.0,
-    "actionFrames": 8
+    "count": 26,
+    "frames": {
+      "rest": 0,
+      "blink": 1,
+      "action": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "turn": [
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "walk": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25
+      ]
+    }
   },
   "smith": {
-    "frameWidth": 80,
+    "frameWidth": 81,
     "frameHeight": 86,
-    "anchorX": 35.0,
-    "actionFrames": 8
+    "anchorX": 36.0,
+    "count": 26,
+    "frames": {
+      "rest": 0,
+      "blink": 1,
+      "action": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "turn": [
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "walk": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25
+      ]
+    }
   }
 }

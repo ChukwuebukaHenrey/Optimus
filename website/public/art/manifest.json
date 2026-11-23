@@ -3,46 +3,36 @@
     "frameWidth": 90,
     "frameHeight": 84,
     "anchorX": 39.0,
-    "actionFrames": 8,
     "source": "Hooded Robot Sprite Sheet.png",
-    "frames": 2,
-    "note": "frame 2 = synthesised blink; action strip in -act.png"
+    "note": "<name>.png: rest + synthesised blink; <name>-sheet.png: every frame, see agent-frames.json"
   },
   "runner": {
     "frameWidth": 80,
-    "frameHeight": 84,
+    "frameHeight": 85,
     "anchorX": 39.0,
-    "actionFrames": 8,
     "source": "Hooded Hacker Robot Sprite Sheet.png",
-    "frames": 2,
-    "note": "frame 2 = synthesised blink; action strip in -act.png"
+    "note": "<name>.png: rest + synthesised blink; <name>-sheet.png: every frame, see agent-frames.json"
   },
   "evidence": {
     "frameWidth": 90,
     "frameHeight": 84,
     "anchorX": 50.0,
-    "actionFrames": 8,
     "source": "Hooded Robot Detective Sprite Sheet.png",
-    "frames": 2,
-    "note": "frame 2 = synthesised blink; action strip in -act.png"
+    "note": "<name>.png: rest + synthesised blink; <name>-sheet.png: every frame, see agent-frames.json"
   },
   "verdict": {
-    "frameWidth": 83,
-    "frameHeight": 86,
+    "frameWidth": 84,
+    "frameHeight": 87,
     "anchorX": 39.0,
-    "actionFrames": 8,
     "source": "Pixel Robot Inspector Sprite Sheet.png",
-    "frames": 2,
-    "note": "frame 2 = synthesised blink; action strip in -act.png"
+    "note": "<name>.png: rest + synthesised blink; <name>-sheet.png: every frame, see agent-frames.json"
   },
   "smith": {
-    "frameWidth": 80,
+    "frameWidth": 81,
     "frameHeight": 86,
-    "anchorX": 35.0,
-    "actionFrames": 8,
+    "anchorX": 36.0,
     "source": "Chibi Robot Mechanic Sprite Sheet.png",
-    "frames": 2,
-    "note": "frame 2 = synthesised blink; action strip in -act.png"
+    "note": "<name>.png: rest + synthesised blink; <name>-sheet.png: every frame, see agent-frames.json"
   },
   "smith-work": {
     "frameWidth": 100,

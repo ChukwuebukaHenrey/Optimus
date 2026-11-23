@@ -363,29 +363,12 @@
   }
 }
 
-/* agents: 2-frame sheets (open eyes, blink); the A-06 action row plays over them in the hero */
-.agent-action {
+/* hero agents: one strip per agent holding every drawn frame; hero-cast.tsx steps through it */
+.agent-strip {
   background-repeat: no-repeat;
   background-size: 100% 100%;
   image-rendering: pixelated;
-}
-.agent-sprite {
-  background-repeat: no-repeat;
-  background-size: 200% 100%;
-  background-position: 0 0;
-  image-rendering: pixelated;
-  animation: blink var(--blink, 5s) step-end infinite;
-  animation-delay: var(--blink-delay, 0s);
-}
-@keyframes blink {
-  0%,
-  95% {
-    background-position: 0 0;
-  }
-  96%,
-  99% {
-    background-position: 100% 0;
-  }
+  will-change: transform;
 }
 
 /* the hand-off spark: contract -> browser run -> evidence -> verdict, then a tick */
@@ -413,7 +396,6 @@
   .strip > img,
   .lantern-glow,
   .twinkle,
-  .agent-sprite,
   .handoff-track,
   .handoff-tick {
     animation: none !important;

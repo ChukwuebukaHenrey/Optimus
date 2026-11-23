@@ -124,6 +124,22 @@ def strip(frames: list[Image.Image]) -> tuple[Image.Image, dict]:
     return out, {"frameWidth": w, "frameHeight": h, "frames": len(frames)}
 
 
+def save_exact(img: Image.Image, path: Path) -> None:
+    """Save as an indexed PNG built from the image's exact colours (lossless: binary alpha and at
+    most 255 colours), which is several times smaller than RGBA; otherwise save RGBA."""
+    a = np.asarray(img.convert("RGBA"))
+    solid = a[..., 3] == 255
+    colours, inverse = np.unique(a[..., :3][solid], axis=0, return_inverse=True)
+    if not np.all((a[..., 3] == 0) | solid) or len(colours) > 255:
+        img.save(path, optimize=True)
+        return
+    index = np.zeros(a.shape[:2], np.uint8)  # 0 = transparent
+    index[solid] = inverse.reshape(-1) + 1
+    out = Image.fromarray(index, "P")
+    out.putpalette([0, 0, 0] + colours.astype(np.uint8).reshape(-1).tolist())
+    out.save(path, optimize=True, transparency=0)
+
+
 def strip_fixed(frames: list[Image.Image]) -> tuple[Image.Image, dict]:
     """Frames that already share one canvas, laid out left to right unchanged."""
     w, h = frames[0].size
@@ -151,13 +167,17 @@ A06_SHEETS = {
     "verdict": "Pixel Robot Inspector Sprite Sheet.png",
     "smith": "Chibi Robot Mechanic Sprite Sheet.png",
 }
-A06_ACTION_ROW = 2      # row 3: the action; its first and last frames are the rest pose
+A06_ROWS = {"turn": 0, "walk": 1, "action": 2}  # turnaround · walk (facing right) · action
+A06_ACTION_ROW = A06_ROWS["action"]  # its first and last frames are the rest pose
 A06_REST_HEIGHT = 80    # the contract agent's rest pose becomes 80 art px tall, as before
 A06_FRAMES = Path(__file__).resolve().parents[1] / "src" / "content" / "agent-frames.json"
 
+Cell = tuple[np.ndarray, np.ndarray, tuple[int, int, int, int]]
 
-def a06_cell(sheet: np.ndarray, row: int, col: int) -> tuple[np.ndarray, np.ndarray, tuple[int, int, int, int]]:
-    """One cell's colour, cleaned alpha and the bounding box of its art, in sheet pixels."""
+
+def a06_cell(sheet: np.ndarray, row: int, col: int) -> Cell | None:
+    """One cell's colour, cleaned alpha and the bounding box of its art, in sheet pixels.
+    None for an empty cell (the seated runner has no walk row)."""
     h, w = sheet.shape[:2]
     y0, y1 = round(row * h / 3), round((row + 1) * h / 3)
     x0, x1 = round(col * w / 8), round((col + 1) * w / 8)
@@ -166,31 +186,45 @@ def a06_cell(sheet: np.ndarray, row: int, col: int) -> tuple[np.ndarray, np.ndar
     alpha[alpha < 0.5] = 0  # the faint halo and soft edge left by background removal
     alpha[alpha > 0] = 1
     ys, xs = np.nonzero(alpha)
+    if len(xs) < 200:
+        return None
     return cell[..., :3].astype(np.int32), alpha, (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1)
 
 
 def a06_agent(name: str, scale: float) -> tuple[list[Image.Image], dict]:
-    """The rest pose plus a blink, and the eight action frames, all on one shared canvas.
+    """Every frame of one agent on one shared canvas, in one strip:
+    rest, blink, then the action, turnaround and walk rows (8 frames each; walk may be absent).
 
-    Frames keep their horizontal place in the cell (the body stays put while an arm reaches out)
-    and stand on one baseline (feet on the same row). One palette for every frame of an agent,
-    so colours don't flicker from frame to frame.
+    Within a row, frames keep their horizontal place in the cell (the body stays put while an arm
+    reaches out). Each row is shifted so its first frame's body lines up with the rest pose, and
+    every frame stands on one baseline. One palette for all frames, so colours don't flicker.
     """
     sheet = np.asarray(Image.open(SRC / A06_SHEETS[name]).convert("RGBA"))
-    cells = [a06_cell(sheet, A06_ACTION_ROW, col) for col in range(8)]
-    left = min(box[0] for _, _, box in cells)
-    right = max(box[2] for _, _, box in cells)
-    tallest = max(box[3] - box[1] for _, _, box in cells)
+    rows: dict[str, list[Cell]] = {}
+    for key in ("action", "turn", "walk"):
+        cells = [a06_cell(sheet, A06_ROWS[key], col) for col in range(8)]
+        if all(c is not None for c in cells):
+            rows[key] = cells  # type: ignore[assignment]
+
+    centre = lambda box: (box[0] + box[2]) / 2  # noqa: E731
+    rest_centre = centre(rows["action"][0][2])
+    shift = {key: rest_centre - centre(cells[0][2]) for key, cells in rows.items()}
+
+    placed_boxes = [(box[0] + shift[key], box[2] + shift[key], box[3] - box[1]) for key, cells in rows.items() for _, _, box in cells]
+    left = min(b[0] for b in placed_boxes)
+    right = max(b[1] for b in placed_boxes)
+    tallest = max(b[2] for b in placed_boxes)
     canvas_w, canvas_h = round((right - left) * scale) + 2, round(tallest * scale) + 1
 
     small: list[np.ndarray] = []
-    for rgb, alpha, (x0, y0, x1, y1) in cells:
-        size = (max(1, round((x1 - x0) * scale)), max(1, round((y1 - y0) * scale)))
-        frame = regrid(rgb[y0:y1, x0:x1], alpha[y0:y1, x0:x1], size, 256)
-        frame = pin_eyes(rgb[y0:y1, x0:x1], frame, size)
-        placed = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
-        placed.paste(frame, (1 + round((x0 - left) * scale), canvas_h - 1 - frame.height), frame)
-        small.append(np.asarray(placed))
+    for key, cells in rows.items():
+        for rgb, alpha, (x0, y0, x1, y1) in cells:
+            size = (max(1, round((x1 - x0) * scale)), max(1, round((y1 - y0) * scale)))
+            frame = regrid(rgb[y0:y1, x0:x1], alpha[y0:y1, x0:x1], size, 256)
+            frame = pin_eyes(rgb[y0:y1, x0:x1], frame, size)
+            placed = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
+            placed.paste(frame, (1 + round((x0 + shift[key] - left) * scale), canvas_h - 1 - frame.height), frame)
+            small.append(np.asarray(placed))
 
     # One shared palette: quantise all frames side by side, then cut them apart again.
     joined = np.concatenate(small, axis=1)
@@ -198,16 +232,22 @@ def a06_agent(name: str, scale: float) -> tuple[list[Image.Image], dict]:
     q = np.asarray(Image.fromarray(joined[..., :3], "RGB").quantize(48, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).convert("RGB")).copy()
     q[np.all(joined[..., :3] == EYE, axis=2) & solid] = EYE  # keep the pinned eye colour exact
     rgba = np.dstack([q, np.where(solid, 255, 0).astype(np.uint8)])
-    frames = [Image.fromarray(rgba[:, i * canvas_w:(i + 1) * canvas_w].copy(), "RGBA") for i in range(8)]
+    frames = [Image.fromarray(rgba[:, i * canvas_w:(i + 1) * canvas_w].copy(), "RGBA") for i in range(len(small))]
 
     rest = frames[0]
     rest_box = rest.getbbox()
+    index: dict[str, list[int] | int] = {"rest": 0, "blink": 1}
+    n = 2
+    for key in rows:
+        index[key] = list(range(n, n + 8))
+        n += 8
     meta = {
         "frameWidth": canvas_w,
         "frameHeight": canvas_h,
         # where the rest pose's body is centred, so the scene can stand it on its old spot
         "anchorX": round((rest_box[0] + rest_box[2]) / 2, 1),
-        "actionFrames": 8,
+        "count": n,
+        "frames": index,
         "source": A06_SHEETS[name],
     }
     return [rest, blink(rest)] + frames, meta
@@ -248,17 +288,21 @@ def main() -> None:
     # The board's own blink drawings are smaller than the main poses, so a swap would make the
     # character shrink. Blink frames are synthesised from the main frame instead.
     if all((SRC / f).exists() for f in A06_SHEETS.values()):
-        # A-06 delivered: idle (rest + synthesised blink) and action strips from the movement sheets.
+        # A-06 delivered: idle (rest + synthesised blink) for the page sections, and one strip
+        # with every frame for the hero, which steps through it on a single animation.
         scale = a06_scale()
         frames_json: dict[str, dict] = {}
         for name in A06_SHEETS:
             frames, meta = a06_agent(name, scale)
             idle, _ = strip_fixed(frames[:2])
-            action, _ = strip_fixed(frames[2:])
-            idle.save(OUT / "agents" / f"{name}.png")
-            action.save(OUT / "agents" / f"{name}-act.png")
-            manifest[name] = meta | {"frames": 2, "note": "frame 2 = synthesised blink; action strip in -act.png"}
-            frames_json[name] = {k: meta[k] for k in ("frameWidth", "frameHeight", "anchorX", "actionFrames")}
+            sheet_strip, _ = strip_fixed(frames)
+            save_exact(idle, OUT / "agents" / f"{name}.png")
+            save_exact(sheet_strip, OUT / "agents" / f"{name}-sheet.png")
+            (OUT / "agents" / f"{name}-act.png").unlink(missing_ok=True)
+            manifest[name] = {k: meta[k] for k in ("frameWidth", "frameHeight", "anchorX", "source")} | {
+                "note": "<name>.png: rest + synthesised blink; <name>-sheet.png: every frame, see agent-frames.json",
+            }
+            frames_json[name] = {k: meta[k] for k in ("frameWidth", "frameHeight", "anchorX", "count", "frames")}
         A06_FRAMES.write_text(json.dumps(frames_json, indent=2) + "\n")
     else:
         for name, (main_box, _board_blink) in pairs.items():
