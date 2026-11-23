@@ -363,7 +363,12 @@
   }
 }
 
-/* agents: 2-frame sheets (open eyes, blink) */
+/* agents: 2-frame sheets (open eyes, blink); the A-06 action row plays over them in the hero */
+.agent-action {
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+}
 .agent-sprite {
   background-repeat: no-repeat;
   background-size: 200% 100%;

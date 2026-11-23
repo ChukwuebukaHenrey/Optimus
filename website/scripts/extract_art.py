@@ -124,6 +124,15 @@ def strip(frames: list[Image.Image]) -> tuple[Image.Image, dict]:
     return out, {"frameWidth": w, "frameHeight": h, "frames": len(frames)}
 
 
+def strip_fixed(frames: list[Image.Image]) -> tuple[Image.Image, dict]:
+    """Frames that already share one canvas, laid out left to right unchanged."""
+    w, h = frames[0].size
+    out = Image.new("RGBA", (w * len(frames), h), (0, 0, 0, 0))
+    for i, f in enumerate(frames):
+        out.paste(f, (i * w, 0))
+    return out, {"frameWidth": w, "frameHeight": h, "frames": len(frames)}
+
+
 def split_pair(sheet: np.ndarray, x0: int, x1: int, y0: int, y1: int) -> tuple[tuple, tuple]:
     """Two touching sprites: cut at the emptiest column in the middle third."""
     mask = np.abs(sheet[y0:y1, x0:x1] - SHEET_BG).sum(axis=2) > 48
@@ -131,6 +140,93 @@ def split_pair(sheet: np.ndarray, x0: int, x1: int, y0: int, y1: int) -> tuple[t
     third = (x1 - x0) // 3
     cut = third + int(np.argmin(cols[third:2 * third]))
     return (x0, y0, x0 + cut, y1), (x0 + cut, y0, x1, y1)
+
+
+# A-06 movement sheets (docs/design/requests/A-06.md), as delivered: 8 columns x 3 rows on a
+# transparent canvas, but not on an exact 384 px grid, so cells are found from the canvas size.
+A06_SHEETS = {
+    "contract": "Hooded Robot Sprite Sheet.png",
+    "runner": "Hooded Hacker Robot Sprite Sheet.png",
+    "evidence": "Hooded Robot Detective Sprite Sheet.png",
+    "verdict": "Pixel Robot Inspector Sprite Sheet.png",
+    "smith": "Chibi Robot Mechanic Sprite Sheet.png",
+}
+A06_ACTION_ROW = 2      # row 3: the action; its first and last frames are the rest pose
+A06_REST_HEIGHT = 80    # the contract agent's rest pose becomes 80 art px tall, as before
+A06_FRAMES = Path(__file__).resolve().parents[1] / "src" / "content" / "agent-frames.json"
+
+
+def a06_cell(sheet: np.ndarray, row: int, col: int) -> tuple[np.ndarray, np.ndarray, tuple[int, int, int, int]]:
+    """One cell's colour, cleaned alpha and the bounding box of its art, in sheet pixels."""
+    h, w = sheet.shape[:2]
+    y0, y1 = round(row * h / 3), round((row + 1) * h / 3)
+    x0, x1 = round(col * w / 8), round((col + 1) * w / 8)
+    cell = sheet[y0:y1, x0:x1]
+    alpha = cell[..., 3].astype(np.float32) / 255
+    alpha[alpha < 0.5] = 0  # the faint halo and soft edge left by background removal
+    alpha[alpha > 0] = 1
+    ys, xs = np.nonzero(alpha)
+    return cell[..., :3].astype(np.int32), alpha, (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1)
+
+
+def a06_agent(name: str, scale: float) -> tuple[list[Image.Image], dict]:
+    """The rest pose plus a blink, and the eight action frames, all on one shared canvas.
+
+    Frames keep their horizontal place in the cell (the body stays put while an arm reaches out)
+    and stand on one baseline (feet on the same row). One palette for every frame of an agent,
+    so colours don't flicker from frame to frame.
+    """
+    sheet = np.asarray(Image.open(SRC / A06_SHEETS[name]).convert("RGBA"))
+    cells = [a06_cell(sheet, A06_ACTION_ROW, col) for col in range(8)]
+    left = min(box[0] for _, _, box in cells)
+    right = max(box[2] for _, _, box in cells)
+    tallest = max(box[3] - box[1] for _, _, box in cells)
+    canvas_w, canvas_h = round((right - left) * scale) + 2, round(tallest * scale) + 1
+
+    small: list[np.ndarray] = []
+    for rgb, alpha, (x0, y0, x1, y1) in cells:
+        size = (max(1, round((x1 - x0) * scale)), max(1, round((y1 - y0) * scale)))
+        frame = regrid(rgb[y0:y1, x0:x1], alpha[y0:y1, x0:x1], size, 256)
+        frame = pin_eyes(rgb[y0:y1, x0:x1], frame, size)
+        placed = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
+        placed.paste(frame, (1 + round((x0 - left) * scale), canvas_h - 1 - frame.height), frame)
+        small.append(np.asarray(placed))
+
+    # One shared palette: quantise all frames side by side, then cut them apart again.
+    joined = np.concatenate(small, axis=1)
+    solid = joined[..., 3] > 0
+    q = np.asarray(Image.fromarray(joined[..., :3], "RGB").quantize(48, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).convert("RGB")).copy()
+    q[np.all(joined[..., :3] == EYE, axis=2) & solid] = EYE  # keep the pinned eye colour exact
+    rgba = np.dstack([q, np.where(solid, 255, 0).astype(np.uint8)])
+    frames = [Image.fromarray(rgba[:, i * canvas_w:(i + 1) * canvas_w].copy(), "RGBA") for i in range(8)]
+
+    rest = frames[0]
+    rest_box = rest.getbbox()
+    meta = {
+        "frameWidth": canvas_w,
+        "frameHeight": canvas_h,
+        # where the rest pose's body is centred, so the scene can stand it on its old spot
+        "anchorX": round((rest_box[0] + rest_box[2]) / 2, 1),
+        "actionFrames": 8,
+        "source": A06_SHEETS[name],
+    }
+    return [rest, blink(rest)] + frames, meta
+
+
+def pin_eyes(rgb: np.ndarray, img: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """Averaging blends the cyan eyes into the dark visor; snap eye pixels back to one cyan."""
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    eye_mask = ((g > 200) & (b > 200) & (r < 175) & (g - r > 55)).astype(np.uint8) * 255
+    cover = np.asarray(Image.fromarray(eye_mask, "L").resize(size, Image.BOX)) / 255
+    a = np.asarray(img).copy()
+    a[(cover >= 0.3) & (a[..., 3] > 0), :3] = EYE
+    return Image.fromarray(a, "RGBA")
+
+
+def a06_scale() -> float:
+    sheet = np.asarray(Image.open(SRC / A06_SHEETS["contract"]).convert("RGBA"))
+    _, _, (_, y0, _, y1) = a06_cell(sheet, A06_ACTION_ROW, 0)
+    return A06_REST_HEIGHT / (y1 - y0)
 
 
 def main() -> None:
@@ -151,17 +247,31 @@ def main() -> None:
     }
     # The board's own blink drawings are smaller than the main poses, so a swap would make the
     # character shrink. Blink frames are synthesised from the main frame instead.
-    for name, (main_box, _board_blink) in pairs.items():
-        main_frame = crop_sprite(sheet, main_box)
-        img, meta = strip([main_frame, blink(main_frame)])
-        img.save(OUT / "agents" / f"{name}.png")
-        manifest[name] = meta | {"source": "asset-pack-sheet.png", "box": main_box, "note": "frame 2 = synthesised blink"}
+    if all((SRC / f).exists() for f in A06_SHEETS.values()):
+        # A-06 delivered: idle (rest + synthesised blink) and action strips from the movement sheets.
+        scale = a06_scale()
+        frames_json: dict[str, dict] = {}
+        for name in A06_SHEETS:
+            frames, meta = a06_agent(name, scale)
+            idle, _ = strip_fixed(frames[:2])
+            action, _ = strip_fixed(frames[2:])
+            idle.save(OUT / "agents" / f"{name}.png")
+            action.save(OUT / "agents" / f"{name}-act.png")
+            manifest[name] = meta | {"frames": 2, "note": "frame 2 = synthesised blink; action strip in -act.png"}
+            frames_json[name] = {k: meta[k] for k in ("frameWidth", "frameHeight", "anchorX", "actionFrames")}
+        A06_FRAMES.write_text(json.dumps(frames_json, indent=2) + "\n")
+    else:
+        for name, (main_box, _board_blink) in pairs.items():
+            main_frame = crop_sprite(sheet, main_box)
+            img, meta = strip([main_frame, blink(main_frame)])
+            img.save(OUT / "agents" / f"{name}.png")
+            manifest[name] = meta | {"source": "asset-pack-sheet.png", "box": main_box, "note": "frame 2 = synthesised blink"}
+        smith_idle = crop_sprite(sheet, (1150, 44, 1326, 204))
+        img, meta = strip([smith_idle, blink(smith_idle)])
+        img.save(OUT / "agents" / "smith.png")
+        manifest["smith"] = meta | {"source": "asset-pack-sheet.png", "note": "blink frame synthesised from the idle pose"}
 
-    smith_idle = crop_sprite(sheet, (1150, 44, 1326, 204))
     smith_work = crop_sprite(sheet, (1336, 70, 1518, 204))
-    img, meta = strip([smith_idle, blink(smith_idle)])
-    img.save(OUT / "agents" / "smith.png")
-    manifest["smith"] = meta | {"source": "asset-pack-sheet.png", "note": "blink frame synthesised from the idle pose"}
     smith_work.save(OUT / "agents" / "smith-work.png")
     manifest["smith-work"] = {"frameWidth": smith_work.width, "frameHeight": smith_work.height, "frames": 1}
 

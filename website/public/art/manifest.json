@@ -1,62 +1,48 @@
 {
   "contract": {
-    "frameWidth": 70,
-    "frameHeight": 80,
+    "frameWidth": 90,
+    "frameHeight": 84,
+    "anchorX": 39.0,
+    "actionFrames": 8,
+    "source": "Hooded Robot Sprite Sheet.png",
     "frames": 2,
-    "source": "asset-pack-sheet.png",
-    "box": [
-      25,
-      44,
-      150,
-      200
-    ],
-    "note": "frame 2 = synthesised blink"
+    "note": "frame 2 = synthesised blink; action strip in -act.png"
   },
   "runner": {
-    "frameWidth": 67,
-    "frameHeight": 70,
+    "frameWidth": 80,
+    "frameHeight": 84,
+    "anchorX": 39.0,
+    "actionFrames": 8,
+    "source": "Hooded Hacker Robot Sprite Sheet.png",
     "frames": 2,
-    "source": "asset-pack-sheet.png",
-    "box": [
-      289,
-      60,
-      408,
-      200
-    ],
-    "note": "frame 2 = synthesised blink"
+    "note": "frame 2 = synthesised blink; action strip in -act.png"
   },
   "evidence": {
-    "frameWidth": 73,
-    "frameHeight": 69,
+    "frameWidth": 90,
+    "frameHeight": 84,
+    "anchorX": 50.0,
+    "actionFrames": 8,
+    "source": "Hooded Robot Detective Sprite Sheet.png",
     "frames": 2,
-    "source": "asset-pack-sheet.png",
-    "box": [
-      548,
-      60,
-      677,
-      200
-    ],
-    "note": "frame 2 = synthesised blink"
+    "note": "frame 2 = synthesised blink; action strip in -act.png"
   },
   "verdict": {
-    "frameWidth": 74,
-    "frameHeight": 82,
+    "frameWidth": 83,
+    "frameHeight": 86,
+    "anchorX": 39.0,
+    "actionFrames": 8,
+    "source": "Pixel Robot Inspector Sprite Sheet.png",
     "frames": 2,
-    "source": "asset-pack-sheet.png",
-    "box": [
-      824,
-      40,
-      955,
-      200
-    ],
-    "note": "frame 2 = synthesised blink"
+    "note": "frame 2 = synthesised blink; action strip in -act.png"
   },
   "smith": {
-    "frameWidth": 98,
+    "frameWidth": 80,
     "frameHeight": 86,
+    "anchorX": 35.0,
+    "actionFrames": 8,
+    "source": "Chibi Robot Mechanic Sprite Sheet.png",
     "frames": 2,
-    "source": "asset-pack-sheet.png",
-    "note": "blink frame synthesised from the idle pose"
+    "note": "frame 2 = synthesised blink; action strip in -act.png"
   },
   "smith-work": {
     "frameWidth": 100,

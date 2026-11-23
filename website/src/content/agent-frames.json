@@ -1,0 +1,32 @@
+{
+  "contract": {
+    "frameWidth": 90,
+    "frameHeight": 84,
+    "anchorX": 39.0,
+    "actionFrames": 8
+  },
+  "runner": {
+    "frameWidth": 80,
+    "frameHeight": 84,
+    "anchorX": 39.0,
+    "actionFrames": 8
+  },
+  "evidence": {
+    "frameWidth": 90,
+    "frameHeight": 84,
+    "anchorX": 50.0,
+    "actionFrames": 8
+  },
+  "verdict": {
+    "frameWidth": 83,
+    "frameHeight": 86,
+    "anchorX": 39.0,
+    "actionFrames": 8
+  },
+  "smith": {
+    "frameWidth": 80,
+    "frameHeight": 86,
+    "anchorX": 35.0,
+    "actionFrames": 8
+  }
+}

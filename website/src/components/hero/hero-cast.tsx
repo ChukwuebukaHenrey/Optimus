@@ -1,45 +1,48 @@
 "use client";
 
-import { motion, type TargetAndTransition } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { AGENTS, FOOT_Y, px, py, type AgentSpec } from "@/content/scene";
 
 /**
  * The five agents and the hand-off, on one shared 10-second cycle (Motion).
  * The spark leaves the contract, reaches the browser run, the evidence and the verdict; each agent
- * acts when it arrives. Positions come from scene.ts, so moving an agent moves its action too.
+ * plays its drawn action frames (A-06) when it arrives. Positions come from scene.ts, so moving an
+ * agent moves its action too. Nothing is flipped or nudged: every pose is a real drawn frame.
  */
 const CYCLE = 10;
-const ARRIVE = [0.04, 0.18, 0.32, 0.46]; // contract (departure), runner, evidence, verdict
+const ARRIVE = [0.08, 0.18, 0.32, 0.46]; // contract (departure), runner, evidence, verdict
 const loop = (times: number[]) => ({ duration: CYCLE, times, repeat: Infinity, ease: "easeInOut" as const });
 
-/** What each agent does in the cycle, as Motion keyframes (y and x in % of the sprite). */
-const ACTIONS: Record<AgentSpec["id"], { animate: TargetAndTransition; times: number[] }> = {
-  // lifts the scroll as it sends the hand-off (real gesture frames: docs/design/requests/A-06.md)
-  contract: {
-    animate: { y: ["0%", "-5%", "0%", "0%"] },
-    times: [0, 0.03, 0.06, 1],
-  },
-  // types in short bursts while the evidence arrives
-  runner: {
-    animate: { y: ["0%", "0%", "-2%", "0%", "-2%", "0%", "-2%", "0%", "0%"] },
-    times: [0, 0.17, 0.19, 0.21, 0.23, 0.25, 0.27, 0.29, 1],
-  },
-  // leans in with the magnifier to inspect
-  evidence: {
-    animate: { x: ["0%", "0%", "6%", "6%", "0%", "0%"], y: ["0%", "0%", "2%", "2%", "0%", "0%"] },
-    times: [0, 0.31, 0.35, 0.42, 0.46, 1],
-  },
-  // stamps the verdict: a short hop as the tick appears
-  verdict: {
-    animate: { y: ["0%", "0%", "-7%", "0%", "-3%", "0%", "0%"] },
-    times: [0, 0.45, 0.48, 0.51, 0.53, 0.55, 1],
-  },
-  // a small hop when the verdict lands (real gesture frames: docs/design/requests/A-06.md)
-  smith: {
-    animate: { y: ["0%", "0%", "-3%", "0%", "0%"] },
-    times: [0, 0.56, 0.6, 0.64, 1],
-  },
+/** When each agent plays its action row, as fractions of the cycle. */
+const ACTION_WINDOW: Record<AgentSpec["id"], [number, number]> = {
+  contract: [0.005, 0.125], // picks up the scroll, holds it out as the spark leaves (frames 5–7)
+  runner: [ARRIVE[1], 0.3], // opens the laptop, types, looks up
+  evidence: [ARRIVE[2], 0.46], // kneels, picks up the frame, inspects it
+  verdict: [ARRIVE[3], 0.6], // writes the tick, shows the clipboard
+  smith: [0.62, 0.78], // sets the { } tile and taps it in once the verdict lands
 };
+const HOLD = 0.0005; // a 5 ms crossover: keyframes this close read as a cut, not a blend
+
+/** Opacity of the rest sprite (1) and the action strip (0), swapping for the action window. */
+function swap([start, end]: [number, number], during: number) {
+  const before = 1 - during;
+  return { values: [before, before, during, during, before, before], times: [0, start, start + HOLD, end - HOLD, end, 1] };
+}
+
+/** Strip offsets that hold each frame for an equal share of the action window. */
+function frameSteps([start, end]: [number, number], frames: number) {
+  const at = (i: number) => `translateX(${(-i / frames) * 100}%)`;
+  const step = (end - start) / frames;
+  const values = [at(0)];
+  const times = [0];
+  for (let i = 0; i < frames; i++) {
+    values.push(at(i), at(i));
+    times.push(start + i * step + (i === 0 ? 0 : HOLD), start + (i + 1) * step);
+  }
+  values.push(at(frames - 1));
+  times.push(1);
+  return { values, times };
+}
 
 function sparkPath() {
   const stops = AGENTS.filter((a) => a.prop && a.id !== "smith").map((a) => a.prop!);
@@ -82,17 +85,23 @@ function PixelTick() {
 export function HeroCast() {
   const spark = sparkPath();
   const verdict = AGENTS.find((a) => a.id === "verdict")!;
+  // Reduced motion: the agents keep their rest pose (MotionConfig only stops transforms by itself).
+  const still = useReducedMotion() ?? false;
   return (
     <>
       <ul className="contents">
         {AGENTS.map((a) => {
-          const action = ACTIONS[a.id];
+          const span = ACTION_WINDOW[a.id];
+          const rest = swap(span, 0);
+          const acting = swap(span, 1);
+          const steps = frameSteps(span, a.actionFrames);
+          const linear = (times: number[]) => ({ duration: CYCLE, times, repeat: Infinity, ease: "linear" as const });
           return (
             <li key={a.id} className={a.mobile ? "contents" : "contents max-md:hidden"}>
               <motion.a
                 href={a.href}
                 className="group absolute block rounded-sm"
-                style={{ left: px(a.x - a.frameW / 2), top: py(FOOT_Y - a.frameH), width: px(a.frameW), height: py(a.frameH) }}
+                style={{ left: px(a.x - a.anchorX), top: py(FOOT_Y - a.frameH), width: px(a.frameW), height: py(a.frameH) }}
                 aria-label={`${a.name}: ${a.caption}`}
                 whileHover={{ y: "-4%" }}
                 whileFocus={{ y: "-4%" }}
@@ -100,17 +109,31 @@ export function HeroCast() {
               >
                 <motion.span
                   aria-hidden="true"
-                  className="absolute inset-0 block origin-bottom"
-                  animate={action.animate}
-                  transition={loop(action.times)}
+                  className="agent-sprite absolute inset-0"
+                  style={{
+                    backgroundImage: `url(${a.sprite})`,
+                    ["--blink" as string]: `${a.blink}s`,
+                    ["--blink-delay" as string]: `${a.blinkDelay}s`,
+                  }}
+                  initial={{ opacity: 1 }}
+                  animate={still ? { opacity: 1 } : { opacity: rest.values }}
+                  transition={still ? undefined : linear(rest.times)}
+                />
+                {/* The strip slides by whole frames inside a clipping window. Opacity and transform
+                    both run as Web Animations, so frames and the rest/action swap share one clock. */}
+                <motion.span
+                  aria-hidden="true"
+                  className="absolute inset-0 overflow-hidden"
+                  initial={{ opacity: 0 }}
+                  animate={still ? { opacity: 0 } : { opacity: acting.values }}
+                  transition={still ? undefined : linear(acting.times)}
                 >
-                  <span
-                    className="agent-sprite absolute inset-0"
-                    style={{
-                      backgroundImage: `url(${a.sprite})`,
-                      ["--blink" as string]: `${a.blink}s`,
-                      ["--blink-delay" as string]: `${a.blinkDelay}s`,
-                    }}
+                  <motion.span
+                    className="agent-action absolute inset-y-0 left-0 block"
+                    style={{ width: `${a.actionFrames * 100}%`, backgroundImage: `url(${a.actionSprite})` }}
+                    initial={{ transform: "translateX(0%)" }}
+                    animate={still ? undefined : { transform: steps.values }}
+                    transition={still ? undefined : linear(steps.times)}
                   />
                 </motion.span>
                 <span
@@ -139,7 +162,7 @@ export function HeroCast() {
         className="handoff-tick"
         style={{ left: px(verdict.x - 4), top: py(FOOT_Y - verdict.frameH - 14), width: px(8), height: py(7) }}
         animate={{ opacity: [0, 0, 1, 1, 0, 0], y: ["40%", "40%", "0%", "0%", "-40%", "-40%"] }}
-        transition={loop([0, 0.47, 0.5, 0.68, 0.72, 1])}
+        transition={loop([0, 0.54, 0.57, 0.7, 0.74, 1])}
       >
         <PixelTick />
       </motion.span>
