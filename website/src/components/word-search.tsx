@@ -95,6 +95,8 @@ export function WordSearch() {
     if (!start) setStart(c);
     setHover(c);
     setFocus(c);
+    // preventDefault above stops the browser focusing the letter; focus it so the keyboard can continue
+    cellRefs.current.get(key(c))?.focus({ preventScroll: true });
   };
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
     if (!dragging.current || !origin.current) return;

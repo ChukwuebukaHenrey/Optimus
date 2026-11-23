@@ -39,7 +39,7 @@ export function Hero() {
 
       {/* Desktop: one copy column over the sky. Phones: headline above the scene, explanation below it. */}
       <div className="max-md:contents md:relative md:z-10 md:mx-auto md:max-w-[1440px] md:px-16 md:pt-36 md:pb-10">
-        <Entrance className="relative z-10 order-1 max-w-[560px] px-4 pt-24 pb-6 max-md:bg-[linear-gradient(180deg,#0b5fa8_0%,#0e74cc_70%,#128aef_100%)] md:px-0 md:pt-0 md:pb-0">
+        <Entrance className="relative z-10 order-1 px-4 md:max-w-[560px] pt-24 pb-6 max-md:bg-[linear-gradient(180deg,#0b5fa8_0%,#0e74cc_70%,#128aef_100%)] md:px-0 md:pt-0 md:pb-0">
           <EntranceItem>
             <p className="label-mono text-white/85">Behavioural assessment for web apps</p>
           </EntranceItem>
@@ -50,7 +50,7 @@ export function Hero() {
             </h1>
           </EntranceItem>
         </Entrance>
-        <Entrance className="relative z-10 order-3 max-w-[560px] px-4 pt-6 pb-14 max-md:bg-azure-deep md:px-0 md:pt-0 md:pb-0">
+        <Entrance className="relative z-10 order-3 px-4 md:max-w-[560px] pt-6 pb-14 max-md:bg-azure-deep md:px-0 md:pt-0 md:pb-0">
           <EntranceItem>
             <p className="font-extrabold md:mt-6">One contract. Many different builds. Evidence-backed verdicts.</p>
             <p className="mt-2 text-white/90">
