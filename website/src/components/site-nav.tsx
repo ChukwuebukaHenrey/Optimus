@@ -10,7 +10,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, Dia
 import { REPO_URL } from "@/content/site";
 
 const CHAPTERS = [
-  { href: "/#contract", label: "How it works" },
+  { href: "/#how", label: "How it works" },
   { href: "/#evidence", label: "Evidence" },
   { href: "/#verdicts", label: "Verdicts" },
   { href: "/#repair", label: "Repair" },
@@ -47,7 +47,7 @@ export function SiteNav({ overHero = true }: { overHero?: boolean }) {
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-40 transition-colors duration-300",
-        scrolled ? "border-b border-rule bg-[var(--paper-glass)] backdrop-blur-md" : "bg-transparent",
+        scrolled ? "border-b border-rule bg-paper shadow-none" : "bg-transparent",
       )}
     >
       <nav aria-label="Main" className={cn("mx-auto flex h-18 max-w-[1440px] items-center justify-between gap-4 px-4 md:px-16", onDark && "on-dark")}>

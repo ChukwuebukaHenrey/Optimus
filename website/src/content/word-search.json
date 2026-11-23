@@ -17,8 +17,8 @@
   "words": [
     {
       "word": "CONTRACT",
-      "href": "#contract",
-      "label": "The contract",
+      "href": "/docs/#library-contract-versions",
+      "label": "How contracts work",
       "cells": [
         [
           8,
@@ -56,8 +56,8 @@
     },
     {
       "word": "EVIDENCE",
-      "href": "#evidence",
-      "label": "The evidence",
+      "href": "/report/#builds",
+      "label": "Evidence for every build",
       "cells": [
         [
           2,
@@ -95,8 +95,8 @@
     },
     {
       "word": "VERIFY",
-      "href": "#verdicts",
-      "label": "The verdicts",
+      "href": "/report/#matrix",
+      "label": "The verdict matrix",
       "cells": [
         [
           2,
@@ -126,8 +126,8 @@
     },
     {
       "word": "REPAIR",
-      "href": "#repair",
-      "label": "The repair loop",
+      "href": "/report/#repairs",
+      "label": "The repair record",
       "cells": [
         [
           8,
@@ -157,8 +157,8 @@
     },
     {
       "word": "BUILD",
-      "href": "/report/",
-      "label": "Every build, one report",
+      "href": "https://github.com/ChukwuebukaHenrey/Optimus",
+      "label": "Build it yourself on GitHub",
       "cells": [
         [
           7,

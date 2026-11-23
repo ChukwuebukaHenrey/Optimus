@@ -1,0 +1,110 @@
+{
+  "scene": {
+    "src": "/art/scene/F-01-dusk.png",
+    "w": 480,
+    "h": 190
+  },
+  "falls": [
+    {
+      "src": "/art/dusk/fall-1.png",
+      "x": 278,
+      "y": 92,
+      "w": 35,
+      "h": 61,
+      "frames": 12
+    },
+    {
+      "src": "/art/dusk/fall-2.png",
+      "x": 318,
+      "y": 92,
+      "w": 31,
+      "h": 61,
+      "frames": 12
+    }
+  ],
+  "lanterns": [
+    {
+      "src": "/art/dusk/lantern-1.png",
+      "x": 75,
+      "y": 124,
+      "w": 25,
+      "h": 32,
+      "delay": 0.0
+    },
+    {
+      "src": "/art/dusk/lantern-2.png",
+      "x": 172,
+      "y": 124,
+      "w": 25,
+      "h": 32,
+      "delay": -0.8
+    },
+    {
+      "src": "/art/dusk/lantern-3.png",
+      "x": 256,
+      "y": 124,
+      "w": 25,
+      "h": 32,
+      "delay": -1.6
+    },
+    {
+      "src": "/art/dusk/lantern-4.png",
+      "x": 337,
+      "y": 124,
+      "w": 25,
+      "h": 32,
+      "delay": -2.4
+    },
+    {
+      "src": "/art/dusk/lantern-5.png",
+      "x": 418,
+      "y": 124,
+      "w": 25,
+      "h": 32,
+      "delay": -3.2
+    }
+  ],
+  "stars": [
+    {
+      "src": "/art/dusk/stars-1.png",
+      "delay": -0.0,
+      "duration": 3.2
+    },
+    {
+      "src": "/art/dusk/stars-2.png",
+      "delay": -1.3,
+      "duration": 4.1
+    },
+    {
+      "src": "/art/dusk/stars-3.png",
+      "delay": -2.6,
+      "duration": 5.0
+    }
+  ],
+  "clouds": [
+    {
+      "src": "/art/dusk/cloud-1.png",
+      "w": 46,
+      "h": 12,
+      "y": 14.0,
+      "duration": 180,
+      "delay": -36.0
+    },
+    {
+      "src": "/art/dusk/cloud-2.png",
+      "w": 32,
+      "h": 9,
+      "y": 24.0,
+      "duration": 140,
+      "delay": -70.0
+    },
+    {
+      "src": "/art/dusk/cloud-3.png",
+      "w": 26,
+      "h": 8,
+      "y": 9.0,
+      "duration": 120,
+      "delay": -96.0
+    }
+  ]
+}

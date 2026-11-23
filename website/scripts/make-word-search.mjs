@@ -7,12 +7,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const SIZE = 12;
+const REPO = "https://github.com/ChukwuebukaHenrey/Optimus";
 const WORDS = [
-  { word: "CONTRACT", href: "#contract", label: "The contract" },
-  { word: "EVIDENCE", href: "#evidence", label: "The evidence" },
-  { word: "VERIFY", href: "#verdicts", label: "The verdicts" },
-  { word: "REPAIR", href: "#repair", label: "The repair loop" },
-  { word: "BUILD", href: "/report/", label: "Every build, one report" },
+  { word: "CONTRACT", href: "/docs/#library-contract-versions", label: "How contracts work" },
+  { word: "EVIDENCE", href: "/report/#builds", label: "Evidence for every build" },
+  { word: "VERIFY", href: "/report/#matrix", label: "The verdict matrix" },
+  { word: "REPAIR", href: "/report/#repairs", label: "The repair record" },
+  { word: "BUILD", href: REPO, label: "Build it yourself on GitHub" },
   { word: "KANE", href: "https://github.com/LambdaTest/kane-cli", label: "Kane CLI" },
 ];
 const DIRS = [[0, 1], [1, 0], [1, 1], [-1, 1], [0, -1], [-1, 0], [-1, -1], [1, -1]];

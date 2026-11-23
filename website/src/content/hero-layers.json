@@ -116,7 +116,7 @@
       "h": 12,
       "y": 10.6,
       "duration": 125,
-      "delay": -56.2
+      "delay": -52.5
     },
     {
       "src": "/art/hero/cloud-3.png",
@@ -124,7 +124,41 @@
       "h": 9,
       "y": 8.4,
       "duration": 100,
-      "delay": -75.0
+      "delay": -69.0
+    }
+  ],
+  "cloudsLow": [
+    {
+      "src": "/art/hero/cloud-low-1.png",
+      "w": 34,
+      "h": 9,
+      "y": 63.0,
+      "duration": 210,
+      "delay": -31.5
+    },
+    {
+      "src": "/art/hero/cloud-low-2.png",
+      "w": 24,
+      "h": 7,
+      "y": 66.5,
+      "duration": 160,
+      "delay": -67.2
+    },
+    {
+      "src": "/art/hero/cloud-low-3.png",
+      "w": 44,
+      "h": 10,
+      "y": 64.5,
+      "duration": 260,
+      "delay": -179.4
+    },
+    {
+      "src": "/art/hero/cloud-low-4.png",
+      "w": 20,
+      "h": 6,
+      "y": 68.0,
+      "duration": 140,
+      "delay": -134.4
     }
   ],
   "scene": {

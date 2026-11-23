@@ -76,12 +76,17 @@ export interface RepairStory {
   minutes: number;
   integrity: { label: string; ok: boolean }[];
   outcome: string;
+  /** The same scenario in the fresh verification run: what Kane recorded after the fix. */
+  verifiedSteps: EvidenceStory["steps"];
 }
 
 export interface EvidenceStory {
   buildLabel: string;
   scenarioId: string;
   scenarioName: string;
+  reason: string;
+  expected: string | null;
+  observed: string | null;
   steps: { stepId: string; action: string; recorded: boolean | null; values: Record<string, string | null>; screenshot: string | null }[];
   verdict: Verdict;
 }
@@ -162,6 +167,13 @@ export function getSiteData(): SiteData {
             ]
           : [],
         outcome: session.outcome.reason,
+        verifiedSteps: (bundle.runs.find((r) => r.runId === latestRunId)?.scenarios.find((x) => x.scenarioId === failing)?.steps ?? []).map((st) => ({
+          stepId: st.stepId,
+          action: st.action,
+          recorded: st.actionRecorded,
+          values: st.values,
+          screenshot: st.screenshot,
+        })),
       };
     }
   }
@@ -177,6 +189,9 @@ export function getSiteData(): SiteData {
       scenarioId: scenario.scenarioId,
       scenarioName: scenarioName(scenario.scenarioId),
       verdict: scenario.result.verdict,
+      reason: scenario.result.reason,
+      expected: scenario.result.expected === undefined ? null : typeof scenario.result.expected === "string" ? scenario.result.expected : JSON.stringify(scenario.result.expected),
+      observed: scenario.result.observed ?? null,
       steps: scenario.steps.map((s) => ({
         stepId: s.stepId,
         action: s.action,

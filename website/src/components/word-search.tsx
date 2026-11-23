@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowUpRight, CheckCircle } from "@phosphor-icons/react";
+import { ArrowRight, ArrowUpRight, CheckCircle } from "@phosphor-icons/react";
+import { AnimatePresence, motion } from "motion/react";
 import { cn } from "cn";
-import { useCallback, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import puzzle from "@/content/word-search.json";
 
 type Cell = [number, number];
@@ -28,7 +29,32 @@ export function WordSearch() {
   const [hover, setHover] = useState<Cell | null>(null);
   const [focus, setFocus] = useState<Cell>([0, 0]);
   const [status, setStatus] = useState("");
+  const [hint, setHint] = useState<string | null>(null);
+  const [lastFound, setLastFound] = useState<(typeof puzzle.words)[number] | null>(null);
   const dragging = useRef(false);
+
+  // Every few seconds, outline one word that has not been found yet, so people know what to look for.
+  useEffect(() => {
+    const left = puzzle.words.filter((w) => !found.includes(w.word));
+    if (!left.length) return;
+    let n = 0;
+    const show = () => {
+      setHint(left[n % left.length].word);
+      n += 1;
+      window.setTimeout(() => setHint(null), 1800);
+    };
+    const first = window.setTimeout(show, 2500);
+    const id = window.setInterval(show, 6000);
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(id);
+    };
+  }, [found]);
+
+  const hintCells = useMemo(
+    () => new Set((puzzle.words.find((w) => w.word === hint)?.cells ?? []).map((c) => key(c as Cell))),
+    [hint],
+  );
 
   const foundCells = useMemo(() => {
     const m = new Map<string, string>();
@@ -63,6 +89,7 @@ export function WordSearch() {
       }
       const next = [...found, match.word];
       setFound(next);
+      setLastFound(match);
       setStatus(
         next.length === puzzle.words.length
           ? `Found ${match.word}. All ${puzzle.words.length} words found.`
@@ -202,8 +229,10 @@ export function WordSearch() {
                 const isSel = selection.has(k);
                 const isFocus = focus[0] === r && focus[1] === c;
                 return (
-                  <button
+                  <motion.button
                     key={k}
+                    animate={isFound ? { scale: [1, 1.18, 1] } : hintCells.has(k) ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+                    transition={{ duration: 0.45 }}
                     type="button"
                     data-cell={k}
                     tabIndex={isFocus ? 0 : -1}
@@ -216,14 +245,15 @@ export function WordSearch() {
                     }}
                     onFocus={() => setFocus([r, c])}
                     className={cn(
-                      "aspect-square font-mono text-[1rem] leading-none font-extrabold transition-colors",
+                      "aspect-square rounded-[2px] font-mono text-[1rem] leading-none font-extrabold transition-[background-color,box-shadow]",
                       isFound ? "bg-lime text-ink" : "text-ink",
+                      hintCells.has(k) && !isFound && "shadow-[inset_0_0_0_2px_var(--azure-deep)]",
                       isSel && "bg-azure-deep text-white",
                       !isFound && !isSel && "hover:bg-paper-2",
                     )}
                   >
                     {letter}
-                  </button>
+                  </motion.button>
                 );
               }),
             )}
@@ -231,6 +261,21 @@ export function WordSearch() {
           <p aria-live="polite" className="mt-4 min-h-6 text-ink">
             {status}
           </p>
+          <AnimatePresence mode="wait">
+            {lastFound && (
+              <motion.a
+                key={lastFound.word}
+                href={lastFound.href}
+                className="mt-2 inline-flex items-center gap-2 rounded-full bg-charcoal px-5 py-2 font-extrabold text-paper hover:bg-ink"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3 }}
+              >
+                Go to: {lastFound.label} <ArrowRight aria-hidden="true" weight="bold" className="size-4" />
+              </motion.a>
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="lg:pt-16">

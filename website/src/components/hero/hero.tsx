@@ -67,7 +67,7 @@ export function Hero() {
               <ArrowRight aria-hidden="true" weight="bold" className="size-4" />
             </a>
             <a
-              href="#contract"
+              href="#how"
               className="glass inline-flex h-12 items-center rounded-full px-6 text-white transition-colors hover:bg-[rgb(6_33_61/0.5)]"
             >
               How it works

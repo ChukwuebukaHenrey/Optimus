@@ -16,6 +16,7 @@ each file to the image tool as-is. When something comes back, give me the file. 
 | [E-03](E-03.md) | Chapter vignette: Verdicts | P1 | 3.0 section art |
 | [E-04](E-04.md) | Chapter vignette: Repair | P1 | 4.0 section art |
 | [F-01](F-01.md) | Footer / final-call scene: observatory at dusk | P2 | Final call-to-action band |
+| [A-06](A-06.md) | Agent action loops: one real gesture per role (6-frame strips) | P1 | Replaces the Motion stand-in gestures in the hero |
 
 ## Made in-house (me) — no request needed
 

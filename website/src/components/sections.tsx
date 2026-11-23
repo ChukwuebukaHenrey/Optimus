@@ -3,13 +3,39 @@ import Link from "next/link";
 import { cn } from "cn";
 import { Chapter } from "@/components/chapter";
 import { Logo } from "@/components/logo";
-import { REPO_URL } from "@/content/site";
-import { Reveal } from "@/components/reveal";
+import { Reveal, Stagger, StaggerItem } from "@/components/reveal";
 import { VerdictBadge } from "@/components/verdict-badge";
+import { AGENTS } from "@/content/scene";
+import { REPO_URL } from "@/content/site";
 import type { SiteData } from "@/lib/bundle";
 
 const shortHash = (h: string) => `${h.slice(0, 8)}…${h.slice(-4)}`;
 const nf = new Intl.NumberFormat("en", { maximumFractionDigits: 0 });
+
+/** A small label that marks real data as coming from the example used on this page. */
+function ExampleTag({ dark = false, children = "Example: Library assignment" }: { dark?: boolean; children?: string }) {
+  return (
+    <span className={cn("inline-block rounded-sm border px-2 py-0.5 font-mono text-[1rem] leading-6", dark ? "border-white/40 text-white/85" : "border-rule text-ink-muted")}>
+      {children}
+    </span>
+  );
+}
+
+/** A recorded value: lists separated by | read one entry per line instead of breaking mid-word. */
+function RecordedValue({ value }: { value: string | null }) {
+  if (value === null) return <span className="text-ink-muted">missing</span>;
+  const parts = value.split("|");
+  return (
+    <span className="flex flex-col">
+      {parts.map((p, i) => (
+        <span key={i} className="[overflow-wrap:anywhere]">
+          {p}
+          {i < parts.length - 1 && <span className="text-ink-muted"> |</span>}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 /* ------------------------------------------------------------------ proof strip */
 
@@ -30,25 +56,95 @@ export function ProofStrip({ data }: { data: SiteData }) {
   return (
     <section aria-label="Measured results" className="bg-paper">
       <div className="mx-auto max-w-[1440px] px-4 md:px-16">
-        <dl className="grid border-y border-rule sm:grid-cols-2 lg:grid-cols-4">
+        <Stagger className="grid border-y border-rule sm:grid-cols-2 lg:grid-cols-4">
           {items.map((item, i) => (
-            <div key={item.label} className={cn("flex flex-col gap-2 py-8 sm:px-6", i > 0 && "max-sm:border-t sm:border-l", "border-rule")}>
-              <dt className="sr-only">{item.label}</dt>
-              <dd className="font-display text-[3rem] leading-[3.5rem] font-extrabold tabular-nums">{item.value}</dd>
-              <dd className="text-ink-muted">{item.label}</dd>
-            </div>
+            <StaggerItem key={item.label} className={cn("flex flex-col gap-2 py-8 sm:px-6", i > 0 && "max-sm:border-t sm:border-l", "border-rule")}>
+              <p className="font-display text-[3rem] leading-[3.5rem] font-extrabold tabular-nums">{item.value}</p>
+              <p className="text-ink-muted">{item.label}</p>
+            </StaggerItem>
           ))}
-        </dl>
+        </Stagger>
         <p className="py-4 text-ink-muted">
-          From {data.assessmentName}, contract <span className="font-mono">{data.pack.name} v{data.pack.version}</span>. Screenshot labels from
-          calibration are still pending independent review.
+          Measured on the example used throughout this page: the {data.assessmentName.replace(/ assessment$/i, "")} assignment, four builds ×{" "}
+          {data.scope.length} scenarios × 2 trials, contract <span className="font-mono">{data.pack.name} v{data.pack.version}</span>.
+          Screenshot labels from calibration are still pending independent review.
         </p>
       </div>
     </section>
   );
 }
 
+/* ------------------------------------------------------------------ what optimus does */
+
+const PIPELINE: { id: (typeof AGENTS)[number]["id"]; title: string; text: string }[] = [
+  { id: "contract", title: "Write the contract", text: "Describe what to do in the app and what to record. Expected answers stay with Optimus — the browser agent never sees them." },
+  { id: "runner", title: "Kane runs every build", text: "Kane CLI performs each step in a real browser, on every build, and records what it sees." },
+  { id: "evidence", title: "Evidence, not opinions", text: "Recorded values and end-of-step screenshots. Missing evidence stays missing — nothing is guessed." },
+  { id: "verdict", title: "Optimus decides", text: "Deterministic checks give PASS or FAIL. Not enough evidence gives no judgement — never a fail." },
+  { id: "smith", title: "Repair, then re-check", text: "A verified FAIL can go to a coding agent. A fresh Kane run with the same contract checks the fix." },
+];
+
+export function WhatItDoes({ data }: { data: SiteData }) {
+  return (
+    <section id="how" aria-labelledby="how-title" className="scroll-mt-24 bg-paper">
+      <div className="mx-auto max-w-[1440px] px-4 py-24 md:px-16">
+        <Reveal className="max-w-[760px]">
+          <p className="label-mono text-ink-muted">What Optimus does</p>
+          <h2 id="how-title" className="headline mt-4">
+            Describe the behaviour once. <span className="text-ink-muted">Check every build the same way.</span>
+          </h2>
+          <p className="mt-6">
+            Optimus checks whether web apps behave as required — any app, any behaviour you can describe as steps in a
+            browser. It is built for comparing many independent builds of the same thing, such as every submission to an
+            assignment: one contract, applied unchanged, with a verdict you can trace back to evidence.
+          </p>
+        </Reveal>
+        <Stagger className="mt-12 grid border-t border-rule md:grid-cols-5" gap={0.1}>
+          {PIPELINE.map((step, i) => {
+            const agent = AGENTS.find((a) => a.id === step.id)!;
+            return (
+              <StaggerItem key={step.id} className={cn("flex flex-col gap-4 border-b border-rule py-8 md:border-b-0 md:px-6", i > 0 && "md:border-l")}>
+                <span
+                  aria-hidden="true"
+                  className="pixelated block h-24 bg-no-repeat"
+                  style={{
+                    width: `${(agent.frameW / agent.frameH) * 96}px`,
+                    backgroundImage: `url(${agent.sprite})`,
+                    backgroundSize: "200% 100%",
+                  }}
+                />
+                <p className="font-mono text-ink-muted">0{i + 1}</p>
+                <h3 className="font-extrabold">{step.title}</h3>
+                <p className="text-ink-muted">{step.text}</p>
+              </StaggerItem>
+            );
+          })}
+        </Stagger>
+        <Reveal className="mt-12 flex flex-col gap-4 border-l-4 border-lime bg-paper-2 p-6 md:flex-row md:items-center md:justify-between">
+          <p className="max-w-[80ch]">
+            <span className="font-extrabold">The example on this page:</span> a {data.assessmentName.replace(/ assessment$/i, "")} assignment — a
+            small book-list app — built four different ways (vanilla JavaScript, React, and two builds with planted bugs),
+            judged by one contract with {data.scope.length} scenarios: {data.scope.map((s) => s.name).join(", ")}. Optimus is not
+            library-specific: the same engine runs any contract, and a calculator contract is part of its test suite.
+          </p>
+          <a href="/report/" className="inline-flex h-11 shrink-0 items-center gap-2 self-start rounded-full bg-charcoal px-5 font-extrabold text-paper hover:bg-ink md:self-auto">
+            Open the example report <ArrowRight aria-hidden="true" weight="bold" className="size-4" />
+          </a>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
 /* ------------------------------------------------------------------ 1.0 contract */
+
+/** "After "<step action>", <prompt> should <rule>" → { step, rule }, read from the real check text. */
+function compactCheck(text: string, steps: { stepId: string; action: string }[]) {
+  const step = steps.find((s) => text.startsWith(`After "${s.action}"`));
+  const at = text.lastIndexOf(" should ");
+  if (!step || at < 0) return null;
+  return { stepId: step.stepId, rule: text.slice(at + 1).replace(/\.$/, "") };
+}
 
 export function ContractChapter({ data }: { data: SiteData }) {
   const s = data.contractScenario;
@@ -75,34 +171,56 @@ export function ContractChapter({ data }: { data: SiteData }) {
       artAlt="Pixel art: the Optimus agent holds one scroll whose light reaches three differently built model houses."
     >
       {s && (
-        <div className="grid items-start gap-4 md:grid-cols-2">
-          <div className="rounded-sm border border-rule bg-white p-4">
-            <p className="label-mono text-ink-muted">Sent to Kane</p>
-            <ol className="mt-3 flex flex-col gap-3">
-              {s.sentToKane.steps.map((step) => (
-                <li key={step.stepId}>
-                  <p>{step.action}</p>
-                  {Object.keys(step.record).length > 0 && (
-                    <p className="mt-1 font-mono text-ink-muted">record: {Object.keys(step.record).join(", ")}</p>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </div>
-          <div className="rounded-sm border border-dashed border-charcoal/40 bg-paper-2 p-4">
-            <p className="label-mono text-ink-muted">Judged by Optimus — never sent</p>
-            <ul className="mt-3 flex flex-col gap-3">
-              {s.judgedByOptimus.checks.map((c) => (
-                <li key={c.text} className="break-words">
-                  {c.prerequisite && <span className="font-mono text-ink-muted">prerequisite · </span>}
-                  {c.text}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <p className="text-ink-muted md:col-span-2">
-            Real contract excerpt: scenario <span className="font-mono">{s.id}</span>. <span className="font-mono">{"{{nonce}}"}</span> is filled with a
-            fresh run id each time; the hash covers the unexpanded contract.
+        <div className="flex flex-col gap-4">
+          <p className="flex flex-wrap items-center gap-2">
+            <ExampleTag />
+            <span className="text-ink-muted">
+              scenario <span className="font-mono">{s.id}</span>: {s.title.replace(/^Scenario \w+: /, "")}
+            </span>
+          </p>
+          <Stagger className="grid items-stretch gap-4 md:grid-cols-2" gap={0.18}>
+            <StaggerItem from="left" className="h-full rounded-sm border border-rule bg-white p-4">
+              <p className="label-mono text-ink-muted">Sent to Kane</p>
+              <ol className="mt-3 flex flex-col gap-3">
+                {s.sentToKane.steps.map((step) => (
+                  <li key={step.stepId}>
+                    <span className="font-mono text-ink-muted">{step.stepId}</span>
+                    <p>{step.action}</p>
+                    {Object.keys(step.record).length > 0 && (
+                      <p className="font-mono text-ink-muted [overflow-wrap:anywhere]">record: {Object.keys(step.record).join(", ")}</p>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </StaggerItem>
+            <StaggerItem from="up" className="h-full rounded-sm border border-dashed border-charcoal/40 bg-paper-2 p-4">
+              <p className="label-mono text-ink-muted">Judged by Optimus — never sent</p>
+              <ul className="mt-3 flex flex-col gap-3">
+                {s.judgedByOptimus.checks.map((c) => {
+                  const short = compactCheck(c.text, s.sentToKane.steps);
+                  return (
+                    <li key={c.text} className="[overflow-wrap:anywhere]">
+                      {short ? (
+                        <>
+                          <span className="font-mono text-ink-muted">
+                            after {short.stepId}
+                            {c.prerequisite && " · prerequisite"}
+                          </span>
+                          <p>
+                            <span className="font-mono font-extrabold">{c.recording}</span> {short.rule}
+                          </p>
+                        </>
+                      ) : (
+                        <p>{c.text}</p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </StaggerItem>
+          </Stagger>
+          <p className="text-ink-muted">
+            <span className="font-mono">{"{{nonce}}"}</span> is filled with a fresh run id each time; the hash covers the unexpanded contract.
           </p>
         </div>
       )}
@@ -139,37 +257,42 @@ export function EvidenceChapter({ data }: { data: SiteData }) {
     >
       {e && (
         <figure className="rounded-sm border border-rule bg-white p-4">
-          <figcaption className="flex flex-wrap items-center justify-between gap-2">
-            <span>
-              <span className="font-extrabold">{e.buildLabel}</span> · {e.scenarioName} (<span className="font-mono">{e.scenarioId}</span>)
+          <figcaption className="flex flex-col gap-2">
+            <ExampleTag />
+            <span className="flex flex-wrap items-center justify-between gap-2">
+              <span>
+                <span className="font-extrabold">{e.buildLabel}</span> · {e.scenarioName} (<span className="font-mono">{e.scenarioId}</span>)
+              </span>
+              <VerdictBadge verdict={e.verdict} />
             </span>
-            <VerdictBadge verdict={e.verdict} />
           </figcaption>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Stagger className="mt-4 grid gap-6 sm:grid-cols-2" gap={0.15}>
             {shots.map((s) => (
-              <div key={s.stepId}>
+              <StaggerItem key={s.stepId}>
                 {/* the archived frame is a full 16:9 browser window; crop in on the app itself */}
                 <a href={`/report/${s.screenshot}`} className="block aspect-[4/3] overflow-hidden rounded-sm border border-rule bg-white">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`/report/${s.screenshot}`}
-                    alt={`End-of-step screenshot after “${s.action}”`}
+                    alt={`End-of-step screenshot after: ${s.action}`}
                     loading="lazy"
-                    className="w-full origin-[50%_0%] scale-[1.9]"
+                    className="w-full origin-[50%_0%] scale-[1.9] text-[0px]"
                   />
                 </a>
                 <p className="mt-2">{s.action}</p>
-                <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 font-mono">
+                <dl className="mt-2 flex flex-col gap-1 font-mono">
                   {Object.entries(s.values).map(([k, v]) => (
-                    <div key={k} className="contents">
-                      <dt className="text-ink-muted">{k}</dt>
-                      <dd className="break-all">{v ?? "missing"}</dd>
+                    <div key={k} className="grid grid-cols-[minmax(0,10rem)_minmax(0,1fr)] gap-x-3">
+                      <dt className="text-ink-muted [overflow-wrap:anywhere]">{k}</dt>
+                      <dd>
+                        <RecordedValue value={v} />
+                      </dd>
                     </div>
                   ))}
                 </dl>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
           <p className="mt-4 text-ink-muted">Real archived screenshots and the values Kane recorded at the end of each step.</p>
         </figure>
       )}
@@ -189,20 +312,22 @@ export function VerdictsChapter({ data }: { data: SiteData }) {
             A clear answer, <span className="text-ink-muted">backed by a run.</span>
           </h2>
           <p className="mt-6">
-            Four builds of the same Library assignment — vanilla JavaScript, React, and two with planted bugs — judged by one
-            contract. Each verdict comes from Optimus&apos;s deterministic checks. A repaired build keeps its baseline
-            verdict next to the verified one; history is never overwritten.
+            In the example, four builds of the same Library assignment — vanilla JavaScript, React, and two with planted
+            bugs — are judged by one contract. Each verdict comes from Optimus&apos;s deterministic checks. A repaired build
+            keeps its baseline verdict next to the verified one; history is never overwritten.
           </p>
         </Reveal>
-        <Reveal delay={0.08} className="relative mt-12 overflow-hidden rounded-sm">
-          {/* the real report, framed over the observatory */}
+        {/* the real report, framed over the observatory; only the window animates, the scene stays put */}
+        <div className="relative mt-12 overflow-hidden rounded-sm">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/art/scene/H-01-plate.png" alt="" aria-hidden="true" loading="lazy" className="pixelated absolute inset-0 size-full object-cover" />
           <div className="relative p-4 sm:p-8 lg:p-12">
-            <div className="mx-auto max-w-[960px] rounded-sm border border-white/60 bg-paper/95 p-4 backdrop-blur-md sm:p-6">
+            <Reveal className="mx-auto max-w-[960px] rounded-sm border border-white/60 bg-paper/95 p-4 backdrop-blur-md sm:p-6">
               <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-rule pb-4">
-                <p className="font-extrabold">{data.assessmentName}</p>
-                <p className="font-mono text-ink-muted">
+                <p className="flex flex-wrap items-center gap-2 font-extrabold">
+                  {data.assessmentName} <ExampleTag>example</ExampleTag>
+                </p>
+                <p className="font-mono text-ink-muted [overflow-wrap:anywhere]">
                   contract {data.pack.name} v{data.pack.version} · {shortHash(data.pack.packHash)}
                 </p>
               </div>
@@ -259,9 +384,9 @@ export function VerdictsChapter({ data }: { data: SiteData }) {
                   Open the full report <ArrowRight aria-hidden="true" weight="bold" className="size-4" />
                 </a>
               </div>
-            </div>
+            </Reveal>
           </div>
-        </Reveal>
+        </div>
       </div>
     </section>
   );
@@ -273,6 +398,11 @@ export function RepairChapter({ data }: { data: SiteData }) {
   const r = data.repair;
   if (!r) return null;
   const diffLines = r.diff.split("\n").filter((l) => !l.startsWith("index "));
+  const label = (
+    <span>
+      {r.scenarioName} (<span className="font-mono">{r.scenarioId}</span>)
+    </span>
+  );
   return (
     <Chapter
       id="repair"
@@ -296,34 +426,34 @@ export function RepairChapter({ data }: { data: SiteData }) {
       art="/art/editorial/E-04-repair.png"
       artAlt="Pixel art: the Optimus agent hands a note to the repair smith, who fits a glowing code tile into a model house while the browser runner waits."
     >
-      <ol className="flex flex-col gap-4">
-        <li className="rounded-sm border border-white/25 bg-azure-ink/40 p-4">
-          <p className="label-mono text-white/75">Baseline · {r.buildLabel}</p>
-          <p className="mt-2 flex flex-wrap items-center gap-2">
-            <span>
-              {r.scenarioName} (<span className="font-mono">{r.scenarioId}</span>)
-            </span>
-            <VerdictBadge verdict={r.baseline} />
+      <Stagger className="flex flex-col gap-4" gap={0.12}>
+        <StaggerItem from="left" className="rounded-sm border border-white/25 bg-azure-ink/40 p-4">
+          <p className="flex flex-wrap items-center gap-2">
+            <ExampleTag dark />
           </p>
-        </li>
-        <li className="rounded-sm border border-dashed border-lime/70 bg-azure-ink/40 p-4">
+          <p className="label-mono mt-3 text-white/75">Baseline · {r.buildLabel}</p>
+          <p className="mt-2 flex flex-wrap items-center gap-2">
+            {label} <VerdictBadge verdict={r.baseline} />
+          </p>
+        </StaggerItem>
+        <StaggerItem from="left" className="rounded-sm border border-dashed border-lime/70 bg-azure-ink/40 p-4">
           <p className="label-mono text-lime">Sent to the coding agent{r.agent ? ` · ${r.agent}` : ""}</p>
-          <p className="mt-2 break-words">{r.requirement}</p>
-          <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 font-mono">
+          <p className="mt-2 [overflow-wrap:anywhere]">{r.requirement}</p>
+          <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 font-mono">
             <dt className="text-white/70">expected</dt>
-            <dd className="break-all">{r.expected}</dd>
+            <dd className="[overflow-wrap:anywhere]">{r.expected}</dd>
             <dt className="text-white/70">observed</dt>
-            <dd className="break-all">{r.observed}</dd>
+            <dd className="[overflow-wrap:anywhere]">{r.observed}</dd>
           </dl>
-        </li>
-        <li className="rounded-sm border border-white/25 bg-azure-ink/60 p-4">
+        </StaggerItem>
+        <StaggerItem from="left" className="rounded-sm border border-white/25 bg-azure-ink/60 p-4">
           <p className="label-mono text-white/75">Code change · {r.changedFiles.join(", ")}</p>
-          <pre className="mt-3 max-h-96 overflow-y-auto font-mono text-[1rem] leading-6">
+          <pre className="mt-3 max-h-96 overflow-auto font-mono text-[1rem] leading-6">
             {diffLines.map((line, i) => (
               <span
                 key={i}
                 className={cn(
-                  "block whitespace-pre-wrap break-all",
+                  "block w-max min-w-full pr-4 whitespace-pre",
                   line.startsWith("+") && !line.startsWith("+++") && "bg-[#1f5c2e] text-[#e3ffe8]",
                   line.startsWith("-") && !line.startsWith("---") && "bg-[#6b1f1f] text-[#ffe6e6]",
                   line.startsWith("@@") && "text-white/60",
@@ -333,33 +463,30 @@ export function RepairChapter({ data }: { data: SiteData }) {
               </span>
             ))}
           </pre>
-        </li>
-        <li className="rounded-sm border border-white/25 bg-azure-ink/40 p-4">
+        </StaggerItem>
+        <StaggerItem from="left" className="rounded-sm border border-white/25 bg-azure-ink/40 p-4">
           <p className="label-mono text-white/75">Integrity checks</p>
           <ul className="mt-2 flex flex-col gap-1">
             {r.integrity.map((c) => (
-              <li key={c.label} className="flex items-center gap-2">
-                {c.ok ? <CheckCircle aria-hidden="true" className="size-5 text-lime" /> : <WarningCircle aria-hidden="true" className="size-5 text-[#ffb4a8]" />}
+              <li key={c.label} className="flex items-start gap-2">
+                {c.ok ? <CheckCircle aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-lime" /> : <WarningCircle aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[#ffb4a8]" />}
                 {c.label}
                 <span className="sr-only">{c.ok ? "passed" : "problem"}</span>
               </li>
             ))}
           </ul>
-        </li>
-        <li className="rounded-sm border border-white/25 bg-azure-ink/40 p-4">
+        </StaggerItem>
+        <StaggerItem from="left" className="rounded-sm border border-white/25 bg-azure-ink/40 p-4">
           <p className="label-mono text-white/75">Fresh Kane run · same contract</p>
           <p className="mt-2 flex flex-wrap items-center gap-2">
-            <span>
-              {r.scenarioName} (<span className="font-mono">{r.scenarioId}</span>)
-            </span>
-            <VerdictBadge verdict={r.latest} />
+            {label} <VerdictBadge verdict={r.latest} />
           </p>
           <p className="mt-2 text-white/80">
             {r.outcome} {r.attempts} attempt · {r.creditsUsed !== null ? `${r.creditsUsed.toFixed(2)} credits` : "credits not recorded"} ·{" "}
             {r.minutes.toFixed(2)} min of agent time.
           </p>
-        </li>
-      </ol>
+        </StaggerItem>
+      </Stagger>
     </Chapter>
   );
 }
@@ -383,9 +510,9 @@ export function DocsTeaser() {
             Run it on your own builds. <span className="text-ink-muted">Four chapters.</span>
           </h2>
         </Reveal>
-        <ol className="mt-12 grid border-t border-rule md:grid-cols-4">
+        <Stagger className="mt-12 grid border-t border-rule md:grid-cols-4" gap={0.1}>
           {DOCS.map((d, i) => (
-            <li key={d.n} className={cn("border-b border-rule md:border-b-0", i > 0 && "md:border-l")}>
+            <StaggerItem key={d.n} className={cn("border-b border-rule md:border-b-0", i > 0 && "md:border-l")}>
               <a href={d.href} className="group flex h-full flex-col gap-8 p-6 transition-colors hover:bg-paper">
                 <span className="font-mono text-ink-muted">Chapter {d.n}</span>
                 <span className="flex items-end justify-between gap-4 font-display text-[1.5rem] leading-8 font-extrabold">
@@ -393,36 +520,15 @@ export function DocsTeaser() {
                   <ArrowRight aria-hidden="true" className="size-6 shrink-0 transition-transform group-hover:translate-x-1" />
                 </span>
               </a>
-            </li>
+            </StaggerItem>
           ))}
-        </ol>
+        </Stagger>
       </div>
     </section>
   );
 }
 
-/* ------------------------------------------------------------------ final call + footer */
-
-export function FinalCta() {
-  return (
-    <section aria-labelledby="final-title" className="on-dark relative isolate overflow-hidden bg-[#2a3a78] text-white">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/art/scene/F-01-dusk.png" alt="" aria-hidden="true" loading="lazy" className="pixelated absolute inset-0 -z-10 size-full object-cover object-[70%_50%]" />
-      <div aria-hidden="true" className="absolute inset-y-0 left-0 -z-10 w-full bg-[linear-gradient(90deg,rgb(6_33_61/0.55)_0%,rgb(6_33_61/0.25)_50%,transparent_75%)]" />
-      <div className="mx-auto max-w-[1440px] px-4 py-32 md:px-16 md:py-40">
-        <Reveal className="max-w-[560px]">
-          <h2 id="final-title" className="headline">
-            One contract. <span className="text-white/75">Many different builds.</span>
-          </h2>
-          <p className="mt-6 text-white/90">See every verdict, every screenshot and the full repair record from a real run.</p>
-          <a href="/report/" className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-paper px-6 font-extrabold text-ink hover:bg-white">
-            See a real report <ArrowRight aria-hidden="true" weight="bold" className="size-4" />
-          </a>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
+/* ------------------------------------------------------------------ footer */
 
 export function SiteFooter() {
   return (
@@ -433,8 +539,8 @@ export function SiteFooter() {
           <p className="mt-2 max-w-[40ch] text-paper/75">Evidence-backed behavioural verdicts for web apps. Built during the Kane CLI hackathon, 2026.</p>
         </div>
         <nav aria-label="Footer" className="grid grid-cols-2 gap-x-12 gap-y-2">
-          <Link className="hover:underline" href="/#contract">How it works</Link>
-          <a className="hover:underline" href="/report/">Real report</a>
+          <Link className="hover:underline" href="/#how">How it works</Link>
+          <a className="hover:underline" href="/report/">Example report</a>
           <Link className="hover:underline" href="/#verdicts">Verdicts</Link>
           <a className="hover:underline" href="/docs/">Docs</a>
           <Link className="hover:underline" href="/#repair">Repair loop</Link>
