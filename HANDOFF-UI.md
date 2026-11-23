@@ -113,6 +113,13 @@ Commits on `ui/website` since base `1a40da9` (oldest first): `7300c80`, `153b8e6
   `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 
 ### 4. Remaining Work (Ordered Next Steps)
+**Update 23 Nov, later session:** steps 1, 2 (counts; the featured repair is still C, the first
+session) and 4 (action rows only) are done: commits `7964d89`…`5144da2`. Root tsc + 190 tests pass;
+website tsc/eslint/build pass. Provenance for the original boards is filled in; the A-06 sheets'
+tool/model is still owed by the owner. Still open: 3 (push/PR/Vercel, owner's yes), 6 (final QA,
+incl. a fresh 360/390 px pass after the frame-stepping change), and optionally using the A-06
+turnaround/walk rows.
+
 1. **Merge `main` into `ui/website`** (in `C:\Users\ADMIN\Optimus-ui`: `git -c safe.directory=* merge main`).
    `main` is 11 commits ahead (head `dc436d7`; D and U repaired, Gate 2 passed). Expected conflict:
    `tests/bundle.test.ts` — keep main's assertions (5 builds incl. `u-unseen`) plus the renamed title.
