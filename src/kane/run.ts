@@ -232,7 +232,9 @@ async function runAttempt(
 export async function readKaneBalance(workingDirectory = process.cwd(), kaneExecutable?: string): Promise<number | null> {
   const directory = resolve(workingDirectory);
   const command = await resolveKaneCommand(directory, kaneExecutable ?? process.env.OPTIMUS_KANE_CLI);
-  for (let attempt = 0; attempt < 3; attempt++) {
+  // The balance service can be briefly unavailable after a failed run; back off before giving up.
+  for (const pause of [0, 5000, 15000, 45000]) {
+    if (pause) await new Promise((resolveDelay) => setTimeout(resolveDelay, pause));
     const { child, exit } = launchKane(command, directory, ['balance']);
     const [code, stdout, stderr] = await Promise.all([exit, streamText(child.stdout), streamText(child.stderr)]);
     const match = code === 0 ? /Available credits:\s*([0-9][0-9,]*(?:\.[0-9]+)?)/iu.exec(`${stdout}
