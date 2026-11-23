@@ -134,7 +134,7 @@ describe('repair controller', { timeout: 60000 }, () => {
     };
     const history = await runRepairLoop({
       root: resolve('.'), loaded: library, packFile: join('packs', 'library', 'pack.yaml'), appSource: app, scope, caps,
-      workspaceParent: base, sessionParent: join(base, 'sessions'),
+      workspaceParent: base, sessionParent: join(base, 'sessions'), infraRetryDelayMs: 0,
     }, deps);
     return { history, agentCalls, base };
   }

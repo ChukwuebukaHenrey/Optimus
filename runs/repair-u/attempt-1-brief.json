@@ -1,0 +1,20 @@
+{
+  "briefId": "brief-a6a0d9cc-3ecc-481b-8bda-00d4f085c9f5",
+  "scenarioId": "L4",
+  "scenarioTitle": "Scenario L4: reload the page and record the list",
+  "actions": [
+    "Open the page.",
+    "Add a new book with title \"GP Keep c61591-run-0\", author \"Ada Okafor\", 123 pages, not read yet, and save it.",
+    "Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut."
+  ],
+  "requirement": "After \"Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut.\", the title of every book currently shown (titles only, not authors or other fields), separated by |, or 'none' should include \"GP Keep c61591-run-0\".",
+  "failingStep": {
+    "id": "reload",
+    "action": "Reload the page in the current browser session using the browser's refresh action, not a keyboard shortcut."
+  },
+  "expected": "GP Keep c61591-run-0",
+  "observed": "none",
+  "screenshot": "<tmp>\\optimus-repair-20261123014521-c61591\\brief\\attempt-1-L4.jpg",
+  "appPath": "<tmp>\\optimus-repair-20261123014521-c61591\\app",
+  "allowedScope": "Only the files of this app folder. Do not create or edit anything outside it."
+}

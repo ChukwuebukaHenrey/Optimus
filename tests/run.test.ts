@@ -144,7 +144,7 @@ it('authors one scenario at a time, saves separate archives, and scores with the
 
 it('retries an explicit upload failure once with unchanged neutral Markdown', async () => {
   const fake = await fakeKane({ uploadFailure: 'first' });
-  const assessment = await runKaneAssessment({ ...fake.options, scenarioId: 'one' });
+  const assessment = await runKaneAssessment({ retryDelayMs: 0, ...fake.options, scenarioId: 'one' });
   const sources = (await fake.events()).filter(({ state }) => state === 'start').map(({ source }) => source);
   const [generated] = generateTests(loaded.pack, nonce, 'one');
   expect(sources).toEqual([generated.markdown, generated.markdown]);
@@ -155,21 +155,21 @@ it('retries an explicit upload failure once with unchanged neutral Markdown', as
 
 it('leaves credits untouched when a Chrome profile is configured', async () => {
   const fake = await fakeKane({ profile: 'configured-profile' });
-  const assessment = await runKaneAssessment({ ...fake.options, scenarioId: 'one' });
+  const assessment = await runKaneAssessment({ retryDelayMs: 0, ...fake.options, scenarioId: 'one' });
   expect(await fake.events()).toEqual([{ state: 'config' }]);
   expect(assessment.results[0]).toMatchObject({ verdict: 'INFRA_ERROR', reason: expect.stringContaining('Chrome profile') });
 }, 20000);
 
 it('refuses an explicitly unauthenticated Kane configuration before authoring', async () => {
   const fake = await fakeKane({ auth: 'not configured', notices: true });
-  const assessment = await runKaneAssessment({ ...fake.options, scenarioId: 'one' });
+  const assessment = await runKaneAssessment({ retryDelayMs: 0, ...fake.options, scenarioId: 'one' });
   expect(await fake.events()).toEqual([{ state: 'config' }]);
   expect(assessment.results[0]).toMatchObject({ verdict: 'INFRA_ERROR', reason: expect.stringContaining('Sign in to Kane') });
 }, 20000);
 
 it('stops retrying after the second explicit upload failure', async () => {
   const fake = await fakeKane({ uploadFailure: 'every' });
-  const assessment = await runKaneAssessment({ ...fake.options, scenarioId: 'one' });
+  const assessment = await runKaneAssessment({ retryDelayMs: 0, ...fake.options, scenarioId: 'one' });
   expect(assessment.results[0]).toMatchObject({ verdict: 'INFRA_ERROR', reasonCode: 'kane_upload_failed' });
   expect(await readdir(join(assessment.directory, 'scenario-one'))).toHaveLength(2);
 }, 20000);
@@ -179,7 +179,7 @@ it.each([
   ['ambiguous', 'invalid_evidence_archive'],
 ] as const)('rejects %s evidence without retrying', async (evidence, reasonCode) => {
   const fake = await fakeKane({ evidence });
-  const assessment = await runKaneAssessment({ ...fake.options, scenarioId: 'one' });
+  const assessment = await runKaneAssessment({ retryDelayMs: 0, ...fake.options, scenarioId: 'one' });
   expect(assessment.results[0]).toMatchObject({ verdict: 'INFRA_ERROR', reasonCode });
   expect(await readdir(join(assessment.directory, 'scenario-one'))).toEqual(['attempt-1']);
 }, 20000);

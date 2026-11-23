@@ -2,6 +2,8 @@
 
 Optimus evaluates web applications against a shared behavioral contract and produces evidence-backed verdicts. Kane acts in the browser and records observations. Optimus applies the contract deterministically.
 
+**Status (23 Nov 2026):** Library contract v5 is calibrated (Gate 1: 24 of 24 cases matched). The closed loop has repaired three defective apps live, including a blind one: see [runs/repair-c](runs/repair-c/REPORT.md), [runs/repair-d](runs/repair-d/REPORT.md) and [runs/repair-u](runs/repair-u/REPORT.md). The demo walkthrough is in [docs/DEMO.md](docs/DEMO.md), and the engineering handoff in [HANDOFF.md](HANDOFF.md).
+
 ## Development setup
 
 Use Node.js 22 for development. Run `npm ci`, then `npm run typecheck` and `npm test`. The offline CLI also runs on Node.js 18 with `npm ci --omit=dev`. The core development phase runs without Kane or TestMu AI credits.

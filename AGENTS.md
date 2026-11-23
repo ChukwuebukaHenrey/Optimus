@@ -43,7 +43,7 @@ Kane CLI Online Hackathon deadline: 26 Nov 2026, 11:59 PM IST. Repo started on o
    fabricate or infer evidence.
 8. **No replay counts toward a grade.** Runs use `--author`. Generated test files must not
    contain `@import` or any replay-only marker (`@db @api @js @smartui @network_query
-   @network_assertion @gps @accessibility @media_injection @network_throttle @deeplink`).
+@network_assertion @gps @accessibility @media_injection @network_throttle @deeplink`).
    `optimus lint` enforces this; a run with `replay_decisions > 0` is rejected.
 9. **Never edit a pack, oracle or evaluator to make a result pass.** When repairing a corpus
    app, edit only that app.
@@ -85,18 +85,19 @@ CLI exit codes: 0 PASS, 10 FAIL, 20 INCONCLUSIVE/NOT_RUN, 30 INFRA_ERROR, 40 ESC
 ## Normalized observation (contract)
 
 ```ts
-type ActionStatus = 'verified' | 'contradicted' | 'unknown';
+type ActionStatus = "verified" | "contradicted" | "unknown";
 type Observation = {
   stepIndex: number;
-  stepId: string;                          // pack step id
-  actionKind: 'open' | 'interact' | 'reload' | 'none';
-  actionRecorded: boolean | null;          // click/fill/navigation present in evidence; null = not available
-  targetAgreement: ActionStatus;           // experimental; 'unknown' is normal
-  values: Record<string, string | null>;   // recorded values; null = missing
+  stepId: string; // pack step id
+  actionKind: "open" | "interact" | "reload" | "none";
+  actionRecorded: boolean | null; // click/fill/navigation present in evidence; null = not available
+  targetAgreement: ActionStatus; // experimental; 'unknown' is normal
+  values: Record<string, string | null>; // recorded values; null = missing
   screenshotRef: string | null;
   evidenceRef: string | null;
 };
 ```
+
 Run-level: `completed`, `kaneExitCode`, `replayDecisions`, `authorDecisions`, `evidencePackPath`,
 `kaneVersion`, `executionId`, `stepsSkipped`, `packHash`, `nonce`, `appUrl`.
 
@@ -109,7 +110,7 @@ support: "DOM-rendered apps that list books as visible text; data kept in the br
 persistence: "survives a page reload in the same browser session (not a fresh browser profile)"
 scenarios:
   - id: L1
-    title: "Scenario L1: add a record and record the list"     # neutral; goes to Kane
+    title: "Scenario L1: add a record and record the list" # neutral; goes to Kane
     preconditions: "fresh browser profile; app at its starting state (may contain sample books)"
     steps:
       - id: before
@@ -118,15 +119,15 @@ scenarios:
           titles_before: "every book title currently shown, separated by |, or 'none'"
           count_before: "the number of books currently shown"
       - id: add
-        do: "Add a new book with title \"GP Book {{nonce}}\", author \"Ada Okafor\", 123 pages, not read yet, and save it."
+        do: 'Add a new book with title "GP Book {{nonce}}", author "Ada Okafor", 123 pages, not read yet, and save it.'
         expects_change: true
         record:
           titles_after: "every book title currently shown, separated by |"
           count_after: "the number of books currently shown"
     expect:
       - { op: not_contains, value: titles_before, arg: "GP Book {{nonce}}" }
-      - { op: contains,     value: titles_after,  arg: "GP Book {{nonce}}" }
-      - { op: delta,        value: count_after,   from: count_before, by: 1 }
+      - { op: contains, value: titles_after, arg: "GP Book {{nonce}}" }
+      - { op: delta, value: count_after, from: count_before, by: 1 }
     evidence: "the add step has a recorded interaction; before and after values present"
 ```
 
@@ -181,8 +182,7 @@ scenarios:
   rect), `screenshot.png`, `annotated.png`, `failure.yaml`. **Unverified:** whether every
   interaction (click, fill, reload) is recorded in `step.json` — Phase 1 checks this.
 - Exit codes: 0 passed, 1 failed, 2 error (auth/Chrome/network), 3 timeout/cancelled.
-- Every authoring run uploads to TestMu Test Manager; upload failure ends the run →
-  INFRA_ERROR, retry once.
+- Every authoring run uploads to TestMu Test Manager; upload failure ends the run → INFRA_ERROR, retry once after a 90-second pause (an immediate relaunch can fail with "TMS did not return an org_id")
 
 ## Repair loop (Phase 4, after grading is proven; agent-independent controller)
 
@@ -192,7 +192,7 @@ verified failure → brief → coding agent → integrity checks → fresh full 
 - **Decision gate** (`src/loop/decision.ts`). Read every scenario in `result.json`; never rely
   on the process exit code. Decisions: `COMPLETE` (all PASS), `REPAIR` (at least one verified
   FAIL and nothing unresolved), `NEEDS_EVIDENCE` (any INCONCLUSIVE or NOT_RUN),
-  `RETRY_INFRASTRUCTURE` (INFRA_ERROR; one retry, separate count), `STOP` (UNSUPPORTED, caps
+  `RETRY_INFRASTRUCTURE` (INFRA_ERROR; one retry per source revision, after a 90-second pause, rerunning only the scenarios that got no verdict; separate count), `STOP` (UNSUPPORTED, caps
   reached, or a mix of FAIL and unresolved). Only a verified FAIL may start a repair.
 - **Brief** (`src/loop/brief.ts`). JSON plus Markdown with only: scenario id, plain-language
   requirement rendered from the assertions, expected vs observed for the failing step,
@@ -204,7 +204,7 @@ verified failure → brief → coding agent → integrity checks → fresh full 
   the pack hash and the hashes of `src/core/` and `src/kane/` are unchanged; the browser
   profile is fresh. Honest limit: an agent with shell access could still read the packs.
 - **Rerun.** The full calibrated scenario set (Gate 1 scope: L1, L3, L4) with a new nonce and a
-  new execution ID, never only the failing scenario.
+  new execution ID, never only the failing scenario. After an infrastructure retry, a decision may combine verdicts from runs of the same source revision. It records which run supplied each verdict and never combines verdicts from different revisions.
 - **Caps.** 3 repair attempts, 1,500 credits (void attempts included), 20 minutes. When a cap
   is reached the loop stops; it never changes the contract, broadens permissions or retries
   silently.

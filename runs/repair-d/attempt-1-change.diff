@@ -1,0 +1,55 @@
+diff --git a/app.js b/app.js
+index 5116379..589dfb3 100644
+--- a/app.js
++++ b/app.js
+@@ -1,5 +1,24 @@
+ const storageKey = 'library.books';
+-const books = JSON.parse(localStorage.getItem(storageKey) ?? '[]');
++function loadBooks() {
++  try {
++    const stored = JSON.parse(localStorage.getItem(storageKey) ?? '[]');
++    return Array.isArray(stored)
++      ? stored.filter((book) => book && typeof book === 'object')
++      : [];
++  } catch {
++    return [];
++  }
++}
++
++function saveBooks() {
++  try {
++    localStorage.setItem(storageKey, JSON.stringify(books));
++  } catch {
++    // Storage may be unavailable or full; keep the in-memory list working.
++  }
++}
++
++const books = loadBooks();
+ const form = document.querySelector('#book-form');
+ const titleInput = form.elements.namedItem('title');
+ const list = document.querySelector('#books');
+@@ -27,12 +46,15 @@ function addCard(book) {
+ 
+   toggle.addEventListener('click', () => {
+     book.read = !book.read;
++    saveBooks();
+     status.textContent = book.read ? 'Read' : 'Not read';
+   });
+ 
+   remove.addEventListener('click', () => {
+     const adjacentCard = card.nextElementSibling ?? card.previousElementSibling;
+-    books.splice(books.indexOf(book), 1);
++    const index = books.indexOf(book);
++    if (index !== -1) books.splice(index, 1);
++    saveBooks();
+     card.remove();
+     updateEmptyMessage();
+     const nextFocus = adjacentCard?.querySelector('.remove') ?? titleInput;
+@@ -53,6 +75,7 @@ form.addEventListener('submit', (event) => {
+   };
+ 
+   books.push(book);
++  saveBooks();
+   addCard(book);
+   updateEmptyMessage();
+   form.reset();

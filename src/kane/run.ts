@@ -26,6 +26,8 @@ interface RunOptions {
   scenarioIds?: readonly string[];
   workingDirectory?: string;
   kaneExecutable?: string;
+  /** Pause before retrying after an upload failure; TestMu can refuse an immediate relaunch. Default 90 s. */
+  retryDelayMs?: number;
 }
 
 type GeneratedTest = ReturnType<typeof generateTests>[number];
@@ -230,7 +232,9 @@ async function runAttempt(
 export async function readKaneBalance(workingDirectory = process.cwd(), kaneExecutable?: string): Promise<number | null> {
   const directory = resolve(workingDirectory);
   const command = await resolveKaneCommand(directory, kaneExecutable ?? process.env.OPTIMUS_KANE_CLI);
-  for (let attempt = 0; attempt < 3; attempt++) {
+  // The balance service can be briefly unavailable after a failed run; back off before giving up.
+  for (const pause of [0, 5000, 15000, 45000]) {
+    if (pause) await new Promise((resolveDelay) => setTimeout(resolveDelay, pause));
     const { child, exit } = launchKane(command, directory, ['balance']);
     const [code, stdout, stderr] = await Promise.all([exit, streamText(child.stdout), streamText(child.stderr)]);
     const match = code === 0 ? /Available credits:\s*([0-9][0-9,]*(?:\.[0-9]+)?)/iu.exec(`${stdout}
@@ -268,7 +272,10 @@ export async function runKaneAssessment(options: RunOptions): Promise<KaneAssess
       for (let attempt = 1; attempt <= attemptLimit; attempt++) {
         const attemptDirectory = join(directory, `scenario-${scenario.id}`, `attempt-${attempt}`);
         const outcome = await runAttempt(command, attemptDirectory, assessment, loaded, scenario, tests[index]);
-        if (outcome.uploadFailed && attempt < attemptLimit) continue;
+        if (outcome.uploadFailed && attempt < attemptLimit) {
+          await new Promise((resolveDelay) => setTimeout(resolveDelay, options.retryDelayMs ?? 90000));
+          continue;
+        }
         assessment.results.push(outcome.result);
         assessment.executions.push({
           scenarioId: scenario.id, attempts: attempt, directory: attemptDirectory,

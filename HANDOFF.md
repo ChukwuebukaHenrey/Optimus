@@ -1,87 +1,128 @@
-# Optimus engineering handoff
+# Optimus handoff brief (23 Nov 2026)
 
-**Current state.** The evaluator, live runner, reports, and five corpus fixtures are built. Gate 1 stopped after six live cases. Five agreed with the screenshots. In the sixth, Kane stored authors as book titles after a correct removal on the React app. That disagreement blocks Gate 1 acceptance. Start by reproducing it from the saved evidence. No live process is running, and the saved queue is paused.
+### 1. Goal & Current Status
 
-## Repository and baseline
+**Goal:** Optimus is a submission for the Kane CLI Online Hackathon (deadline **26 Nov 2026, 11:59 PM IST**; pushes are refused after it). One behavioural contract (a "pack") is applied unchanged to many independently built web apps. Kane CLI acts in a real browser and records what it sees; Optimus's deterministic code decides each verdict. A closed loop sends verified failures to a coding agent (Claude Code), checks the change, and has Kane re-verify it. The pitch: "One contract. Many different builds. Evidence-backed verdicts."
 
-- Windows checkout `C:\Users\ADMIN\Optimus`, with PowerShell available. The private GitHub remote is `ChukwuebukaHenrey/Optimus`. The verified implementation and Gate 1 checkpoint are on `origin/main` at `7f353f3`. This handoff was written after that checkpoint. Check `git status --short --branch` before editing. [GitHub repository](https://github.com/ChukwuebukaHenrey/Optimus)
-- [AGENTS.md](AGENTS.md) is the authoritative spec. [SESSION_PROMPTS.md](SESSION_PROMPTS.md) defines the phases, independent fixture sessions, and Gate 1 acceptance criteria. [README.md](README.md) documents the CLI. [Phase 1 report](runs/phase1/REPORT.md) and [Gate 1 report](runs/gate1/REPORT.md) contain the measured results and evidence details.
-- Use Node 22 for development. The CLI was also verified on Node 18.20.8 with a synthetic Kane launcher. The last full verification passed TypeScript and **113 tests**. Run the following from the repository root for a fresh checkout.
+**Status: the backend and integrations are complete and proven live.**
 
-```powershell
-npm.cmd ci
-npm.cmd run typecheck
-npm.cmd test
+- Library contract **v5** (`packs/library/pack.yaml`, SHA-256 `b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74`).
+- **Gate 1** (L1 add, L3 remove, L4 persist): 24 of 24 cases matched the expected verdicts.
+- **Gate 2** (L2 read status): 4 of 4 on the reference apps; it has no negative control yet.
+- **Closed loop:** three live repairs completed: C (wrong book removed), D (lost on reload), and U (a blind app whose defect stayed sealed until grading). Each was verified by a fresh Kane run against the unchanged contract and grader.
+- **Repo:** public at https://github.com/ChukwuebukaHenrey/Optimus (MIT licence). `main` was at `769f54e` before this brief, in sync with origin.
+- **Checks:** typecheck passes; `npm test` passes 184 tests in 9 files.
+- **Credits:** 6,703.23 left (23 Nov).
+- **UI:** a separate agent is building the website and report UI on branch `ui/website` in the worktree `C:/Users/ADMIN/Optimus-ui`. It is **not merged yet**.
+
+### 2. What's Done
+
+| Area | Result | Record |
+|---|---|---|
+| Evaluator (`src/core/`) | Order: integrity → action evidence → change plausibility and **list continuity** → assertions. A list may gain only values declared by `new_values` in the steps since the earlier recording. | `src/core/evaluate.ts` (`inconsistentRecording`, `hasObservableChange`) |
+| Kane adapter (`src/kane/`) | Origin check (a step on another site has its target contradicted, so INCONCLUSIVE). JSON-array and empty-list (`[]` vs `none`) recordings count as the same list. Conflicting values are withheld. End-of-step screenshots come from `lastStepScreenshots`. | `parse.ts` (`originAgreement`, `sameRecording`), `evidence.ts` (`loggedRecording`, `extractArchiveEntry`), `screens.ts` |
+| Runner | Scenario subsets (`scenarioIds`), per-scenario `executions`, and `readKaneBalance` with back-off. An upload failure gets one retry after `retryDelayMs` (90 s). | `src/kane/run.ts` (`runKaneAssessment`) |
+| Repair controller | `optimus repair`. Decision gate (`decide`); plain-language brief (`buildBrief`, `describeCheck`); disposable git workspace outside Optimus; Claude Code headless with file tools only (`claudeCodeCommand`); grader and pack hashes checked (`graderFingerprint`); full-scope rerun. An infrastructure retry reruns **only unjudged scenarios, once per source revision, after 90 s**. Each decision records its `basis` (which run supplied each verdict). Caps: 3 attempts, 1,500 credits, 20 minutes. Output: `repair-history.json`. | `src/loop/{decision,brief,workspace,serve,integrity,agent,repair}.ts` |
+| Report data contract | **Bundle v2**: `builds[].latestRuns` and `repairs[].decisions[].basis`. `optimus bundle --manifest` and `optimus report --bundle`. | `src/report/schema.ts`, `src/report/bundle.ts`, `docs/UI_DATA_CONTRACT.md` |
+| Real-data fixture | 5 builds (A, B, C, D, U), 9 runs, 3 repairs, end-of-step screenshots, local paths masked. | `tests/fixtures/report-bundle/`, built from `runs/demo/library-demo.manifest.json` |
+| Gates | Gate 1 v5: 24/24. Gate 2: 4/4. The v2 and v4 runs are archived and don't count. | `runs/gate1-v5/REPORT.md`, `runs/gate2-v5/REPORT.md`, `expected.json` in each folder |
+| Live repairs | C: one `app.js` fix (310.78 credits). D: added `saveBooks()` persistence (306.45; three earlier sessions stopped safely). U (blind): one `saveBooks()` line; the unsealed defect matches (365.08). | `runs/repair-{c,d,u}/REPORT.md` and the sanitized `repair-history.json`, brief and diff in each |
+| Docs | Spec amendments for an agent-independent loop and per-revision retries (made by the owner). Demo walkthrough. UI structure. | `AGENTS.md`, `docs/DEMO.md`, `docs/UI_STRUCTURE.md` |
+| Screenshot review | All labels were reviewed by Claude. The owner **delegated** the review on 23 Nov; the reports say it is not an independent human check. Local review page: `.optimus/review/index.html` (30 cards, 60 images; it doesn't include Gate 2). | Reports and `runs/gate1-v5/raw/screenshot-labels.json` |
+
+### 3. In Progress / Uncommitted
+
+- **No uncommitted tracked changes.** Nothing is half-written, and no Kane job is running.
+- **UI branch `ui/website` (not merged):** a Next.js static site in `website/`, the renderer `src/report/render.ts` (Levels 1–4, reads `latestRuns`, keeps the offline CSP plus `font-src data:`), `src/report/styles.ts`, fonts, `tests/render.test.ts`. A trial merge with `main` showed no conflicts (checked against `ba07b72`). Its only change to a backend-owned file is a one-word test rename in `tests/bundle.test.ts`.
+- **Untracked files in the main checkout that are not Optimus's** (from the owner or the UI agent): design PDFs (`docs/cofounder-co-*.pdf`, `docs/www-navbar-gallery-*.pdf`), images with random names (`FOXNsi0….jpg`, `fgUkJtOm….jpg`), `Pixel-Art Sci-Fi Robot Adventurers.png`, `docs/Optimus_CoreOS_Components.zip`, `docs/180++FREE+logos+library+–+Untitled+UI.zip`, `DESIGN.md`, `assets/`, `docs/design/`, `docs/demo-*.png`, `docs/asset-preview.png`, the `docs/*` prompt files, and `Optimus_Kane_Closed_Loop_Audit.md`. **Do not commit them**: the repo is public, and some are third-party reference material.
+
+### 4. Next Steps (in order)
+
+1. **Merge the UI.** The UI agent merges `main` into `ui/website` in `C:/Users/ADMIN/Optimus-ui`, then runs `npm run typecheck` and `npm test` **from the repo root**, so that `website/` doesn't break the root TypeScript or Vitest setup. Then, in the **main checkout** (git won't update a branch checked out in another worktree): `git -c safe.directory=C:/Users/ADMIN/Optimus merge --ff-only ui/website`, run the tests, and `git push origin main`. After the merge, regenerate the fixture's `index.html` with the real renderer: `rm -rf tests/fixtures/report-bundle && npm run optimus -- bundle --manifest runs/demo/library-demo.manifest.json --out tests/fixtures/report-bundle`. Check that `tests/bundle.test.ts` passes, then commit.
+2. **Hosting:** Vercel is recommended for a static Next.js export, with preview links per push. It needs the owner's sign-in and decision. Then set the social-preview URL in the site (the UI agent's request).
+3. **Art provenance** (for the UI agent's `ASSET_PROVENANCE.md`): "Generated with OpenAI's GPT image generation on 22 Nov 2026; to be edited by the owner later; this entry will be updated after the edits." The UI agent should also update the "pending independent review" wording in `docs/design/HERO_PROPOSAL.md` to the delegated-review wording.
+4. **Before the deadline:** submission text (what was built, who it's for, which agent, what Kane does), a demo video of a real fail-then-pass (see `docs/DEMO.md`), and a final push. Freeze the repo after the deadline.
+5. **Optional:** an L2-defective corpus app built in a **separate session** (AGENTS.md rule: corpus apps are built outside Optimus sessions). That adds a Gate 2 negative control, and L2 could then join the repair scope.
+
+### 5. Key Files
+
+```
+AGENTS.md                      authoritative spec (owner edits it; agent edits to it may be blocked)
+packs/library/pack.yaml        contract v5 (never edit to make a result pass; any change = new version + recalibration)
+src/core/                      types, pack, expect, evaluate, generate, lint, report (old per-run page)
+src/kane/                      parse.ts, evidence.ts, screens.ts, run.ts
+src/loop/                      decision.ts, brief.ts, workspace.ts, serve.ts, integrity.ts, agent.ts, repair.ts
+src/report/                    schema.ts + bundle.ts (backend), render.ts + styles.ts (UI agent)
+src/cli.ts                     gen-tests | lint | evaluate | run | repair | bundle | report
+corpus/                        a-vanilla, b-react (dist/ build), c-remove-wrong, d-no-persist, u-unseen
+runs/gate1-v5, runs/gate2-v5   calibration reports and expected.json (raw/ is ignored and local only)
+runs/repair-{c,d,u}            committed, sanitized repair records
+runs/demo/library-demo.manifest.json   bundle manifest (references local raw data)
+tests/fixtures/report-bundle/  committed real-data bundle (v2)
+docs/UI_DATA_CONTRACT.md, docs/UI_STRUCTURE.md, docs/DEMO.md
+.optimus/repair/<session>/     raw repair sessions (ignored): C 1b7e12, D fe7a64 (+ stopped c26c1d, 6f4dd9, 85d737), U c61591 (+ stopped c1f0ad, 9ac091)
+.optimus/tools/                local helper scripts (ignored), listed in section 6
 ```
 
-## Work completed
+### 6. Commands
 
-| Area | Status |
-| --- | --- |
-| Core and audit | Validated and hashed YAML packs, immutable pack data, neutral test Markdown and linting, deterministic verdicts and scoring, and checks for malformed or conflicting evidence. The calculator is an offline fixture for testing pack reuse. |
-| Corpus | `corpus/a-vanilla` and `corpus/b-react` are independently built, browser-verified reference apps. `corpus/c-remove-wrong` intentionally deletes the first row regardless of the selected book. `corpus/d-no-persist` loses new books on reload. The blind fixture is copied to `corpus/u-unseen` and is awaiting grading. |
-| Phase 1 | Live L1 add and L4 reload passed on A with zero replays and screenshot agreement. L4's successful `refresh` was in the archived inner action log, corroborated by an archived document request. Phase 1 used `100.0956` credits. |
-| Runner and reporting | `optimus run` drives Kane sequentially on a loopback URL, checks authentication and the Chrome profile, saves raw artifacts, retries an explicit upload failure once, and writes `result.json` and escaped static `report.html`. It passed fake-launcher integration checks. The live Gate 1 matrix used a separate local launcher to measure credits and elapsed time per case. |
-| Gate 1 work in progress | A trial 1 passed L1, L3, and L4. B trial 1 passed L1 and L4 with screenshot agreement. B L3 was invalidated by the recorder mismatch below. All six had zero replays. The six cases used `305.9857` credits over `1520` seconds. The last recorded balance was `10793.9187`. |
+```sh
+# Setup and checks (no Kane needed)
+npm ci && npm run typecheck && npm test          # expect 184 passing
 
-The runner, reporting, and blind-fixture agents finished and their work is already on `main`. The only isolated workspace to preserve is the one holding the sealed blind-fixture description.
+# Git: the checkout's .git is owned by another Windows user
+git -c safe.directory=C:/Users/ADMIN/Optimus status
 
-## Current blocker and first offline check
+# Live runs (cost credits)
+export OPTIMUS_KANE_CLI="C:/Users/ADMIN/AppData/Local/Author Software/nvm/installs/v22.23.5/node_modules/@testmuai/kane-cli/bin/kane-cli.cjs"
+npm run optimus -- repair --pack packs/library --app corpus/c-remove-wrong --scenarios L1,L3,L4
+bash .optimus/tools/repair-run.sh corpus/d-no-persist label   # same, with keep-awake and output to .optimus/tools/repair-label.out.json
 
-The L3 reference calibration on A originally returned INCONCLUSIVE because `run_end.final_state` used `book_titles` and `book_count`. The sealed action log for the same inner run contained successful Analyze outputs under the exact requested names. The parser was updated to recover those explicitly named values, tied to the inner run ID. Reprocessing the original archive passed and agreed with the screenshots. No additional Kane run or pack edit was needed. A copy of that trace with the removal action set to unknown returned INCONCLUSIVE.
+# Report bundle
+npm run optimus -- bundle --manifest runs/demo/library-demo.manifest.json --out <new-folder>
+npm run optimus -- report --bundle <folder-with-bundle.json>
 
-The React failure is different. The screenshot before removal shows `The Hobbit`, `Kindred`, `GP Beta g1-b-1`, and `GP Alpha g1-b-1`. The screenshot after removal shows the first three books, and the count drops from 4 to 3. Kane's successful Analyze action and `run_end.final_state` both stored `J. R. R. Tolkien|Octavia E. Butler|Ada Okafor` as `titles_after`. These are the displayed author values. The machine returned FAIL for the missing Beta title. The independent screenshot check invalidated that verdict as a judgment of the app.
-
-On the Windows checkout, the evidence for this case is under `runs/gate1/raw/g1-b-1/L3/`. The file names below all start with `g1-b-1-`.
-
-| File or entry | Use |
-| --- | --- |
-| `input.md` | Original neutral Markdown before Kane rewrote its working copy. |
-| `stdout.ndjson` and `stderr.log` | Original Kane streams. Inspect the outer removal step and its `run_end`. |
-| `metrics.json` | Original exit, elapsed time, balances, URL, hash, and absolute `evidence[0]` path. Open that ZIP locally for the sealed data. |
-| `normalized.json` and `assessment.json` | Saved normalized input and machine result. The `expected` field in the matrix assessment is the expected **verdict** for that case. |
-| `tests/<test-id>/logs/3-actions.ndjson` inside the archive | The removal step's successful `analyze` entry has the wrong `output_value` for `titles_after`. |
-
-These PowerShell commands reproduce the machine result and display the two actual screenshots without spending credits. The `evaluate` command's expected exit is `10`. The screenshot helper prints an encoded JPEG, so the second command writes it to a temporary file for viewing.
-
-```powershell
-npm.cmd run optimus -- evaluate runs/gate1/raw/g1-b-1/L3/g1-b-1-normalized.json --pack packs/library
-
-$image = python (Join-Path $env:TEMP 'optimus-gate1-screenshots.py') g1-b-1 L3
-if ($LASTEXITCODE -ne 0) { throw 'Could not read the screenshot pair.' }
-$preview = Join-Path $env:TEMP 'optimus-react-l3-repro.jpg'
-[IO.File]::WriteAllBytes($preview, [Convert]::FromBase64String(($image -join '').Trim()))
+# Kane health
+node "$OPTIMUS_KANE_CLI" whoami ; node "$OPTIMUS_KANE_CLI" balance ; node "$OPTIMUS_KANE_CLI" config show
 ```
 
-If the helper is unavailable, use `metrics.json` to open the archive and find the last screenshot of outer steps 3 and 4. The corresponding `step_end` in stdout gives `ordinal`, `id`, and the screenshot basename. The entry is under `tests/<test-id>/steps/<ordinal>-<id>/`. Compare the screenshot against both the named Analyze output and `final_state`. If `tsx` fails before CLI startup with `uv_os_get_passwd` or a Windows home-directory permission error, retry the same offline command under the normal Windows user through the approval mechanism.
+Helpers in `.optimus/tools/` (local, run from the repo root with `node --import tsx` or `python`):
 
-## Where to continue
+- `build-review.mts`: rebuilds the screenshot review page.
+- `sanitize_session.py <session-dir> <out-dir>`: copies a repair session into `runs/` with paths masked.
+- `repair-final-shots.mts <history> <runId> <scenario> <outDir>`: extracts end-of-step screenshots.
+- `reparse-sessions.mts <history...>`: re-evaluates sessions from raw evidence after an adapter change.
+- `gate1v5-matrix.mjs` with `gate1v5-launch.mjs`: the Gate 1 v5 orchestrator. `status` mode re-evaluates offline; remove `runs/gate1-v5/raw/pause` first and restore it afterwards.
+- `gate2.mts` and `gate2-shots.mts`: run and check Gate 2.
+- `keep-awake.ps1`: holds a keep-awake request while a given PID runs.
 
-1. **Investigate capture quality offline first.** Use the saved React reproduction to assess whether a generic, deterministic evidence check can detect the wrong field. A legitimate adapter fix must be grounded in actual archived evidence and tested against the known-good A case and the React case. Preserve missing or contradictory evidence as unresolved. A successful action and a correct numeric count alone do not validate the recorded title field. Keep the React reproduction as the documented fallback while the capture issue is unresolved.
-2. **Preserve the comparison.** `packs/library/pack.yaml` is Library v2. Its verified SHA-256 is `259613c83f6ff13aa3b3bb832092c214cc4fefbdfbc3cabaaa636882e63a1c80`. The same hash governed Phase 1 and all six Gate 1 cases. Keep the contract and verdict rules fixed for this comparison. Kane sees only the neutral action and recording instructions. Optimus judges deterministically. A changed capture contract needs a newly approved and calibrated comparison, with its own hash across all cases. A later successful run cannot retroactively validate the earlier mismatched recording.
-3. **Restart paid testing only when it serves the requested scope.** The original Gate 1 has 18 cases remaining. These are A and B trial 2, and both trials for C and D. Gate 1 requires L1, L3, and L4 on each app twice, zero replays, screenshot agreement, per-case time and credits, and no definitive verdict for an unestablished action. A and B should pass all three. C should fail only L3, and D only L4. If the user requests further exploratory runs with the current capture setup, preserve the known invalidation in the report.
-4. **Keep later phases gated.** L2 read toggle is implemented and tested offline. Its live calibration is Gate 2. The blind fixture awaits independent grading. Keep its defect description sealed outside the repo, under the isolated `%TEMP%\optimus-blind-session-*` workspace, until after grading. The Phase 4 repair loop remains unbuilt and starts after grading is proven. Follow the spec's separated repair workspace, path guard, grader hash check, narrow failure brief, full-pack rerun, and caps of three attempts, 1,500 credits, and 20 minutes.
+### 7. Environment & Gotchas
 
-## Local live-run state and Cloud access
+- Windows 11, Node 22.23.5, Git Bash and PowerShell. Kane CLI **0.10.6** (an update to 0.10.7 is offered; **don't upgrade** mid-comparison). OAuth profile `default`; `chrome_profile` and `chrome_profile_path` must stay unset. Claude Code 2.1.330 is at `~/.local/bin/claude.exe`. `gh` is signed in as ChukwuebukaHenrey.
+- **Keep the laptop on mains power with the lid open.** A lid or battery sleep killed runs (`TargetClosedError`). Keep-awake cannot block a lid close.
+- **Kane flakiness seen, and how it's handled:**
+  - TestMu upload rejected → one retry after 90 s.
+  - "TMS did not return an org_id" on an immediate relaunch → the 90 s pause.
+  - Wrong-site navigation to Kane's tutorial page → INCONCLUSIVE through the origin check.
+  - Planner stall ("AP produced no action for 3 consecutive steps") → infrastructure error, then a scenario-level retry.
+  - Balance lookup failures → back-off; the loop stops if the balance can't be read, because the credit cap can't be enforced.
+  - Network outages → the loop stops.
+- Costs: about 40–75 credits and 3–7 minutes per scenario; about 300–370 credits and 30–45 minutes per repair session.
+- The screenshot linked to a step's **action** can predate the action's effect. Always use the **end-of-step** screenshot (`lastStepScreenshots`).
+- Kane rewrites its working copy of a test file and caches authored steps beside it. A retry in the same folder **replays** cached steps (rejected as `replay_detected`), so every attempt must use a fresh folder (the runner does this).
+- Inline Python in Bash heredocs mangled backslashes and quotes several times. Write scripts to files instead.
+- An interrupted tool call can still have launched its command. Check `tasklist` and the output folders before re-running.
 
-- Kane CLI `0.10.6` was authenticated through OAuth on this Windows PC under profile `default`. It selected TestMu project `KaneAI Generated` and folder `Untitled`. Before any authorized paid run, check `kane-cli.cmd whoami`, `kane-cli.cmd config show`, and `kane-cli.cmd balance`. Both `chrome_profile` and `chrome_profile_path` must stay unset so each run has a fresh browser. The established flags are `--author --agent --headless`. Each live authoring run uploads to TestMu and uses credits.
-- The old matrix serves A, B, C, and D on loopback ports 43184 through 43187 respectively. It uses the production build at `corpus/b-react/dist` for B. If that build is missing, run `npm.cmd ci` and `npm.cmd run build` in `corpus/b-react`. The tracked CLI can run a specific scenario on any fixture you serve on a loopback URL. See the README for the command and exit codes.
-- On this PC, `%TEMP%\optimus-live-gate1.mjs` launches one case and preserves metrics. `%TEMP%\optimus-gate1-matrix.mjs` orchestrates the matrix and skips cases with completed metrics. It refuses to duplicate a case that has a saved input and lacks completion metadata. `%TEMP%\optimus-gate1-screenshots.py` shows a case's screenshot pair, and `%TEMP%\optimus-gate1-report.py` consolidates the report. These helpers existed when this handoff was written. The queue stop marker is `runs/gate1/raw/pause`. Its progress and independent labels are in `matrix-progress.json` and `screenshot-labels.json` beside it. Leave the marker in place while investigating offline.
-- Keep local-only evidence and credentials out of Git. The ignored stores include `runs/**/raw/`, `.testmuai/`, `.optimus/`, and `*.evidence`. Source, tests, and sanitized reports are available via the private remote for Codex Cloud. Cloud can run development and synthetic checks. The saved Windows OAuth session, raw archives, and temporary helpers stay on this PC.
+### 8. Open Decisions (owner)
 
-If the user explicitly resumes the existing paid queue, preserve its raw directory, verify the pack hash and existing six completed cases, then remove only the pause marker. Run the saved orchestrator from the repo root with the resolved Kane entry and the launcher as arguments. If the temporary helpers are gone, use the tracked `optimus run` command one remaining case at a time, with the corresponding `g1-a-2`, `g1-b-2`, `g1-c-1`, `g1-c-2`, `g1-d-1`, or `g1-d-2` nonce and explicit scenario. Record balance before and after each case and keep new reports separate from the six saved cases.
+- Hosting: Vercel (recommended) or Cloudflare Pages; then the site URL.
+- When to merge the UI branch (after the UI agent's root checks).
+- Whether to build an L2-defective app for a Gate 2 negative control.
+- Art edits, and the final provenance text.
 
-```powershell
-# Paid continuation only. The pause marker blocks the queue until explicitly removed.
-$entry = Join-Path (Split-Path -Parent (Get-Command kane-cli.cmd).Source) 'node_modules/@testmuai/kane-cli/bin/kane-cli.cjs'
-$matrix = Join-Path $env:TEMP 'optimus-gate1-matrix.mjs'
-$launcher = Join-Path $env:TEMP 'optimus-live-gate1.mjs'
-node --import tsx $matrix $entry $launcher matrix
-```
+### 9. Rules a fresh session must keep
 
-## Implementation map
-
-- `src/core/pack.ts`, `generate.ts`, and `lint.ts` enforce the reusable contract and neutral Kane projection.
-- `src/core/evaluate.ts` and `expect.ts` apply integrity, action, change, and assertion checks in that order. Keep app-specific knowledge in packs. Add a regression for any evidence bug instead of tuning the evaluator to a corpus app.
-- `src/kane/evidence.ts` and `parse.ts` own archive and stream formats. Ordinary actions join on archived step ordinal and ID, action ID, and kind. Archived reloads and named recordings are bound to the matching inner run. Missing or conflicting recordings stay unresolved.
-- `src/kane/run.ts`, `src/core/report.ts`, and `src/cli.ts` provide sequential execution, isolated artifacts, and reports. `tests/fixtures/kane-phase1-l1.ndjson` and `kane-phase1-l4.ndjson` are sanitized real-format regression fixtures. Runner tests use a fake provider and consume no TestMu credits.
+- Kane never judges; verdicts come only from `src/core/evaluate.ts`. No LLM may decide or reinterpret a verdict. The repair agent changes only the app copy, never the pack, the grader or `src/core`/`src/kane`.
+- Never edit a pack, the evaluator or the adapter to make one result pass. Adapter fixes must come from real archived evidence and be re-checked against **all** saved cases (use `reparse-sessions.mts` and the Gate 1 `status` mode).
+- Commit small and honestly. Never force-push, rebase away or backdate. Never commit secrets, `.env*`, raw evidence or the untracked third-party files listed in section 3.
+- Paid Kane runs and outward-facing actions (publishing, hosting, visibility changes) need the owner's go-ahead. The owner has approved live runs for this project's plan so far.

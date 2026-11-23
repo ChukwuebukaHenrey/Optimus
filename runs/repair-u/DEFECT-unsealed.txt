@@ -1,0 +1,1 @@
+The add-book submit handler adds a book to the displayed list and the in-memory array but does not save it to local storage. Reloading immediately after adding a book loses that book. A later toggle or removal can persist the current array because those actions still save.

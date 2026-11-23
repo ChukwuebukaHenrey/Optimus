@@ -1,19 +1,31 @@
 {
   "name": "Library assessment",
   "pack": "../../packs/library",
-  "scope": ["L1", "L3", "L4"],
+  "scope": [
+    "L1",
+    "L3",
+    "L4"
+  ],
   "builds": [
     {
       "buildId": "a-vanilla",
       "label": "A · Vanilla JS",
       "appSource": "../../corpus/a-vanilla",
-      "gateCases": ["../gate1-v5/raw/g5-a-2/L1", "../gate1-v5/raw/g5-a-2/L3", "../gate1-v5/raw/g5-a-2/L4"]
+      "gateCases": [
+        "../gate1-v5/raw/g5-a-2/L1",
+        "../gate1-v5/raw/g5-a-2/L3",
+        "../gate1-v5/raw/g5-a-2/L4"
+      ]
     },
     {
       "buildId": "b-react",
       "label": "B · React",
       "appSource": "../../corpus/b-react",
-      "gateCases": ["../gate1-v5/raw/g5-b-2/L1-retry", "../gate1-v5/raw/g5-b-2/L3", "../gate1-v5/raw/g5-b-2/L4-retry"]
+      "gateCases": [
+        "../gate1-v5/raw/g5-b-2/L1-retry",
+        "../gate1-v5/raw/g5-b-2/L3",
+        "../gate1-v5/raw/g5-b-2/L4-retry"
+      ]
     },
     {
       "buildId": "c-remove-wrong",
@@ -25,7 +37,13 @@
       "buildId": "d-no-persist",
       "label": "D · Loses books on reload",
       "appSource": "../../corpus/d-no-persist",
-      "gateCases": ["../gate1-v5/raw/g5-d-2/L1", "../gate1-v5/raw/g5-d-2/L3", "../gate1-v5/raw/g5-d-2/L4"]
+      "repairHistory": "../../.optimus/repair/repair-20261123000518-fe7a64/repair-history.json"
+    },
+    {
+      "buildId": "u-unseen",
+      "label": "U · Blind, defect unseen",
+      "appSource": "../../corpus/u-unseen",
+      "repairHistory": "../../.optimus/repair/repair-20261123014521-c61591/repair-history.json"
     }
   ],
   "calibration": {
