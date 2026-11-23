@@ -1,4 +1,5 @@
 import { ArrowRight, CheckCircle, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
 import { cn } from "cn";
 import { Chapter } from "@/components/chapter";
 import { Reveal } from "@/components/motion";
@@ -430,11 +431,11 @@ export function SiteFooter() {
           <p className="mt-2 max-w-[40ch] text-paper/75">Evidence-backed behavioural verdicts for web apps. Built during the Kane CLI hackathon, 2026.</p>
         </div>
         <nav aria-label="Footer" className="grid grid-cols-2 gap-x-12 gap-y-2">
-          <a className="hover:underline" href="/#contract">How it works</a>
+          <Link className="hover:underline" href="/#contract">How it works</Link>
           <a className="hover:underline" href="/report/">Real report</a>
-          <a className="hover:underline" href="/#verdicts">Verdicts</a>
+          <Link className="hover:underline" href="/#verdicts">Verdicts</Link>
           <a className="hover:underline" href="/docs/">Docs</a>
-          <a className="hover:underline" href="/#repair">Repair loop</a>
+          <Link className="hover:underline" href="/#repair">Repair loop</Link>
           <a className="hover:underline" href="https://github.com/LambdaTest/kane-cli">Kane CLI</a>
         </nav>
       </div>

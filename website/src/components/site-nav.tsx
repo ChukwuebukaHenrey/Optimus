@@ -4,6 +4,7 @@ import { ArrowRight, List, X } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { cn } from "cn";
+import Link from "next/link";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const CHAPTERS = [
@@ -17,7 +18,7 @@ const CTA = { href: "/report/", label: "See a real report" };
 
 function Wordmark({ onDark }: { onDark: boolean }) {
   return (
-    <a href="/#top" className="flex items-center gap-2 rounded-sm" aria-label="Optimus, back to top">
+    <Link href="/#top" className="flex items-center gap-2 rounded-sm" aria-label="Optimus, back to top">
       <svg viewBox="0 0 4 4" shapeRendering="crispEdges" className="size-5" aria-hidden="true">
         <rect x="1" y="0" width="2" height="1" fill={onDark ? "#fff" : "var(--ink)"} />
         <rect x="0" y="1" width="1" height="2" fill={onDark ? "#fff" : "var(--ink)"} />
@@ -28,7 +29,7 @@ function Wordmark({ onDark }: { onDark: boolean }) {
       <span className={cn("font-display text-[1.5rem] leading-none font-extrabold tracking-tight", onDark ? "text-white" : "text-ink")}>
         Optimus
       </span>
-    </a>
+    </Link>
   );
 }
 

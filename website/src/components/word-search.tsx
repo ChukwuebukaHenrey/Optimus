@@ -8,6 +8,8 @@ import puzzle from "@/content/word-search.json";
 type Cell = [number, number];
 const key = ([r, c]: Cell) => `${r}-${c}`;
 const SIZE = puzzle.size;
+/** The button for a cell; only called from event handlers, never during render. */
+const cellButton = (c: Cell) => document.querySelector<HTMLButtonElement>(`#find [data-cell="${key(c)}"]`);
 
 /** Cells on the straight line from a to b, or null if a and b are not on one row, column or diagonal. */
 function line(a: Cell, b: Cell): Cell[] | null {
@@ -27,7 +29,6 @@ export function WordSearch() {
   const [focus, setFocus] = useState<Cell>([0, 0]);
   const [status, setStatus] = useState("");
   const dragging = useRef(false);
-  const cellRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   const foundCells = useMemo(() => {
     const m = new Map<string, string>();
@@ -96,7 +97,7 @@ export function WordSearch() {
     setHover(c);
     setFocus(c);
     // preventDefault above stops the browser focusing the letter; focus it so the keyboard can continue
-    cellRefs.current.get(key(c))?.focus({ preventScroll: true });
+    cellButton(c)?.focus({ preventScroll: true });
   };
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
     if (!dragging.current || !origin.current) return;
@@ -132,7 +133,7 @@ export function WordSearch() {
     const next: Cell = [Math.max(0, Math.min(SIZE - 1, r)), Math.max(0, Math.min(SIZE - 1, c))];
     setFocus(next);
     if (start) setHover(next);
-    cellRefs.current.get(key(next))?.focus();
+    cellButton(next)?.focus();
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, cell: Cell) => {
@@ -203,9 +204,6 @@ export function WordSearch() {
                 return (
                   <button
                     key={k}
-                    ref={(el) => {
-                      if (el) cellRefs.current.set(k, el);
-                    }}
                     type="button"
                     data-cell={k}
                     tabIndex={isFocus ? 0 : -1}
