@@ -1,0 +1,12 @@
+{
+  "pack": "library",
+  "version": 5,
+  "packHash": "b5295a39f4bec78aacd7f071022cf50d881e9233a1271dddb423c6ddf0c2fc74",
+  "scenario": "L2",
+  "trials": 2,
+  "note": "Fixed before any Gate 2 run. L2 adds a not-read book, toggles its read status once, and records the status text before and after. Both reference apps should pass. There is no L2-defective corpus app yet, so this gate has no negative control; that needs a separate corpus session (AGENTS.md: corpus apps are built outside Optimus sessions).",
+  "apps": {
+    "A": { "fixture": "corpus/a-vanilla", "expected": "PASS", "rationale": "The status shows 'Not read' and becomes 'Read' after Toggle read; both texts are in the pack's allowed lists." },
+    "B": { "fixture": "corpus/b-react/dist", "expected": "PASS", "rationale": "The status shows 'To read' and becomes 'Finished' when it is clicked; both texts are in the pack's allowed lists." }
+  }
+}
