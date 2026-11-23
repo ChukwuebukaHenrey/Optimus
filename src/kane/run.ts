@@ -26,6 +26,8 @@ interface RunOptions {
   scenarioIds?: readonly string[];
   workingDirectory?: string;
   kaneExecutable?: string;
+  /** Pause before retrying after an upload failure; TestMu can refuse an immediate relaunch. Default 90 s. */
+  retryDelayMs?: number;
 }
 
 type GeneratedTest = ReturnType<typeof generateTests>[number];
@@ -268,7 +270,10 @@ export async function runKaneAssessment(options: RunOptions): Promise<KaneAssess
       for (let attempt = 1; attempt <= attemptLimit; attempt++) {
         const attemptDirectory = join(directory, `scenario-${scenario.id}`, `attempt-${attempt}`);
         const outcome = await runAttempt(command, attemptDirectory, assessment, loaded, scenario, tests[index]);
-        if (outcome.uploadFailed && attempt < attemptLimit) continue;
+        if (outcome.uploadFailed && attempt < attemptLimit) {
+          await new Promise((resolveDelay) => setTimeout(resolveDelay, options.retryDelayMs ?? 90000));
+          continue;
+        }
         assessment.results.push(outcome.result);
         assessment.executions.push({
           scenarioId: scenario.id, attempts: attempt, directory: attemptDirectory,

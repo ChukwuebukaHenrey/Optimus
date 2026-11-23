@@ -35,6 +35,8 @@ export interface RepairOptions {
   scope: readonly string[];
   caps: RepairCaps;
   workspaceParent?: string;
+  /** Pause before an infrastructure retry so the Kane service can recover. Default 90 s. */
+  infraRetryDelayMs?: number;
   /** Where session records are written. Defaults to <root>/.optimus/repair. */
   sessionParent?: string;
 }
@@ -202,6 +204,7 @@ export async function runRepairLoop(options: RepairOptions, deps: RepairDeps): P
         // Rerun only the scenarios that got no verdict, on the same source revision.
         retriesForRevision++;
         history.budget.infrastructureRetriesUsed++;
+        await new Promise((resolveDelay) => setTimeout(resolveDelay, options.infraRetryDelayMs ?? 90000));
         run = await doRun('infrastructure_retry', basis.filter(({ verdict }) => verdict === 'INFRA_ERROR').map(({ scenarioId }) => scenarioId));
         continue;
       }
