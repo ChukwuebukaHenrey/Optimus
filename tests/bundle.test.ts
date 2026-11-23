@@ -51,7 +51,7 @@ describe('report data contract', () => {
   });
 });
 
-it('renders the placeholder report with escaped text', async () => {
+it('renders the report with escaped text', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'optimus-render-'));
   temporary.push(directory);
   const bundle = comparisonBundleSchema.parse(raw);
