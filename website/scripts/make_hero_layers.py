@@ -90,7 +90,7 @@ def main() -> None:
     crng = np.random.default_rng(11)                  # separate seed: falls and lanterns stay identical
     tones = [(255, 255, 255), (238, 247, 255), (207, 232, 252), (169, 212, 247)]
     layers["clouds"] = []
-    for i, (w, h, speed, y) in enumerate([(56, 16, 170, 2.0), (40, 12, 125, 6.5), (28, 9, 100, 3.5)]):
+    for i, (w, h, speed, y) in enumerate([(56, 16, 170, 9.5), (40, 12, 125, 15.0), (28, 9, 100, 12.0)]):
         yy, xx = np.mgrid[0:h, 0:w]
         body = np.zeros((h, w), bool)
         for _ in range(7):                            # union of puffs along a flat base
@@ -109,7 +109,7 @@ def main() -> None:
                 img[y0, x] = (*tone, 255)
         name = f"cloud-{i + 1}.png"
         Image.fromarray(img, "RGBA").save(OUT / name)
-        layers["clouds"].append({"src": f"/art/hero/{name}", "w": w, "h": h, "y": y, "duration": speed,
+        layers["clouds"].append({"src": f"/art/hero/{name}", "w": w, "h": h, "y": y, "duration": speed,  # y: percent of the scene
                                  "delay": round(-speed * (0.15 + 0.3 * i), 1)})
 
     layers["scene"] = {"src": "/art/scene/H-01-plate.png", "w": 640, "h": 360}

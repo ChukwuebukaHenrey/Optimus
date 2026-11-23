@@ -2,7 +2,7 @@ import { ArrowRight, CheckCircle, WarningCircle } from "@phosphor-icons/react/di
 import Link from "next/link";
 import { cn } from "cn";
 import { Chapter } from "@/components/chapter";
-import { Reveal } from "@/components/motion";
+import { Reveal } from "@/components/reveal";
 import { VerdictBadge } from "@/components/verdict-badge";
 import type { SiteData } from "@/lib/bundle";
 

@@ -1,5 +1,5 @@
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
-import { Entrance, EntranceItem } from "@/components/motion";
+import { Entrance, EntranceItem } from "@/components/reveal";
 import { HeroScene } from "./hero-scene";
 
 /** Stepped pixel edge where the hero meets the paper page. */
@@ -50,7 +50,7 @@ export function Hero() {
             </h1>
           </EntranceItem>
         </Entrance>
-        <Entrance className="relative z-10 order-3 px-4 md:max-w-[560px] pt-6 pb-14 max-md:bg-azure-deep md:px-0 md:pt-0 md:pb-0">
+        <Entrance start={2} className="relative z-10 order-3 px-4 md:max-w-[560px] pt-6 pb-14 max-md:bg-azure-deep md:px-0 md:pt-0 md:pb-0">
           <EntranceItem>
             <p className="font-extrabold md:mt-6">One contract. Many different builds. Evidence-backed verdicts.</p>
             <p className="mt-2 text-white/90">

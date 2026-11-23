@@ -1,7 +1,7 @@
 import { AGENTS, FOOT_Y, HERO_LAYERS, SCENE, px, py } from "@/content/scene";
 
 /** The clouds' band, in percent of the scene: top sky only, ending before the observatory. */
-const CLOUD_BAND = { w: 62, h: 16 };
+const CLOUD_BAND = { top: 8, w: 62, h: 14 };
 
 /**
  * Keyframes for the hand-off spark. The track is a full-scene layer, so translate percentages are
@@ -68,7 +68,7 @@ export function HeroScene() {
               src={c.src}
               alt=""
               style={{
-                top: `${(c.y / CLOUD_BAND.h) * 100}%`,
+                top: `${((c.y - CLOUD_BAND.top) / CLOUD_BAND.h) * 100}%`,
                 width: `${(c.w / (SCENE.w * CLOUD_BAND.w / 100)) * 100}%`,
                 height: `${(c.h / (SCENE.h * CLOUD_BAND.h / 100)) * 100}%`,
               }}
