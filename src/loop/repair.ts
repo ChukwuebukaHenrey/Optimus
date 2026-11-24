@@ -25,6 +25,8 @@ export interface RepairDeps {
   balance: () => Promise<number | null>;
   agent: (input: { cwd: string; prompt: string; timeoutMs: number; logDirectory: string; briefDirectory: string }) => Promise<AgentRun>;
   now?: () => number;
+  /** Plain progress lines for a person watching the loop. Never part of the record; verdicts are unaffected. */
+  log?: (line: string) => void;
 }
 
 export interface RepairOptions {
@@ -39,6 +41,8 @@ export interface RepairOptions {
   infraRetryDelayMs?: number;
   /** Where session records are written. Defaults to <root>/.optimus/repair. */
   sessionParent?: string;
+  /** How often a still-running Kane run or agent is reported to `log`. Default 60 s; 0 turns it off. */
+  heartbeatMs?: number;
 }
 
 interface RunEntry {
@@ -147,6 +151,27 @@ export async function runRepairLoop(options: RepairOptions, deps: RepairDeps): P
   let revision = baselineRevision;
   let firstAgentAt: number | null = null;
 
+  // Progress for a person watching. Kane runs headless and the agent works silently, so without these
+  // lines the terminal shows nothing for many minutes.
+  const log = (line: string) => deps.log?.(line);
+  const minutesSince = (start: number) => `${((now() - start) / 60000).toFixed(1)} min`;
+  const whileWaiting = async <T>(label: string, work: Promise<T>): Promise<T> => {
+    const every = options.heartbeatMs ?? 60000;
+    if (!deps.log || every <= 0) return work;
+    const started = now();
+    const timer = setInterval(() => log(`  ... ${label} still running (${minutesSince(started)})`), every);
+    timer.unref?.();
+    try {
+      return await work;
+    } finally {
+      clearInterval(timer);
+    }
+  };
+  const verdictLine = (results: readonly ScenarioResult[]) =>
+    results.map((r) => `${r.scenarioId} ${r.verdict}${r.verdict === 'PASS' ? '' : ` (${r.reasonCode})`}`).join(' | ');
+  const ok = (value: boolean) => (value ? 'ok' : 'FAILED');
+  log(`Session ${sessionId}: app ${options.appSource}, scenarios ${options.scope.join(', ')}; caps ${options.caps.attempts} attempts, ${options.caps.credits} credits, ${options.caps.minutes} min.`);
+
   const spend = async (): Promise<number | null> => {
     const balance = await deps.balance();
     if (balance !== null && history.budget.creditsStart !== null) history.budget.creditsUsed = Number((history.budget.creditsStart - balance).toFixed(4));
@@ -157,8 +182,12 @@ export async function runRepairLoop(options: RepairOptions, deps: RepairDeps): P
     const nonce = `${short}-${runId}`;
     const startedAt = new Date(now()).toISOString();
     const creditsBefore = await spend();
-    const assessment = await deps.assess({ appUrl: server.url, nonce, scope });
+    const started = now();
+    log(`Kane run ${runId} (${kind.replace('_', ' ')}) started: ${scope.join(', ')}. Kane drives a real browser headless; each scenario takes a few minutes.`);
+    const assessment = await whileWaiting(`Kane run ${runId}`, deps.assess({ appUrl: server.url, nonce, scope }));
     const creditsAfter = await spend();
+    const used = creditsBefore !== null && creditsAfter !== null ? `, ${(creditsBefore - creditsAfter).toFixed(2)} credits` : '';
+    log(`Kane run ${runId} finished (${minutesSince(started)}${used}).`);
     const entry: RunEntry = {
       runId, kind, nonce, sourceRevision: revision, startedAt, finishedAt: new Date(now()).toISOString(),
       creditsBefore, creditsAfter, runDirectory: assessment.directory,
@@ -166,6 +195,7 @@ export async function runRepairLoop(options: RepairOptions, deps: RepairDeps): P
     };
     history.runs.push(entry);
     await save();
+    log(`Optimus verdicts for ${runId}: ${verdictLine(entry.results)}`);
     return entry;
   };
   /**
@@ -185,6 +215,7 @@ export async function runRepairLoop(options: RepairOptions, deps: RepairDeps): P
   };
   const finish = async (decision: LoopDecision, reason: string, run: RunEntry | null) => {
     history.outcome = { decision, reason, finalRunId: run?.runId ?? null };
+    log(`Outcome: ${decision}. ${reason}`);
   };
 
   try {
@@ -200,12 +231,16 @@ export async function runRepairLoop(options: RepairOptions, deps: RepairDeps): P
       };
       history.decisions.push(decision);
       await save();
+      log(`Decision: ${outcome.decision}. ${outcome.reason}`);
       if (outcome.decision === 'RETRY_INFRASTRUCTURE') {
         // Rerun only the scenarios that got no verdict, on the same source revision.
         retriesForRevision++;
         history.budget.infrastructureRetriesUsed++;
-        await new Promise((resolveDelay) => setTimeout(resolveDelay, options.infraRetryDelayMs ?? 90000));
-        run = await doRun('infrastructure_retry', basis.filter(({ verdict }) => verdict === 'INFRA_ERROR').map(({ scenarioId }) => scenarioId));
+        const retryScope = basis.filter(({ verdict }) => verdict === 'INFRA_ERROR').map(({ scenarioId }) => scenarioId);
+        const delay = options.infraRetryDelayMs ?? 90000;
+        log(`Retrying ${retryScope.join(', ')} on the same app revision in ${Math.round(delay / 1000)} s, so the Kane service can recover.`);
+        await new Promise((resolveDelay) => setTimeout(resolveDelay, delay));
+        run = await doRun('infrastructure_retry', retryScope);
         continue;
       }
       if (outcome.decision !== 'REPAIR') { await finish(outcome.decision, outcome.reason, run); break; }
@@ -238,12 +273,16 @@ export async function runRepairLoop(options: RepairOptions, deps: RepairDeps): P
       };
       history.attempts.push(attempt);
       await save();
+      const shown = (value: unknown) => (typeof value === 'string' ? `"${value}"` : JSON.stringify(value));
+      log(`Attempt ${attemptNumber}: brief for ${failure.scenarioId} (expected ${shown(failure.expected)}, observed ${shown(failure.observed)}). The brief has no contract and no grader.`);
 
       const remaining = options.caps.minutes * 60000 - (now() - firstAgentAt);
-      attempt.agent = await deps.agent({
+      log(`Agent started in a throwaway copy of the app, outside Optimus (${Math.max(1, Math.round(remaining / 60000))} min left on the time cap).`);
+      const agentStarted = now();
+      attempt.agent = await whileWaiting('agent', deps.agent({
         cwd: workspace.appDirectory, prompt, timeoutMs: Math.max(60000, remaining), logDirectory: attemptDirectory,
         briefDirectory: workspace.briefDirectory,
-      });
+      }));
       history.budget.repairMinutesUsed = Number(((now() - firstAgentAt) / 60000).toFixed(2));
       const after = await graderFingerprint(root, options.packFile);
       attempt.sourceRevisionAfter = await snapshot(workspace.appDirectory, `Agent repair attempt ${attemptNumber} (${brief.briefId})`);
@@ -259,7 +298,10 @@ export async function runRepairLoop(options: RepairOptions, deps: RepairDeps): P
         changedGraderFiles: changedGraderFiles(before, after),
       };
       await save();
+      const summary = change.stat.split(/\r?\n/u).at(-1)?.trim() ?? '';
+      log(`Agent finished (${minutesSince(agentStarted)}${attempt.agent.timedOut ? ', timed out' : ''}): ${change.files.length ? `changed ${change.files.join(', ')}${summary ? ` (${summary})` : ''}` : 'no change'}.`);
       const { workspaceOutsideOptimus, packHashUnchanged, graderUnchanged } = attempt.integrity;
+      log(`Integrity: workspace outside Optimus ${ok(workspaceOutsideOptimus)} | contract hash unchanged ${ok(packHashUnchanged)} | grader (src/core, src/kane) unchanged ${ok(graderUnchanged)}`);
       if (!workspaceOutsideOptimus || !packHashUnchanged || !graderUnchanged) {
         await finish('STOP', 'An integrity check failed after the agent ran; the contract or grader may have changed.', run);
         break;

@@ -109,7 +109,9 @@ describe('repair controller', { timeout: 60000 }, () => {
     let credits = 1000;
     let runs = 0;
     const agentCalls: string[] = [];
+    const lines: string[] = [];
     const deps: RepairDeps = {
+      log: (line) => lines.push(line),
       assess: async ({ appUrl, nonce, scope: selected }) => {
         const body = await (await fetch(appUrl)).text();
         credits -= 50;
@@ -136,7 +138,7 @@ describe('repair controller', { timeout: 60000 }, () => {
       root: resolve('.'), loaded: library, packFile: join('packs', 'library', 'pack.yaml'), appSource: app, scope, caps,
       workspaceParent: base, sessionParent: join(base, 'sessions'), infraRetryDelayMs: 0,
     }, deps);
-    return { history, agentCalls, base };
+    return { history, agentCalls, base, lines };
   }
   const buggyRemove = (body: string): Record<string, Verdict> => body.includes('BUG') ? { L3: 'FAIL' } : {};
 
@@ -158,6 +160,33 @@ describe('repair controller', { timeout: 60000 }, () => {
     expect(history.budget).toMatchObject({ attemptsUsed: 1, creditsUsed: 100 });
     const saved = JSON.parse(await readFile(join(history.workspace, '..', '..', 'sessions', history.sessionId, 'repair-history.json'), 'utf8'));
     expect(saved.outcome.decision).toBe('COMPLETE');
+  });
+
+  it('reports progress in order, with Optimus verdicts kept apart from Kane runs', async () => {
+    const { history, lines } = await setup('fix', buggyRemove);
+    const order = [
+      /^Session repair-.*scenarios L1, L3, L4/,
+      /^Kane run run-0 \(baseline\) started: L1, L3, L4/,
+      /^Kane run run-0 finished \(.* min, 50\.00 credits\)/,
+      /^Optimus verdicts for run-0: L1 PASS \| L3 FAIL \([^)]+\) \| L4 PASS$/,
+      /^Decision: REPAIR\./,
+      /^Attempt 1: brief for L3 \(expected "GP Beta .*", observed "none"\)\. The brief has no contract and no grader\./,
+      /^Agent started in a throwaway copy of the app/,
+      /^Agent finished \(.*\): changed index\.html/,
+      /^Integrity: workspace outside Optimus ok \| contract hash unchanged ok \| grader \(src\/core, src\/kane\) unchanged ok$/,
+      /^Kane run run-1 \(verification\) started/,
+      /^Optimus verdicts for run-1: L1 PASS \| L3 PASS \| L4 PASS$/,
+      /^Decision: COMPLETE\./,
+      /^Outcome: COMPLETE\./,
+    ];
+    let at = -1;
+    for (const pattern of order) {
+      const next = lines.findIndex((line, index) => index > at && pattern.test(line));
+      expect(next, `missing or out of order: ${pattern} in:\n${lines.join('\n')}`).toBeGreaterThan(at);
+      at = next;
+    }
+    // The record is unchanged by logging: progress never enters the history.
+    expect(JSON.stringify(history)).not.toContain('Optimus verdicts for');
   });
 
   it('never calls the agent when the evidence is unresolved', async () => {

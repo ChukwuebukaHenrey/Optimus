@@ -115,6 +115,8 @@ async function main([command, ...args]: string[]): Promise<number> {
       agent: ({ cwd, prompt, timeoutMs, logDirectory, briefDirectory }) => invokeAgent(
         values.agent && values.agent !== 'claude' ? customAgentCommand(resolve(values.agent)) : claudeCodeCommand('claude', [briefDirectory]),
         cwd, prompt, timeoutMs, logDirectory),
+      // Progress goes to stderr, so stdout stays the single JSON summary that scripts read.
+      log: (line) => process.stderr.write(`[${new Date().toLocaleTimeString('en-GB', { hour12: false })}] ${line}\n`),
     });
     console.log(JSON.stringify({
       sessionId: history.sessionId, outcome: history.outcome, budget: history.budget,

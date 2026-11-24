@@ -37,7 +37,7 @@ Two Kane CLI issues found along the way are reported upstream:
 
 ```sh
 npm ci
-npm test                      # 190 tests: evaluator, Kane adapter, repair loop, report
+npm test                      # 191 tests: evaluator, Kane adapter, repair loop, report
 ```
 
 Then open [`tests/fixtures/report-bundle/index.html`](tests/fixtures/report-bundle/index.html) in a
@@ -82,7 +82,7 @@ flowchart LR
 | Gate 1 calibration (Library v5) | **24/24 cases matched** |
 | Gate 2 reference-app cases | **4/4 matched** |
 | Completed live repairs | **3** |
-| Automated tests | **190 passing** |
+| Automated tests | **191 passing** |
 
 Gate 2 currently covers reference apps and does not yet have a negative control. The three completed live repairs include a blind application whose defect remained sealed until grading.
 
@@ -175,6 +175,8 @@ The loop works as follows:
 5. By default, the agent is Claude Code in headless mode, limited to file tools in the workspace. Use `--agent <path>` for another agent that reads the brief from stdin.
 6. Optimus commits the agent's change, records the diff, and checks that the pack and grader sources (`src/core`, `src/kane`) remain unchanged.
 7. Kane reruns the entire scope with a new nonce. The loop repeats until all scenarios pass or a safety cap is reached.
+
+While it runs, the command prints timestamped progress to stderr: each Kane run starting and finishing (time and credits), Optimus's verdicts for that run, each decision, the brief, the agent's change and the integrity checks, with a heartbeat every minute. Stdout stays a single JSON summary for scripts.
 
 Default caps are 3 attempts, 1,500 credits (including void attempts), and 20 minutes from the first agent call. Each session records its baseline, decisions, brief, agent invocation, source revisions, diff, integrity checks and verification run in `.optimus/repair/<session>/repair-history.json`.
 
