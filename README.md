@@ -27,6 +27,12 @@ These are real runs, committed with their evidence in `runs/`:
 
 Calibration before any of this: 24 of 24 cases matched their expected verdicts, with zero replays.
 
+Across all 97 archived runs, Kane reported a green run 11 times on a build that was actually broken;
+Optimus caught each one from what Kane recorded ([Kane's result next to Optimus's verdict](runs/kane-vs-optimus/REPORT.md)).
+Two Kane CLI issues found along the way are reported upstream:
+[#252](https://github.com/LambdaTest/kane-cli/issues/252) (a "reload" that never reloads, yet passes) and
+[#253](https://github.com/LambdaTest/kane-cli/issues/253) (values recorded from the wrong site).
+
 ## Try it in two minutes (no Kane account needed)
 
 ```sh
