@@ -13,3 +13,10 @@ docs/REFERENCE_ANALYSIS.md
 docs/ASSET_REQUEST_TEMPLATE.md
 docs/design/HERO_PROPOSAL.md
 docs/design/requests/
+
+# Internal working notes: session prompts, agent handoffs and reviews (kept locally)
+SESSION_PROMPTS.md
+HANDOFF.md
+HANDOFF-UI.md
+docs/Optimus_UI_Structure_v3_Critical_Review.md
+docs/optimus-hackathon-comparison.md

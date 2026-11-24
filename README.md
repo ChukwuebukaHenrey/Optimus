@@ -2,51 +2,59 @@
 
 **One contract. Many different builds. Evidence-backed verdicts.**
 
-Optimus evaluates independently built web applications against the same behavioral contract. Kane acts in the browser and records what it observes; Optimus evaluates that evidence deterministically.
+Optimus checks many independently built web apps against one behavioural contract, such as every
+submission to the same assignment. **Kane CLI** acts in a real browser and records what it sees;
+Optimus judges that evidence deterministically, with no AI deciding the verdict. When a build fails,
+Optimus sends the verified failure to a coding agent (**Claude Code**, headless), then has Kane check
+the fix against the unchanged contract.
 
-When an application fails, Optimus can send the verified failure to a coding agent, then independently verify the repair.
+**[Live site](https://optimus-one-mu.vercel.app)** ·
+**[Example report](https://optimus-one-mu.vercel.app/report/)** ·
+**[Five-minute demo walkthrough](docs/DEMO.md)**
+
+Built for the Kane CLI Online Hackathon (12–26 Nov 2026); see [BUILT_DURING_EVENT.md](BUILT_DURING_EVENT.md).
+
+## What Kane caught
+
+These are real runs, committed with their evidence in `runs/`:
+
+| Build | What Kane recorded | Verdict | Repair (Claude Code) | Kane re-run |
+|---|---|---|---|---|
+| **U** — blind build, defect sealed until grading | after a reload, the list showed `none` instead of the book just added | FAIL (L4 persist) | one line: `saveBooks();` | PASS, all scenarios |
+| **C** — removes the wrong book | removing "GP Alpha" removed "GP Beta" instead | FAIL (L3 remove) | one fix in `app.js` | PASS, all scenarios |
+| **D** — loses books on reload | the list was empty after a reload | FAIL (L4 persist) | added persistence | PASS, all scenarios |
+| **A**, **B** — vanilla JS and React | add, remove and persist all as required | PASS | — | — |
+
+Calibration before any of this: 24 of 24 cases matched their expected verdicts, with zero replays.
+
+## Try it in two minutes (no Kane account needed)
+
+```sh
+npm ci
+npm test                      # 190 tests: evaluator, Kane adapter, repair loop, report
+```
+
+Then open [`tests/fixtures/report-bundle/index.html`](tests/fixtures/report-bundle/index.html) in a
+browser: the real comparison report for five builds and three repairs, rendered from recorded Kane
+evidence. Live runs need a TestMu AI account and Kane CLI (see [Run a live browser evaluation](#4-run-a-live-browser-evaluation)).
 
 ## How it works
 
-```text
-              Shared behavioral contract
-                         |
-                         v
-                Target web application
-                         |
-                         v
-                     Kane CLI
-              Browser actions + recordings
-                         |
-                         v
-                  Evidence archive
-                         |
-                         v
-                Optimus evaluator
-                         |
-              +----------+----------+
-              |          |          |
-             PASS       FAIL   INCONCLUSIVE
-                         |
-                         v
-                   Decision gate
-                         |
-                         v
-                   Coding agent
-                         |
-                         v
-                   Code changes
-                         |
-                         v
-                 Kane re-verifies
-                         |
-                         v
-                Optimus evaluates
+```mermaid
+flowchart LR
+  P[Contract<br/>pack.yaml] --> K[Kane CLI<br/>acts + records<br/>in a real browser]
+  A[Web app] --> K
+  K --> E[Evidence<br/>values + screenshots]
+  E --> O{Optimus<br/>evaluator}
+  O -->|PASS| Done[Verdict]
+  O -->|INCONCLUSIVE| Done
+  O -->|verified FAIL| B[Brief] --> C[Coding agent<br/>Claude Code] --> F[Code change]
+  F -->|fresh Kane run,<br/>same contract| K
 ```
 
 | Component | Responsibility |
 |---|---|
-| **Behavioral contract** | Defines the expected behavior and assertions for each scenario. |
+| **Behavioural contract** | Defines the expected behaviour and assertions for each scenario. |
 | **Kane CLI** | Operates the application in a real browser and records observations. |
 | **Evidence archive** | Preserves recordings, screenshots, test definitions and run metadata. |
 | **Optimus evaluator** | Checks evidence against the contract and returns a verdict. |
@@ -68,7 +76,7 @@ When an application fails, Optimus can send the verified failure to a coding age
 | Gate 1 calibration (Library v5) | **24/24 cases matched** |
 | Gate 2 reference-app cases | **4/4 matched** |
 | Completed live repairs | **3** |
-| Automated tests at engineering handoff | **184 passing** |
+| Automated tests | **190 passing** |
 
 Gate 2 currently covers reference apps and does not yet have a negative control. The three completed live repairs include a blind application whose defect remained sealed until grading.
 
@@ -134,7 +142,7 @@ An array produces a score from 0 to 1 when every scenario in the loaded pack has
 
 ### 4. Run a live browser evaluation
 
-Start a corpus app on a loopback URL, sign in with `kane-cli`, and leave its Chrome profile unset. Select a scenario explicitly for a Gate 1 run.
+Install Kane CLI (`npm install -g @testmuai/kane-cli`, or set `OPTIMUS_KANE_CLI` to its `kane-cli.cjs` entry file), sign in to your TestMu AI account with it, and leave its Chrome profile unset. Start a corpus app on a loopback URL and select a scenario explicitly for a Gate 1 run.
 
 ```sh
 npm run optimus -- run --pack packs/library --url http://127.0.0.1:3000/ --scenario L3
@@ -168,19 +176,19 @@ Default caps are 3 attempts, 1,500 credits (including void attempts), and 20 min
 
 ```text
 Optimus/
-├── packs/       Behavioral contracts and scenarios
+├── packs/       Behavioural contracts and scenarios
 ├── src/
 │   ├── core/    Contract loading, generation, linting and evaluation
 │   ├── kane/    Browser-run adapter and evidence extraction
 │   ├── loop/    Repair decisions, workspaces, agent and verification loop
-│   ├── report/  Report data and rendering
+│   ├── report/  Report data and the offline HTML report
 │   └── cli.ts   Command-line interface
+├── website/     The public site (Next.js static export), rendered from the same report data
 ├── corpus/      Reference and intentionally defective applications
-├── runs/        Committed, sanitized run reports and repair records
+├── runs/        Committed, sanitised run reports and repair records
 ├── tests/       Automated tests and fixtures
 ├── docs/        User-facing and engineering documentation
-├── AGENTS.md    Development and agent constraints
-├── HANDOFF.md   Detailed engineering handoff
+├── AGENTS.md    Rules every coding agent on this repo follows (Claude Code reads it via CLAUDE.md)
 └── README.md
 ```
 
@@ -189,10 +197,10 @@ Optimus/
 | Document | What it covers |
 |---|---|
 | [Demo walkthrough](docs/DEMO.md) | A guided five-minute demonstration of evaluation and repair. |
-| [Engineering handoff](HANDOFF.md) | Current engineering state, decisions, operational notes and next steps. |
 | [UI data contract](docs/UI_DATA_CONTRACT.md) | Data contract consumed by the report UI. |
-| [UI structure](docs/UI_STRUCTURE.md) | Report interface organization. |
-| [Agent instructions](AGENTS.md) | Repository rules and constraints for development agents. |
+| [UI structure](docs/UI_STRUCTURE.md) | Report interface organisation. |
+| [Report design rules](DESIGN.md) | How the offline report looks and why. |
+| [Agent instructions](AGENTS.md) | Repository rules for coding agents: Kane never judges, the contract never changes to suit an app. |
 
 ## Evaluation details
 

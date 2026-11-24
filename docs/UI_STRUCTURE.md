@@ -6,7 +6,7 @@ Revision 2 adopts a design review. The comparison matrix is the visual centrepie
 
 Revision 3 adds the repair loop after the closed-loop audit (`Optimus_Kane_Closed_Loop_Audit.md`). The hackathon's third requirement is that the coding agent and Kane CLI communicate through a feedback loop. The report must therefore show the full chain: verified failure → brief to the agent → code change → fresh Kane run → outcome. It must also show the proof that the contract and grader stayed unchanged. This adds a fourth level (the repair record) and a repair state in the matrix.
 
-Revision 4 applies a critical review of Revision 3 (`docs/Optimus_UI_Structure_v3_Critical_Review.md`). Level 4 now appears only for builds with a recorded repair session. Every repair claim is rendered from a machine-generated chain of IDs. Aggregation is repair-aware. The report is an offline bundle, not a single file. Baseline verdicts are never struck through. The repair controller and its records come before any styling of the repair view. This is the last UI revision before the closed loop runs for real.
+Revision 4 applies a critical review of Revision 3 (an internal note, not in the repository). Level 4 now appears only for builds with a recorded repair session. Every repair claim is rendered from a machine-generated chain of IDs. Aggregation is repair-aware. The report is an offline bundle, not a single file. Baseline verdicts are never struck through. The repair controller and its records come before any styling of the repair view. This is the last UI revision before the closed loop runs for real.
 
 ## Build constraints the design must respect
 
