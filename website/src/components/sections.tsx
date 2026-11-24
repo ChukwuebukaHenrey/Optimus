@@ -500,9 +500,9 @@ export function RepairChapter({ data }: { data: SiteData }) {
 
 const DOCS = [
   { n: "I", title: "Write a contract", href: "/docs/#library-contract-versions" },
-  { n: "II", title: "Run Kane on a build", href: "/docs/#live-runs-and-reports" },
-  { n: "III", title: "Read the verdicts", href: "/docs/#offline-workflow" },
-  { n: "IV", title: "Close the repair loop", href: "/docs/#repair-loop" },
+  { n: "II", title: "Run Kane on a build", href: "/docs/#4-run-a-live-browser-evaluation" },
+  { n: "III", title: "Read the verdicts", href: "/docs/#3-evaluate-evidence-offline" },
+  { n: "IV", title: "Close the repair loop", href: "/docs/#automated-repair-loop" },
 ];
 
 export function DocsTeaser() {
