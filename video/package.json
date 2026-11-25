@@ -1,0 +1,49 @@
+{
+  "name": "optimus-video",
+  "version": "1.0.0",
+  "description": "Optimus hackathon demo video (Remotion). Brief: docs/video/DEMO_VIDEO_BRIEF.md",
+  "repository": {},
+  "license": "MIT",
+  "engines": {
+    "node": "^20.19.0 || ^22.13.0 || >=24"
+  },
+  "private": true,
+  "dependencies": {
+    "@remotion/cli": "4.0.546",
+    "@remotion/fonts": "4.0.546",
+    "@remotion/media": "4.0.546",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.546",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@remotion/eslint-config-flat": "4.0.546",
+    "@types/react": "19.3.0",
+    "@types/web": "0.0.166",
+    "eslint": "10.15.0",
+    "prettier": "3.8.1",
+    "tsx": "^4.23.15",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "assets": "tsx scripts/sync-assets.ts",
+    "derive": "tsx scripts/derive.ts",
+    "check": "tsx scripts/check-config.ts",
+    "predev": "npm run assets",
+    "dev": "remotion studio",
+    "still": "remotion still OptimusDemo",
+    "render": "npm run check && remotion render OptimusDemo out/optimus-demo.raw.mp4 --concurrency=2 && npm run master -- out/optimus-demo.raw.mp4 out/optimus-demo.mp4 && npm run probe -- out/optimus-demo.mp4",
+    "probe": "tsx scripts/probe.ts",
+    "build": "remotion bundle",
+    "lint": "eslint src && tsc",
+    "upgrade": "remotion upgrade",
+    "qa": "tsx scripts/qa-stills.ts",
+    "audio": "tsx scripts/make-audio.ts",
+    "master": "tsx scripts/master.ts",
+    "render:novo": "tsx scripts/no-vo.ts"
+  },
+  "allowScripts": {
+    "esbuild": false
+  }
+}
