@@ -387,14 +387,14 @@ export const SCENES: readonly Scene[] = [
       {
         id: "calibrated",
         text: `${F.calibrationGate1.matched}/${F.calibrationGate1.total} calibrated`,
-        at: s(3.5),
+        at: s(1),
       },
       {
         id: "green-broken",
         text: `${F.greenOnBroken.caught} green runs on broken builds — caught`,
-        at: s(9.7),
+        at: s(6.5),
       },
-      { id: "kane-bugs", text: `${F.kaneIssues.numbers.length} Kane bugs reported`, at: s(16) },
+      { id: "kane-bugs", text: `${F.kaneIssues.numbers.length} Kane bugs reported`, at: s(15.1) },
     ],
     vo: "VO-5",
     reviewCriterion: "Numbers match FACTS; each source visible while its number is on screen",

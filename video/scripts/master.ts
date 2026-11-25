@@ -15,10 +15,11 @@ const [input, output, flag, matchFile] = process.argv.slice(2);
 const match = flag === "--match" ? matchFile : undefined;
 if (!input || !output) throw new Error("usage: master <input.mp4> <output.mp4>");
 const ffmpeg = path.join(process.env.OPTIMUS_FFMPEG_DIR ?? TOOLING.ffmpegDir, "ffmpeg.exe");
-const target = `I=${AUDIO.levels.mixLufs}:TP=-1.5:LRA=11`;
+/** TP -2.5 leaves room for the AAC encoder's overshoot, so the delivered file stays under -1 dBTP. */
+const target = `I=${AUDIO.levels.mixLufs}:TP=-2.5:LRA=11`;
 /** Tame peaks first so the normaliser can raise the level linearly; finish with an oversampled limiter. */
 const pre = "alimiter=limit=0.6:attack=2:release=60:level=false";
-const post = "aresample=192000,alimiter=limit=0.83:attack=1:release=40:level=false,aresample=48000";
+const post = "aresample=192000,alimiter=limit=0.7:attack=1:release=40:level=false,aresample=48000";
 
 const pass1 = spawnSync(ffmpeg, ["-hide_banner", "-i", match ?? input, "-af", `${pre},loudnorm=${target}:print_format=json`, "-f", "null", "-"], { shell: false, encoding: "utf8" });
 const json = pass1.stderr.slice(pass1.stderr.lastIndexOf("{"), pass1.stderr.lastIndexOf("}") + 1);
