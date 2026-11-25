@@ -126,11 +126,12 @@ export const FACTS = {
     claim:
       "Live run: baseline L4 FAIL (expected \"GP Keep 7efe46-run-0\", observed none); Claude Code added one line (saveBooks();) to app.js; integrity ok; fresh Kane run L1/L3/L4 PASS. 313.28 credits, 1 attempt.",
     sources: [
-      "r1-terminal.log",
-      ".optimus/repair/repair-20261125041104-7efe46/repair-history.json",
-      ".optimus/repair/repair-20261125041104-7efe46/attempt-1/brief.md",
-      ".optimus/repair/repair-20261125041104-7efe46/attempt-1/change.diff",
-      ".optimus/runs/pack-library/7efe46-run-0-L0n6YR/scenario-L4/attempt-1/stdout.ndjson (test_md_summary)",
+      "runs/repair-u-live/REPORT.md",
+      "runs/repair-u-live/terminal.log",
+      "runs/repair-u-live/repair-history.json",
+      "runs/repair-u-live/attempt-1-brief.md",
+      "runs/repair-u-live/attempt-1-change.diff",
+      "runs/repair-u-live/kane-L4-summaries.ndjson",
       "R1",
     ],
   },

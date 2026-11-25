@@ -1,0 +1,12 @@
+diff --git a/app.js b/app.js
+index 98436cf..c610b5c 100644
+--- a/app.js
++++ b/app.js
+@@ -59,6 +59,7 @@ form.addEventListener('submit', (event) => {
+   };
+ 
+   books.push(book);
++  saveBooks();
+   addCard(book);
+   updateEmptyMessage();
+   form.reset();

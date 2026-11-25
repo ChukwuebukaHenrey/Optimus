@@ -1,0 +1,87 @@
+
+> optimus@0.1.0 optimus
+> tsx src/cli.ts repair --pack packs/library --app corpus/u-unseen --scenarios L1,L3,L4
+
+[05:11:04] Session repair-20261125041104-7efe46: app corpus/u-unseen, scenarios L1, L3, L4; caps 3 attempts, 1500 credits, 20 min.
+[05:11:14] Kane run run-0 (baseline) started: L1, L3, L4. Kane drives a real browser headless; each scenario takes a few minutes.
+[05:12:14]   ... Kane run run-0 still running (1.0 min)
+[05:13:14]   ... Kane run run-0 still running (2.0 min)
+[05:14:14]   ... Kane run run-0 still running (3.0 min)
+[05:15:14]   ... Kane run run-0 still running (4.0 min)
+[05:16:14]   ... Kane run run-0 still running (5.0 min)
+[05:17:14]   ... Kane run run-0 still running (6.0 min)
+[05:18:14]   ... Kane run run-0 still running (7.0 min)
+[05:19:14]   ... Kane run run-0 still running (8.0 min)
+[05:20:14]   ... Kane run run-0 still running (9.0 min)
+[05:21:14]   ... Kane run run-0 still running (10.0 min)
+[05:21:23] Kane run run-0 finished (10.1 min, 165.18 credits).
+[05:21:23] Optimus verdicts for run-0: L1 PASS | L3 PASS | L4 FAIL (assertion_failed)
+[05:21:23] Decision: REPAIR. L4 failed after an established action.
+[05:21:26] Attempt 1: brief for L4 (expected "GP Keep 7efe46-run-0", observed "none"). The brief has no contract and no grader.
+[05:21:26] Agent started in a throwaway copy of the app, outside Optimus (20 min left on the time cap).
+[05:22:03] Agent finished (0.6 min): changed app.js (1 file changed, 1 insertion(+)).
+[05:22:03] Integrity: workspace outside Optimus ok | contract hash unchanged ok | grader (src/core, src/kane) unchanged ok
+[05:22:06] Kane run run-1 (verification) started: L1, L3, L4. Kane drives a real browser headless; each scenario takes a few minutes.
+[05:23:06]   ... Kane run run-1 still running (1.0 min)
+[05:24:06]   ... Kane run run-1 still running (2.0 min)
+[05:25:06]   ... Kane run run-1 still running (3.0 min)
+[05:26:06]   ... Kane run run-1 still running (4.0 min)
+[05:27:06]   ... Kane run run-1 still running (5.0 min)
+[05:28:06]   ... Kane run run-1 still running (6.0 min)
+[05:29:06]   ... Kane run run-1 still running (7.0 min)
+[05:30:06]   ... Kane run run-1 still running (8.0 min)
+[05:31:05] Kane run run-1 finished (9.0 min, 148.10 credits).
+[05:31:05] Optimus verdicts for run-1: L1 PASS | L3 PASS | L4 PASS
+[05:31:05] Decision: COMPLETE. Every scenario in scope passed.
+[05:31:05] Outcome: COMPLETE. Every scenario in scope passed.
+{
+  "sessionId": "repair-20261125041104-7efe46",
+  "outcome": {
+    "decision": "COMPLETE",
+    "reason": "Every scenario in scope passed.",
+    "finalRunId": "run-1"
+  },
+  "budget": {
+    "creditsStart": 6703.2326,
+    "creditsUsed": 313.2838,
+    "attemptsUsed": 1,
+    "infrastructureRetriesUsed": 0,
+    "repairMinutesUsed": 0.61
+  },
+  "runs": [
+    {
+      "runId": "run-0",
+      "kind": "baseline",
+      "verdicts": {
+        "L1": "PASS",
+        "L3": "PASS",
+        "L4": "FAIL"
+      }
+    },
+    {
+      "runId": "run-1",
+      "kind": "verification",
+      "verdicts": {
+        "L1": "PASS",
+        "L3": "PASS",
+        "L4": "PASS"
+      }
+    }
+  ],
+  "attempts": [
+    {
+      "attempt": 1,
+      "changedFiles": [
+        "app.js"
+      ],
+      "integrity": {
+        "workspaceOutsideOptimus": true,
+        "packHashUnchanged": true,
+        "graderUnchanged": true,
+        "changedGraderFiles": []
+      },
+      "verificationRunId": "run-1"
+    }
+  ],
+  "history": "<optimus>\\.optimus\\repair\\repair-20261125041104-7efe46\\repair-history.json"
+}
