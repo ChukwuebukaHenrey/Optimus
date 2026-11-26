@@ -50,7 +50,7 @@ Several repair sessions stopped instead of claiming success: a network outage, K
 ## Reproduce
 
 ```sh
-npm ci && npm test                       # 184 offline tests, no Kane needed
+npm ci && npm test                       # 198 offline tests, no Kane needed
 export OPTIMUS_KANE_CLI=<path to kane-cli.cjs>
 npm run optimus -- repair --pack packs/library --app corpus/c-remove-wrong --scenarios L1,L3,L4
 ```

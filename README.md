@@ -8,6 +8,14 @@ Optimus judges that evidence deterministically, with no AI deciding the verdict.
 Optimus sends the verified failure to a coding agent (**Claude Code**, headless), then has Kane check
 the fix against the unchanged contract.
 
+**Judges, start here (no Kane account, no credits, about 2 minutes):**
+
+1. `npm ci && npm test`: 198 offline tests (evaluator, Kane adapter, repair loop and its anti-cheat rules, report).
+2. Open [`tests/fixtures/report-bundle/index.html`](tests/fixtures/report-bundle/index.html) in a browser: the real
+   report for five builds and three repairs, built from recorded Kane evidence. Every verdict links to Kane's screenshots.
+3. Read [`runs/repair-u/`](runs/repair-u/REPORT.md): a blind defect, the brief Claude Code received, its one-line fix,
+   and the fresh Kane run that proved it.
+
 **[Live site](https://optimus-one-mu.vercel.app)** ·
 **[Example report](https://optimus-one-mu.vercel.app/report/)** ·
 **[Five-minute demo walkthrough](docs/DEMO.md)**
@@ -37,7 +45,7 @@ Two Kane CLI issues found along the way are reported upstream:
 
 ```sh
 npm ci
-npm test                      # 191 tests: evaluator, Kane adapter, repair loop, report
+npm test                      # 198 tests: evaluator, Kane adapter, repair loop, report
 ```
 
 Then open [`tests/fixtures/report-bundle/index.html`](tests/fixtures/report-bundle/index.html) in a
@@ -82,7 +90,7 @@ flowchart LR
 | Gate 1 calibration (Library v5) | **24/24 cases matched** |
 | Gate 2 reference-app cases | **4/4 matched** |
 | Completed live repairs | **3** |
-| Automated tests | **191 passing** |
+| Automated tests | **198 passing** |
 
 Gate 2 currently covers reference apps and does not yet have a negative control. The three completed live repairs include a blind application whose defect remained sealed until grading.
 
@@ -179,6 +187,30 @@ The loop works as follows:
 While it runs, the command prints timestamped progress to stderr: each Kane run starting and finishing (time and credits), Optimus's verdicts for that run, each decision, the brief, the agent's change and the integrity checks, with a heartbeat every minute. Stdout stays a single JSON summary for scripts.
 
 Default caps are 3 attempts, 1,500 credits (including void attempts), and 20 minutes from the first agent call. Each session records its baseline, decisions, brief, agent invocation, source revisions, diff, integrity checks and verification run in `.optimus/repair/<session>/repair-history.json`.
+
+### What the repair agent cannot do
+
+Each rule is proved by a test in [`tests/loop.test.ts`](tests/loop.test.ts) that uses a fake agent which
+cheats on purpose, against a throwaway copy of the contract and grader (never the real `packs/` or `src/`).
+
+| The agent cannot… | What happens | Test |
+|---|---|---|
+| Edit the contract (`pack.yaml`) | STOP with an integrity failure; no verification run | `stops when the agent edits the pack file` |
+| Edit the evaluator (`src/core/evaluate.ts`) | STOP; the file is listed in the attempt's integrity record | `stops when the agent edits src/core/evaluate.ts` |
+| Edit the Kane adapter (`src/kane/`) | STOP; the file is listed in the integrity record | `stops when the agent edits a file in src/kane` |
+| Add a file to the grader (`src/core/`) | STOP; the new file is listed in the integrity record | `stops when the agent adds a new file under src/core` |
+| Learn where the contract is | The brief has no pack path, file name, hash or grader path | `never tells the agent where the contract is or what it is called` |
+| See the contract or the other checks | The brief states only the one failed requirement | `never carries the contract, other assertions or grader vocabulary` |
+| Work inside the Optimus folder | The workspace is refused | `refuses a repair workspace inside the Optimus folder` |
+| Use a shell, the web or sub-agents (Claude Code) | Only Read, Edit, Write, Glob and Grep are allowed | `gives the default agent (Claude Code) file tools only` |
+| Be started without a verified FAIL | No agent call when evidence is unresolved | `never calls the agent when the evidence is unresolved` |
+| Claim a fix without changing the app | STOP | `stops when the agent changes nothing` |
+| Grade its own fix | A fresh Kane run of every scenario in scope, with a new nonce | `repairs a verified failure and verifies it with a fresh full-scope run` |
+| Keep trying forever | STOP at the attempt, credit or time cap | `stops at the attempt cap without changing anything else` |
+
+The cheats are caught by comparing hashes before and after the agent runs, so the loop detects them; it does not
+prevent them. An agent given a shell could still read the pack, and an agent wired in with `--agent` runs with your
+own permissions. The integrity check catches any change, and the verdict still comes only from a fresh Kane run.
 
 ## Project structure
 
