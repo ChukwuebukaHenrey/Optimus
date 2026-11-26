@@ -1,0 +1,23 @@
+PLANTED DEFECT
+
+File: app/app.js, in addCard(), inside the click handler of the "Toggle read"
+button (the line that updates status.textContent after saveBooks()).
+
+Change: the label shown after a toggle was changed from
+    status.textContent = book.read ? 'Read' : 'Not read';
+to
+    status.textContent = book.read ? 'Reading' : 'Not read';
+
+The initial rendering line (outside the handler) was left as 'Read' / 'Not read'.
+The data model and storage are unchanged: book.read is still flipped to true and
+saved to localStorage exactly as before.
+
+What the user sees:
+- Add a book without ticking Read: status shows "Not read" (unchanged).
+- Click "Toggle read" once: status changes to "Reading" instead of "Read".
+- Click again: status goes back to "Not read".
+- After a reload, a book toggled to read is shown as "Read", because the
+  initial render uses the correct label. So the page right after a toggle
+  disagrees with what it shows after a reload.
+
+Fix: change 'Reading' back to 'Read' in the toggle click handler.

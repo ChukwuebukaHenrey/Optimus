@@ -84,16 +84,18 @@ flowchart LR
 
 ## Current status
 
-**23 November 2026**
+**26 November 2026**
 
 | Validation | Result |
 |---|---:|
 | Gate 1 calibration (Library v5) | **24/24 cases matched** |
-| Gate 2 reference-app cases | **4/4 matched** |
+| Gate 2 (read status), including a negative control | **6/6 matched** |
 | Completed live repairs | **3** |
 | Automated tests | **200 passing** |
 
-Gate 2 currently covers reference apps and does not yet have a negative control. The three completed live repairs include a blind application whose defect remained sealed until grading.
+Gate 2's negative control is build E, made in a separate session with a broken read toggle: after one click it shows
+"Reading" instead of "Read". Optimus returned FAIL on both trials, as fixed in advance, although Kane reported
+`passed` on both. The three completed live repairs include a blind application whose defect remained sealed until grading.
 
 **Reports and evidence**
 - [Gate 1 v5 calibration](runs/gate1-v5/REPORT.md)
