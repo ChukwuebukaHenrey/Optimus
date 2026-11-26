@@ -38,6 +38,11 @@ function renderReadme() {
       html() {
         return "";
       },
+      // Mermaid diagrams render on GitHub, not here: point readers to the drawn version.
+      code({ lang }) {
+        if (lang !== "mermaid") return false;
+        return `<p><a href="${REPO_URL}#how-it-works">See the flow diagram in the README on GitHub.</a></p>\n`;
+      },
     },
   });
   return marked.parse(source, { async: false }) as string;
