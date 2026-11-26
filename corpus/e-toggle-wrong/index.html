@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Library</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <h1>Library</h1>
+
+      <form id="book-form" aria-labelledby="add-heading">
+        <h2 id="add-heading">Add a book</h2>
+        <div class="fields">
+          <label>
+            Title (required)
+            <input name="title" required pattern=".*\S.*">
+          </label>
+          <label>
+            Author (required)
+            <input name="author" required pattern=".*\S.*">
+          </label>
+          <label>
+            Pages
+            <input name="pages" type="number" min="1" step="1">
+          </label>
+        </div>
+        <div class="form-actions">
+          <label class="checkbox"><input name="read" type="checkbox"> Read</label>
+          <button class="primary" type="submit">Add Book</button>
+        </div>
+      </form>
+
+      <section aria-labelledby="books-heading">
+        <h2 id="books-heading">Books</h2>
+        <p id="empty-message">No books yet.</p>
+        <ul id="books" class="books"></ul>
+      </section>
+    </main>
+
+    <template id="book-template">
+      <li class="book">
+        <h3 class="book-title"></h3>
+        <p class="book-author"></p>
+        <p class="book-pages"></p>
+        <p class="book-status"></p>
+        <div class="book-actions">
+          <button class="toggle" type="button">Toggle read</button>
+          <button class="remove" type="button">Remove</button>
+        </div>
+      </li>
+    </template>
+  </body>
+</html>

@@ -6,7 +6,20 @@
   "trials": 2,
   "note": "Fixed before any Gate 2 run. L2 adds a not-read book, toggles its read status once, and records the status text before and after. Both reference apps should pass. There is no L2-defective corpus app yet, so this gate has no negative control; that needs a separate corpus session (AGENTS.md: corpus apps are built outside Optimus sessions).",
   "apps": {
-    "A": { "fixture": "corpus/a-vanilla", "expected": "PASS", "rationale": "The status shows 'Not read' and becomes 'Read' after Toggle read; both texts are in the pack's allowed lists." },
-    "B": { "fixture": "corpus/b-react/dist", "expected": "PASS", "rationale": "The status shows 'To read' and becomes 'Finished' when it is clicked; both texts are in the pack's allowed lists." }
+    "A": {
+      "fixture": "corpus/a-vanilla",
+      "expected": "PASS",
+      "rationale": "The status shows 'Not read' and becomes 'Read' after Toggle read; both texts are in the pack's allowed lists."
+    },
+    "B": {
+      "fixture": "corpus/b-react/dist",
+      "expected": "PASS",
+      "rationale": "The status shows 'To read' and becomes 'Finished' when it is clicked; both texts are in the pack's allowed lists."
+    },
+    "E": {
+      "fixture": "corpus/e-toggle-wrong",
+      "expected": "FAIL",
+      "rationale": "Negative control, added 26 Nov 2026 before any run on E. Built in a separate headless Claude Code session from a copy of A that never saw the pack (prompt: e-build-prompt.md), with one bug planted in the read toggle: after one click the status visibly changes, but to a value that does not mean 'read'. The bug description stays sealed outside the repository until grading ends."
+    }
   }
 }
