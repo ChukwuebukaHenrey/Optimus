@@ -1,6 +1,6 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { loadPack } from '../src/core/pack.js';
 import type { ScenarioResult, Verdict } from '../src/core/types.js';
@@ -10,6 +10,8 @@ import { briefMarkdown, buildBrief } from '../src/loop/brief.js';
 import { decide } from '../src/loop/decision.js';
 import { runRepairLoop, type RepairDeps } from '../src/loop/repair.js';
 import { serveStatic } from '../src/loop/serve.js';
+import { createWorkspace } from '../src/loop/workspace.js';
+import { claudeCodeCommand } from '../src/loop/agent.js';
 
 const library = await loadPack(join('packs', 'library'));
 const scope = ['L1', 'L3', 'L4'];
@@ -82,6 +84,27 @@ describe('repair brief', () => {
   });
 });
 
+describe('repair agent limits', () => {
+  it('refuses a repair workspace inside the Optimus folder', async () => {
+    const source = await mkdtemp(join(tmpdir(), 'optimus-app-'));
+    temporary.push(source);
+    await writeFile(join(source, 'index.html'), '<p>app</p>');
+    await expect(createWorkspace(source, join(resolve('.'), '.optimus', 'inside-test'), resolve('.')))
+      .rejects.toThrow('The repair workspace must be outside the Optimus folder.');
+  });
+
+  it('gives the default agent (Claude Code) file tools only: no shell, no web, no sub-agents', () => {
+    const { args } = claudeCodeCommand();
+    const after = (flag: string) => {
+      const rest = args.slice(args.indexOf(flag) + 1);
+      const end = rest.findIndex((arg) => arg.startsWith('--'));
+      return end === -1 ? rest : rest.slice(0, end);
+    };
+    expect(after('--allowedTools')).toEqual(['Read', 'Edit', 'Write', 'Glob', 'Grep']);
+    expect(after('--disallowedTools')).toEqual(['Bash', 'WebFetch', 'WebSearch', 'Task']);
+  });
+});
+
 it('serves only files inside the app folder', async () => {
   const root = await mkdtemp(join(tmpdir(), 'optimus-serve-'));
   temporary.push(root);
@@ -97,13 +120,14 @@ it('serves only files inside the app folder', async () => {
 });
 
 describe('repair controller', { timeout: 60000 }, () => {
-  async function setup(agentBehaviour: 'fix' | 'nothing', verdictsFor: (body: string, run: number) => Record<string, Verdict>, caps = { attempts: 3, credits: 1500, minutes: 20 }) {
+  type Behaviour = 'fix' | 'nothing' | ((cwd: string) => Promise<void>);
+  async function setup(agentBehaviour: Behaviour, verdictsFor: (body: string, run: number) => Record<string, Verdict>, caps = { attempts: 3, credits: 1500, minutes: 20 },
+    root = resolve('.'), packFile = join('packs', 'library', 'pack.yaml')) {
     const base = await mkdtemp(join(tmpdir(), 'optimus-loop-test-'));
     temporary.push(base);
     const app = join(base, 'source');
     await rm(app, { recursive: true, force: true });
     await writeFile(join(base, 'placeholder'), '');
-    const { mkdir } = await import('node:fs/promises');
     await mkdir(app);
     await writeFile(join(app, 'index.html'), '<p>BUG</p>');
     let credits = 1000;
@@ -127,6 +151,7 @@ describe('repair controller', { timeout: 60000 }, () => {
       agent: async ({ cwd, prompt, logDirectory }) => {
         agentCalls.push(prompt);
         if (agentBehaviour === 'fix') await writeFile(join(cwd, 'index.html'), `<p>FIXED ${agentCalls.length}</p>`);
+        else if (typeof agentBehaviour === 'function') await agentBehaviour(cwd);
         return {
           agentInvocationId: `agent-${agentCalls.length}`, agent: 'fake', exitCode: 0, timedOut: false,
           startedAt: new Date().toISOString(), finishedAt: new Date().toISOString(), finalMessage: 'done', agentSessionId: null,
@@ -135,7 +160,7 @@ describe('repair controller', { timeout: 60000 }, () => {
       },
     };
     const history = await runRepairLoop({
-      root: resolve('.'), loaded: library, packFile: join('packs', 'library', 'pack.yaml'), appSource: app, scope, caps,
+      root, loaded: library, packFile, appSource: app, scope, caps,
       workspaceParent: base, sessionParent: join(base, 'sessions'), infraRetryDelayMs: 0,
     }, deps);
     return { history, agentCalls, base, lines };
@@ -237,4 +262,73 @@ describe('repair controller', { timeout: 60000 }, () => {
     expect(history.decisions.at(-1)?.basis.find(({ scenarioId }) => scenarioId === 'L4')).toMatchObject({ verdict: 'INFRA_ERROR', runId: 'run-2' });
   });
 
+  describe('a cheating agent', () => {
+    // Each cheat runs against a throwaway copy of the contract and the grader, never the real packs/ or src/.
+    async function copyOfOptimus(): Promise<string> {
+      const copy = await mkdtemp(join(tmpdir(), 'optimus-root-copy-'));
+      temporary.push(copy);
+      for (const path of [join('src', 'core'), join('src', 'kane'), join('packs', 'library')]) {
+        await cp(path, join(copy, path), { recursive: true });
+      }
+      return copy;
+    }
+    async function rewrite(path: string, change: (text: string) => string): Promise<void> {
+      const before = await readFile(path, 'utf8');
+      const after = change(before);
+      if (after === before) throw new Error(`The cheat did not change ${path}.`);
+      await writeFile(path, after);
+    }
+    const integrityStop = 'An integrity check failed after the agent ran; the contract or grader may have changed.';
+    const cheats: [string, (copy: string) => Promise<void>, { packHashUnchanged: boolean; changedGraderFiles: string[] }][] = [
+      ['edits the pack file', (copy) => rewrite(join(copy, 'packs', 'library', 'pack.yaml'), (text) => text.replace(/by: -1/u, 'by: 0')),
+        { packHashUnchanged: false, changedGraderFiles: [] }],
+      ['edits src/core/evaluate.ts', (copy) => rewrite(join(copy, 'src', 'core', 'evaluate.ts'), (text) => `${text}\nexport const everythingPasses = true;\n`),
+        { packHashUnchanged: true, changedGraderFiles: ['src/core/evaluate.ts'] }],
+      ['edits a file in src/kane', (copy) => rewrite(join(copy, 'src', 'kane', 'parse.ts'), (text) => `// recorded values are trusted as PASS\n${text}`),
+        { packHashUnchanged: true, changedGraderFiles: ['src/kane/parse.ts'] }],
+      ['adds a new file under src/core', (copy) => writeFile(join(copy, 'src', 'core', 'override.ts'), "export const verdict = 'PASS';\n"),
+        { packHashUnchanged: true, changedGraderFiles: ['src/core/override.ts'] }],
+    ];
+
+    it.each(cheats)('stops when the agent %s, and runs no verification', async (_cheat, cheat, expected) => {
+      const copy = await copyOfOptimus();
+      const realPack = await readFile(join('packs', 'library', 'pack.yaml'));
+      // The agent also "fixes" the app, so only the integrity check can stop the loop.
+      const { history, agentCalls, lines } = await setup(async (cwd) => {
+        await writeFile(join(cwd, 'index.html'), '<p>FIXED</p>');
+        await cheat(copy);
+      }, buggyRemove, undefined, copy, join(copy, 'packs', 'library', 'pack.yaml'));
+      expect(agentCalls).toHaveLength(1);
+      expect(history.outcome).toMatchObject({ decision: 'STOP', reason: integrityStop, finalRunId: 'run-0' });
+      expect(history.runs.map(({ kind }) => kind)).toEqual(['baseline']);
+      const [attempt] = history.attempts;
+      expect(attempt.verificationRunId).toBeNull();
+      expect(attempt.changedFiles).toEqual(['index.html']);
+      expect(attempt.integrity).toEqual({
+        workspaceOutsideOptimus: true,
+        packHashUnchanged: expected.packHashUnchanged,
+        graderUnchanged: expected.changedGraderFiles.length === 0,
+        changedGraderFiles: expected.changedGraderFiles,
+      });
+      expect(lines.some((line) => line.startsWith('Integrity:') && line.includes('FAILED'))).toBe(true);
+      expect(lines.some((line) => line.startsWith('Kane run run-1'))).toBe(false);
+      // The real contract was never touched.
+      expect(await readFile(join('packs', 'library', 'pack.yaml'))).toEqual(realPack);
+    });
+
+    it('never tells the agent where the contract is or what it is called', async () => {
+      const { history, agentCalls } = await setup('fix', buggyRemove);
+      const packPath = resolve('packs', 'library', 'pack.yaml');
+      const briefFiles = [history.attempts[0].briefPath, join(dirname(history.attempts[0].briefPath), 'brief.json')];
+      const briefDirectory = join(history.workspace, '..', 'brief');
+      briefFiles.push(...(await readdir(briefDirectory)).filter((name) => /\.(md|json)$/u.test(name)).map((name) => join(briefDirectory, name)));
+      const texts = [...agentCalls, ...await Promise.all(briefFiles.map((path) => readFile(path, 'utf8')))];
+      expect(texts.length).toBeGreaterThanOrEqual(4);
+      for (const text of texts) {
+        for (const leak of ['pack.yaml', 'packs/', 'packs\\', packPath, packPath.replaceAll('\\', '/'), library.packHash, 'evaluate.ts', 'src/core', 'src/kane']) {
+          expect(text, `brief leaks "${leak}"`).not.toContain(leak);
+        }
+      }
+    });
+  });
 });
