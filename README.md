@@ -10,11 +10,12 @@ the fix against the unchanged contract.
 
 **Judges, start here (no Kane account, no credits, about 2 minutes):**
 
-1. `npm ci && npm test`: 198 offline tests (evaluator, Kane adapter, repair loop and its anti-cheat rules, report).
+1. `npm ci && npm test`: 200 offline tests (evaluator, Kane adapter, repair loop and its anti-cheat rules, report).
 2. Open [`tests/fixtures/report-bundle/index.html`](tests/fixtures/report-bundle/index.html) in a browser: the real
    report for five builds and three repairs, built from recorded Kane evidence. Every verdict links to Kane's screenshots.
 3. Read [`runs/repair-u/`](runs/repair-u/REPORT.md): a blind defect, the brief Claude Code received, its one-line fix,
-   and the fresh Kane run that proved it.
+   and the fresh Kane run that proved it. Or run `npm run demo` to replay it in the terminal, with Kane's result
+   next to Optimus's verdict for all 97 archived runs (reads committed files only; no network).
 
 **[Live site](https://optimus-one-mu.vercel.app)** ·
 **[Example report](https://optimus-one-mu.vercel.app/report/)** ·
@@ -45,7 +46,7 @@ Two Kane CLI issues found along the way are reported upstream:
 
 ```sh
 npm ci
-npm test                      # 198 tests: evaluator, Kane adapter, repair loop, report
+npm test                      # 200 tests: evaluator, Kane adapter, repair loop, report
 ```
 
 Then open [`tests/fixtures/report-bundle/index.html`](tests/fixtures/report-bundle/index.html) in a
@@ -90,7 +91,7 @@ flowchart LR
 | Gate 1 calibration (Library v5) | **24/24 cases matched** |
 | Gate 2 reference-app cases | **4/4 matched** |
 | Completed live repairs | **3** |
-| Automated tests | **198 passing** |
+| Automated tests | **200 passing** |
 
 Gate 2 currently covers reference apps and does not yet have a negative control. The three completed live repairs include a blind application whose defect remained sealed until grading.
 

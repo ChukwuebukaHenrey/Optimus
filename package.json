@@ -10,7 +10,8 @@
   "scripts": {
     "optimus": "tsx src/cli.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "demo": "tsx src/demo.ts"
   },
   "dependencies": {
     "tsx": "^4.20.0",
